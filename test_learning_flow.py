@@ -164,7 +164,7 @@ class LearningFlowTests(unittest.TestCase):
         self.click('[data-example-next]')
         self.assertEqual(self.js("Number(document.querySelector('[data-funnel]').dataset.value)"), 30)
         self.command('find', 'role', 'button', 'click', '--name', 'What if one rate changes?')
-        self.wait("document.querySelector('wa-details.visual-experiment').open")
+        self.wait("document.querySelector('wa-details.visual-experiment').open && !document.querySelector('wa-details.visual-experiment').isAnimating")
         self.command('focus', '#visual-rate')
         self.command('press', 'ArrowRight')
         self.assertEqual(self.js("document.querySelector('#visual-rate').value"), '50.5')
@@ -192,7 +192,7 @@ class LearningFlowTests(unittest.TestCase):
             self.assertEqual(self.js("performance.getEntriesByType('resource').filter(r=>!r.name.startsWith(location.origin)).length"), 0)
             self.click('[data-example-next]')
             self.command('find', 'role', 'button', 'click', '--name', 'What if one rate changes?')
-            self.wait("document.querySelector('wa-details.visual-experiment').open")
+            self.wait("document.querySelector('wa-details.visual-experiment').open && !document.querySelector('wa-details.visual-experiment').isAnimating")
             self.assertFalse(self.js("document.documentElement.scrollWidth > innerWidth"))
         finally:
             self.command('set', 'media', 'light')
