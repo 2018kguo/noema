@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Noema</title>
+<meta name="description" content="An interactive course with explanations, worked examples, practice, and feedback.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to lesson</a>
+<header class="app-header"><div class="header-inner"><a class="brand" id="course-brand" href="#home"><span class="brand-mark">n</span><span id="course-title">Noema</span></a><nav aria-label="Main navigation"><a href="#home" data-nav="home">Course</a><a href="#practice" data-nav="practice">Practice</a><details class="reference-menu"><summary>Reference</summary><div><a href="#glossary">Glossary</a><a href="#sources">Sources</a><a href="#settings">Feedback settings</a><button id="export">Export progress</button></div></details></nav></div></header>
+<main id="main" tabindex="-1"></main>
+<footer class="site-footer"><span>Your place and answers are saved in this browser.</span><a href="#sources">About this course</a></footer>
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+fetch('course.json').then(r=>{if(!r.ok)throw Error('Course data could not load');return r.json();}).then(course=>{Object.assign(window,course);document.title=course.META.title;document.getElementById('course-title').textContent=location.pathname.startsWith('/learn/')?'Noema':course.META.title;if(location.pathname.startsWith('/learn/'))document.getElementById('course-brand').href='/';const script=document.createElement('script');script.src='app.js';document.body.appendChild(script);}).catch(()=>{document.getElementById('main').innerHTML='<h1>Start the local workbook</h1><p>Run <code>python3 serve.py</code> in this folder, then open <a href="http://127.0.0.1:8765">http://127.0.0.1:8765</a>.</p>';});
+</script>
+</body></html>

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Noema"
+  short_description: "Build interactive lessons from repos and articles"
+  default_prompt: "Use $noema to turn this source and its prerequisites into a browser course with worked examples and feedback."

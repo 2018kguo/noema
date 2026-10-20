@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Noema — your learning inbox</title>
+  <meta name="description" content="Save what interests you. Turn links into lessons, examples, and practice.">
+  <link rel="stylesheet" href="inbox.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to inbox</a>
+  <aside class="sidebar">
+    <a class="brand" href="#inbox"><span class="brand-mark" aria-hidden="true">n</span>Noema</a>
+    <p class="workspace-label">YOUR SPACE</p>
+    <nav aria-label="Workspace">
+      <a href="#inbox" id="nav-inbox" class="nav-item"><span>↳</span> Inbox <span class="count" id="inbox-count">0</span></a>
+      <a href="#learning" id="nav-learning" class="nav-item"><span>▤</span> Learning <span class="count" id="learning-count">1</span></a>
+    </nav>
+    <div class="sidebar-bottom"><p>Something to start with</p><a href="/learn/deepinfer/">Inside Inference <span>↗</span><small>From first principles to a tiny engine.</small></a><button id="settings-button" class="settings-button">Preparation settings <span>⌘</span></button></div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar"><span id="breadcrumb">Your inbox</span><div id="queue-control"></div></header>
+    <main id="main" tabindex="-1">
+      <section id="capture">
+        <span class="eyebrow">A PLACE FOR YOUR CURIOSITY</span>
+        <h1>What caught your attention?</h1>
+        <p class="intro">Drop in a post, article, or repo. Noema turns it into lessons you can work through.</p>
+        <form id="capture-form" class="capture-box">
+          <label for="links" class="sr-only">Links to explore, one per line</label>
+          <textarea id="links" name="links" rows="1" placeholder="Paste a link, or a few…" required spellcheck="false"></textarea>
+          <details id="capture-context"><summary>Add a note or paste source text <span>Optional</span></summary><div class="context-fields"><label for="intent">What do you want to understand?</label><textarea id="intent" rows="2" maxlength="4000" placeholder="I’m new to this. Help me understand how it works and judge the claims."></textarea><label for="source-text">Source text <span>Useful for tweets or pages that need a login</span></label><textarea id="source-text" rows="4" maxlength="100000" placeholder="Paste the post or an excerpt here. Attach text to one link at a time."></textarea></div></details>
+          <div class="capture-bottom"><span>One link per line · drag a link here, too</span><button type="submit" class="primary" id="add-button">Add to queue <span aria-hidden="true">↗</span></button></div>
+          <p id="capture-error" class="error" role="alert" hidden></p>
+        </form>
+      </section>
+      <section class="collection" aria-label="Saved links">
+        <div class="collection-heading"><div><h2 id="collection-title">Your links</h2><p id="collection-summary">Loading your inbox…</p></div><label class="search"><span aria-hidden="true">⌕</span><span class="sr-only">Find a saved link</span><input id="search" type="search" placeholder="Find a link"></label></div>
+        <div class="filters" id="filters" aria-label="Filter links"><button data-filter="all" aria-pressed="true">All</button><button data-filter="preparing" aria-pressed="false">Preparing</button><button data-filter="ready" aria-pressed="false">Ready to learn</button><button data-filter="needs" aria-pressed="false">Needs you</button></div>
+        <div id="connection-error" class="error" role="status" hidden></div>
+        <div id="items"></div>
+      </section>
+      <footer class="workspace-footer"><span>Saved on this computer.</span><span id="worker-note">You can leave this tab open or come back later.</span></footer>
+    </main>
+  </div>
+  <dialog id="settings-dialog" aria-labelledby="settings-title"><form id="settings-form"><div class="dialog-heading"><h2 id="settings-title">How should Noema prepare links?</h2><button type="button" class="close" data-close="settings-dialog" aria-label="Close settings">×</button></div><p>Choose an installed CLI. Preparation uses its signed-in account and usage limits. Your links and drafts stay on this computer.</p><label for="provider">Prepare with</label><select id="provider"><option value="claude">Claude Code</option><option value="codex">Codex</option></select><label for="generation-model">Model <span>Optional</span></label><input id="generation-model" placeholder="Use the CLI’s default model" maxlength="120"><p class="form-help">For Claude, you can use <code>sonnet</code> for writing or <code>haiku</code> for a cheaper first pass. Use a model available to your account.</p><p id="provider-help" class="form-help"></p><p id="settings-error" class="error" role="alert" hidden></p><div class="dialog-actions"><button type="button" class="quiet" data-close="settings-dialog">Cancel</button><button type="submit" class="primary" id="save-settings">Start preparing</button></div></form></dialog>
+  <dialog id="item-dialog" aria-labelledby="item-title"><div id="item-content"></div></dialog>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="inbox.js"></script>
+</body>
+</html>

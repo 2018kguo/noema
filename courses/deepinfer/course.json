@@ -1,0 +1,2219 @@
+{
+  "SNAPSHOT": "774ce244b87cc0eb8d4b94ab9f5de2ab22049f01",
+  "REPO": "https://github.com/deepseek-ai/DeepInfer/blob/774ce244b87cc0eb8d4b94ab9f5de2ab22049f01/",
+  "SOURCES": {
+    "readme": [
+      "DeepInfer: release scope",
+      "https://github.com/deepseek-ai/DeepInfer/blob/774ce244b87cc0eb8d4b94ab9f5de2ab22049f01/README.md",
+      "Official repository; checked October 20, 2026. The release and the full internal service have different scopes."
+    ],
+    "qa": [
+      "DeepSeek deployment Q&A",
+      "https://github.com/deepseek-ai/DeepInfer/blob/774ce244b87cc0eb8d4b94ab9f5de2ab22049f01/doc/inference_deployment_qa.md",
+      "Author-reported production design. Production measurements are not independently reproduced here."
+    ],
+    "entry": [
+      "DeepInfer LLM entrypoint",
+      "https://github.com/deepseek-ai/DeepInfer/blob/774ce244b87cc0eb8d4b94ab9f5de2ab22049f01/deepinfer/entrypoints/llm.py",
+      "Read generate, _add_request and _run_engine."
+    ],
+    "engine": [
+      "DeepInfer engine loop",
+      "https://github.com/deepseek-ai/DeepInfer/blob/774ce244b87cc0eb8d4b94ab9f5de2ab22049f01/deepinfer/engine/llm_engine.py",
+      "Read step, _execute_model_async_step and post_process."
+    ],
+    "sampler": [
+      "DeepInfer sampler",
+      "https://github.com/deepseek-ai/DeepInfer/blob/774ce244b87cc0eb8d4b94ab9f5de2ab22049f01/deepinfer/model_executor/layers/sampler.py",
+      "Sampling, verification, residual resampling and grammar masks."
+    ],
+    "varlen": [
+      "DeepInfer confidence scheduler",
+      "https://github.com/deepseek-ai/DeepInfer/blob/774ce244b87cc0eb8d4b94ab9f5de2ab22049f01/deepinfer/model_executor/layers/tilelang_ops/cuda/schedule_mtp_varlen.py",
+      "Cumulative confidence, rank selection and per-sequence query lengths."
+    ],
+    "moe": [
+      "DeepInfer expert containers",
+      "https://github.com/deepseek-ai/DeepInfer/blob/774ce244b87cc0eb8d4b94ab9f5de2ab22049f01/deepinfer/model_executor/models/v4_modules/moe.py",
+      "Logical experts, redundant physical copies and local expert ownership."
+    ],
+    "yoco": [
+      "DeepInfer YoCo runtime",
+      "https://github.com/deepseek-ai/DeepInfer/blob/774ce244b87cc0eb8d4b94ab9f5de2ab22049f01/deepinfer/model_executor/models/v4_modules/yoco.py",
+      "Producer/consumer layer boundaries and compaction."
+    ],
+    "equiv": [
+      "DeepInfer equivalence checks",
+      "https://github.com/deepseek-ai/DeepInfer/blob/774ce244b87cc0eb8d4b94ab9f5de2ab22049f01/examples/yoco/README.md",
+      "Distinguishes metadata checks from model-level logprob checks."
+    ],
+    "env": [
+      "DeepInfer configuration",
+      "https://github.com/deepseek-ai/DeepInfer/blob/774ce244b87cc0eb8d4b94ab9f5de2ab22049f01/deepinfer/environ.py",
+      "Flags are implementation details at this pinned revision."
+    ],
+    "example": [
+      "DeepInfer offline example",
+      "https://github.com/deepseek-ai/DeepInfer/blob/774ce244b87cc0eb8d4b94ab9f5de2ab22049f01/examples/offline_inference.py",
+      "Concrete launch configuration and reported acceptance statistics."
+    ],
+    "roof": [
+      "All About Rooflines",
+      "https://jax-ml.github.io/scaling-book/roofline/",
+      "Google DeepMind authors; first-principles bounds for compute and data movement."
+    ],
+    "inference": [
+      "All About Transformer Inference",
+      "https://jax-ml.github.io/scaling-book/inference/",
+      "Blog-style textbook; use for quantitative follow-up, not as a DeepInfer specification."
+    ],
+    "transformer": [
+      "Transformer foundations",
+      "https://jax-ml.github.io/scaling-book/transformers/",
+      "Prerequisite explanations of layers, attention and matrix shapes."
+    ],
+    "flash": [
+      "FlashAttention (2022)",
+      "https://arxiv.org/abs/2205.14135",
+      "Original paper. Exact attention, tiling and reduced memory traffic."
+    ],
+    "paged": [
+      "PagedAttention / vLLM (2023)",
+      "https://arxiv.org/abs/2309.06180",
+      "Original paper on block-based KV storage and sharing."
+    ],
+    "sglang": [
+      "SGLang (2023–24)",
+      "https://arxiv.org/abs/2312.07104",
+      "Original paper; RadixAttention and structured generation."
+    ],
+    "nanoflow": [
+      "NanoFlow (2024)",
+      "https://arxiv.org/abs/2408.12757",
+      "Original paper on overlapping use of compute, memory and network resources."
+    ],
+    "spec": [
+      "Speculative decoding (2022–23)",
+      "https://arxiv.org/abs/2211.17192",
+      "Leviathan et al.; exact distribution-preserving speculative sampling."
+    ],
+    "dspark": [
+      "DSpark (2026)",
+      "https://arxiv.org/abs/2607.05147",
+      "DeepSeek authors; semi-autoregressive drafting and load-aware confidence scheduling."
+    ],
+    "mla": [
+      "DeepSeek-V2 (2024)",
+      "https://arxiv.org/abs/2405.04434",
+      "Historical source for MLA and sparse expert design; not a V4.1 specification."
+    ],
+    "yocopaper": [
+      "You Only Cache Once (2024)",
+      "https://arxiv.org/abs/2405.05254",
+      "Historical architectural prior art; distinguish it from DeepInfer bounded replay."
+    ],
+    "lora": [
+      "PEFT LoRA reference",
+      "https://huggingface.co/docs/peft/package_reference/lora",
+      "Official guide to low-rank updates and merging; compatibility is version dependent."
+    ],
+    "template": [
+      "Transformers chat templates",
+      "https://huggingface.co/docs/transformers/chat_templating",
+      "Official documentation. Prompt format is part of the trained model contract."
+    ],
+    "vmodels": [
+      "vLLM model support",
+      "https://docs.vllm.ai/en/latest/models/supported_models/",
+      "Check the exact architecture and version before choosing an engine."
+    ],
+    "vlora": [
+      "vLLM LoRA serving",
+      "https://docs.vllm.ai/en/latest/features/lora/",
+      "Official documentation for adapter serving and supported configurations."
+    ],
+    "learning": [
+      "How Might We Learn?",
+      "https://andymatuschak.org/hmwl/",
+      "Design prior art: guidance, interactive representations and practice tied to a goal."
+    ],
+    "retrieval": [
+      "Retrieval inside worked examples (2025)",
+      "https://doi.org/10.1016/j.learninstruc.2025.102196",
+      "Experiment with 164 adults; supports trying each step before revealing it. Not a trial of this course."
+    ],
+    "guardrails": [
+      "AI assistance and learning (Bastani et al.)",
+      "https://hamsabastani.github.io/education_llm.pdf",
+      "Mathematics RCT: assisted performance is not the same as unassisted learning. Findings do not directly validate this curriculum."
+    ],
+    "tutoring": [
+      "AI tutoring design study (2025)",
+      "https://www.nature.com/articles/s41598-025-97652-6",
+      "Physics RCT of a designed tutor, not generic evidence that any chatbot beats teaching."
+    ],
+    "skills": [
+      "LangChain Academy tutor skill",
+      "https://github.com/langchain-ai/lca-tutors",
+      "Practical teaching prior art only. Listed usage and repository popularity were modest when checked; no skill installed."
+    ]
+  },
+  "LESSONS": [
+    {
+      "id": "map",
+      "title": "What an inference engine actually does",
+      "phase": "01 · Foundations",
+      "mins": 20,
+      "goal": "Explain what happens when a model answers, and what an inference engine contributes.",
+      "needs": [],
+      "recall": "What do you think happens between sending a prompt and seeing the first word?",
+      "predict": "If two companies serve identical weights, must their speed and running cost be identical?",
+      "layers": [
+        "<h2>Start with a question you have probably already had.</h2><p>You send a message to a chatbot. There is a pause, then the answer starts appearing a little at a time. Somewhere, a computer is turning your message into an answer. What is it actually doing, and why can one service feel much faster than another?</p><p>To answer that, we need to separate three things that are often all called “the model”: the learned model itself, the software that runs it, and the service you interact with.</p><h3>The model contains learned numbers.</h3><p>During training, a computer adjusts a large collection of numbers so that the model gets better at predicting text. Those numbers are called <b>weights</b>. Think of them as the settings of a very large machine: their values determine how information moves through the machine and which predictions it makes.</p><p>After training, you can save the weights to files. When you fine-tune a base model, you adjust those learned numbers or add a smaller learned update to them. You are changing the model’s behavior.</p><h3>Answering uses those numbers.</h3><p>When the model answers your question, it uses its weights to calculate what piece of text could come next. It chooses one piece, adds it to the text so far, and uses the longer text to make the next prediction. Repeating that process produces a response.</p><p>Using a trained model to make predictions is called <b>inference</b>. In ordinary inference, the model does not update its weights after each word. Its working state changes as the conversation grows, but its learned weights stay fixed.</p><h3>The engine organizes the work.</h3><p>Someone must load the weights, reserve memory, decide which requests to work on together, run the calculations, and keep track of each unfinished answer. That software is an <b>inference engine</b>. Two engines can run the same learned model and still use different amounts of memory or take different amounts of time.</p><p>The service around the engine handles things such as signing you in, deciding which machine receives your request, and sending the answer back to your screen. A faster engine helps, but the service can add delays too.</p><p>DeepInfer is an inference engine. We will use it to study these decisions after we understand the smaller pieces. Your first job is simply to keep the learned model, the engine, and the surrounding service separate in your mind.</p>",
+        "<p>Follow a single request from left to right. Text first becomes a sequence of numbered pieces, which we will call tokens in lesson three. The engine feeds those numbers through the model’s calculations. The result is a set of scores for possible next pieces. The engine chooses a piece and runs the process again. Because the answer is unfinished between rounds, the engine must remember which request owns which working state.</p><p>This is why an engine is more than a function that loads a file and returns a paragraph. It coordinates a repeated process for many requests sharing limited hardware.</p><p>An engine manages execution: weight loading, memory allocation, request batching, attention state, kernels and sampling. A serving system adds routing, admission control, streaming, failures and operations.</p><p>Model quality and serving quality are separate axes. Wrong prompt formatting can make good weights look bad. Poor scheduling can make a correct model feel slow.</p><p>DeepInfer is a specialized case study. Its README currently names <b>DeepSeek-V4.1-Flash</b>. It releases offline inference capabilities and leaves a full KV-cache service, production disaggregation and replica load balancing outside the release. That does not mean the engine lacks local attention caches.</p>",
+        "<p>Suppose you replace the engine but keep the same weights. What should stay the same? The answer depends on the change you are making. Some changes should reproduce the same numerical result. Others preserve the probabilities of possible outputs, even if one particular answer differs. Still others deliberately approximate the calculation to save work. Before judging speed, name which promise you are trying to keep.</p><p>Define the contract before optimizing: given weights, tokenizer, prompt IDs, attention semantics and sampling settings, what outputs are legal? Then define workload and service targets. An optimization might preserve the mathematical function, only the output distribution, or approximate both. Those are different promises.</p><p>Your long-term task is to map a bottleneck to a layer you can change, then prove both correctness and benefit. “Faster” without a workload and quality contract is an incomplete engineering statement.</p>"
+      ],
+      "example": [
+        "Your team makes three changes to a chatbot. Which part of the system does each change affect?",
+        [
+          "First, the team fine-tunes the model so its replies follow your preferred writing style. That changes learned weights or a learned adapter. It belongs to the model, because it changes the prediction the same input can produce.",
+          "Next, the team arranges for the computer to process several people’s questions together. The learned weights can remain exactly the same. This is an engine decision: it changes how the computer schedules and executes the work.",
+          "Finally, the team adds a sign-in page and sends each request to an available machine. Those responsibilities belong to the surrounding service. If the chatbot feels slow, knowing which of these three parts is responsible tells you where to investigate."
+        ]
+      ],
+      "questions": [
+        {
+          "id": "map1",
+          "level": 1,
+          "prompt": "Two teams use exactly the same learned model weights. Could their engines still take different amounts of time and memory to answer?",
+          "options": [
+            "No. Matching weights force identical execution costs.",
+            "Yes. The software can organize and execute the same calculations differently.",
+            "Only if one team retrains the model."
+          ],
+          "correct": 1,
+          "why": "Yes. Keeping the learned numbers fixed does not fix how requests are grouped, how memory is managed, or how calculations run. One engine can avoid repeated work that another engine performs. The model and the organization of its execution are different parts of the system.",
+          "hint": "Separate learned numbers from how they are executed.",
+          "repair": "map"
+        },
+        {
+          "id": "map2",
+          "level": 2,
+          "prompt": "The public release supports offline inference. What follows?",
+          "options": [
+            "It is already a complete hosted chat service",
+            "It cannot allocate any KV memory",
+            "A service still needs surrounding components"
+          ],
+          "correct": 2,
+          "why": "Offline execution can use local KV state while lacking a distributed cache service and online routing.",
+          "hint": "Local attention state and a fleet cache system are different things.",
+          "repair": "map"
+        },
+        {
+          "id": "map3",
+          "level": 3,
+          "prompt": "Before accepting an optimization, first specify…",
+          "options": [
+            "Workload, output contract and target metrics",
+            "Only peak GPU utilization",
+            "Only a single impressive tokens/s number"
+          ],
+          "correct": 0,
+          "why": "You need to know what must stay correct and which measured behavior should improve.",
+          "hint": "Ask: faster for whom, doing what?",
+          "repair": "bench"
+        }
+      ],
+      "transfer": [
+        "A friend asks: “If the model has already been trained, why do we still need an inference engine?” Explain the difference, then name one job the surrounding service does.",
+        [
+          "Names weights and execution separately",
+          "Explains iterative next-token prediction",
+          "Names one surrounding service responsibility"
+        ],
+        "Training produced the learned numbers, or weights, that determine the model’s calculations. When the model answers, the engine repeatedly runs those calculations, chooses a next token, adds it to the text so far, and continues. It also manages memory and coordinates requests that share the hardware. The surrounding service has additional jobs, such as signing users in and sending each request to an available machine."
+      ],
+      "sources": [
+        "readme"
+      ],
+      "takeaway": "The learned model decides which calculations to do. The engine organizes how the computer runs them.",
+      "activity": {
+        "kind": "check",
+        "title": "Put three changes in the right place.",
+        "intro": "A chatbot team makes the three changes below. Decide which part of the system each change primarily belongs to. The same visible product contains all three parts.",
+        "fields": [
+          {
+            "id": "weights",
+            "kind": "select",
+            "label": "Fine-tune the learned numbers so replies follow your style.",
+            "options": [
+              [
+                "model",
+                "The learned model"
+              ],
+              [
+                "engine",
+                "The inference engine"
+              ],
+              [
+                "service",
+                "The surrounding service"
+              ]
+            ],
+            "answer": "model",
+            "why": "Fine-tuning changes the learned numbers or an adapter that changes the model’s predictions."
+          },
+          {
+            "id": "batch",
+            "kind": "select",
+            "label": "Process several users’ requests together on one accelerator.",
+            "options": [
+              [
+                "model",
+                "The learned model"
+              ],
+              [
+                "engine",
+                "The inference engine"
+              ],
+              [
+                "service",
+                "The surrounding service"
+              ]
+            ],
+            "answer": "engine",
+            "why": "Grouping requests changes how the calculations are organized and executed. The learned numbers can stay the same."
+          },
+          {
+            "id": "route",
+            "kind": "select",
+            "label": "Send a signed-in user’s request to an available machine.",
+            "options": [
+              [
+                "model",
+                "The learned model"
+              ],
+              [
+                "engine",
+                "The inference engine"
+              ],
+              [
+                "service",
+                "The surrounding service"
+              ]
+            ],
+            "answer": "service",
+            "why": "Choosing a machine and handling user access are responsibilities of the service around the engine."
+          }
+        ],
+        "conclusion": "These boundaries help you investigate a problem. A model change affects predictions, an engine change affects execution, and a service change affects how people reach that execution.",
+        "revision": "embedded-practice-2026-10-20"
+      }
+    },
+    {
+      "id": "numbers",
+      "title": "The math you need, without the fog",
+      "phase": "01 · Foundations",
+      "mins": 35,
+      "goal": "Read the small amount of arithmetic and notation that inference explanations rely on.",
+      "needs": [
+        "map"
+      ],
+      "recall": "What is a weight, and what changes during inference?",
+      "predict": "Does a vector with 4 entries multiplied by a 4×6 matrix produce 4 numbers or 6?",
+      "layers": [
+        "<h2>The model works with collections of numbers.</h2><p>When people explain inference, they often jump straight to words such as “tensor” and “matrix multiplication.” The underlying ideas are more concrete than the names suggest. We will start with a small example you could calculate on paper.</p><p>A <b>vector</b> is an ordered list of numbers, such as <code>[2, 3]</code>. A <b>matrix</b> is a rectangular table of numbers. A <b>tensor</b> is the general name for an array that can have one, two, or more directions of organization. A vector has one direction; a matrix has rows and columns.</p><h3>A shape is a description of the container.</h3><p>Suppose you have four requests, each with ten text positions, and you represent each position with six numbers. You could arrange the data in a tensor with shape <code>[4, 10, 6]</code>. The shape tells you the number of requests, positions, and features. It does not tell you the actual numbers stored inside.</p><p>This distinction matters when debugging. Two tensors can have the same shape and contain completely different values. A successful shape check can rule out some mistakes, but it cannot prove that a model calculated the right answer.</p><h3>Multiplication mixes information.</h3><p>The small calculation <code>[2, 3] · [4, 5]</code> means multiply matching entries and add the results: <code>2 × 4 + 3 × 5 = 23</code>. This is called a <b>dot product</b>. Matrix multiplication repeats this idea to produce many results at once. In a model, a learned matrix transforms one collection of features into another.</p><p>You will see symbols such as <code>[B, d]</code>. Here B might mean the number of positions being processed and d the number of features per position. Multiplying by a matrix shaped <code>[d, h]</code> produces <code>[B, h]</code>. The matching d tells you which dimension is combined.</p><h3>Always carry the units.</h3><p>There is a second kind of arithmetic we will use often: “How many bytes fit?” and “How long does moving them take?” If each stored number occupies two bytes, a billion numbers take roughly two billion bytes, or two decimal gigabytes. That estimate includes those numbers only; other working memory is extra.</p><p>If a device moves one gigabyte at a rate of one hundred gigabytes per second, the transfer takes at least one hundredth of a second: ten milliseconds. Capacity answers what fits. Bandwidth answers how quickly data can move. We will use this difference to explain why very powerful hardware sometimes spends time waiting.</p>",
+        "<p>Read a matrix formula as a set of questions: what does each row represent, what does each column represent, and which dimension gets combined? Only then do the arithmetic. A convenient approximation counts one multiplication and one addition as two floating-point operations. That lets you estimate work without following every instruction the hardware executes.</p><p>The orientation stored by a programming library can differ from the notation in a paper. Check the declared input and output dimensions rather than assuming every weight matrix is laid out the same way.</p><p>Using row vectors: <code>x[1,d] × W[d,h] = y[1,h]</code>. For B tokens, <code>X[B,d] × W[d,h] = Y[B,h]</code>. Each output entry uses about d multiplications and d additions, so the work is about <code>2Bdh FLOPs</code>.</p><p><b>FLOP</b> means one floating-point operation. <b>FLOP/s</b> is a rate. <b>GB</b> is decimal bytes; <b>GiB</b> is 2³⁰ bytes. Bandwidth is bytes per second. Capacity is bytes. Confusing these units causes bad hardware estimates.</p><p>Logarithms turn products into sums: <code>log(p₁p₂)=log p₁+log p₂</code>. An average negative log probability measures how surprised the model is by known target tokens.</p>",
+        "<p>Some symbols describe work, while others describe a rate. A FLOP counts one arithmetic operation; FLOP/s counts how many such operations a device can perform per second. Dividing work by a rate gives time. Similarly, dividing bytes by bytes per second gives time. If the units do not cancel to the quantity you want, pause before trusting the answer.</p><p>Check dimensions before algebra. If W maps d input features to h output features, its orientation depends on the library: PyTorch linear layers store <code>[h,d]</code> and effectively use the transpose for row-vector input.</p><p>A <b>gradient</b> tells training how changing a parameter changes loss. Inference usually disables gradient tracking; it does not need backward activations or optimizer state. Do not estimate inference memory using a training multiplier.</p><p>Stable softmax subtracts the largest logit before exponentiating. The result is mathematically unchanged, but intermediate values avoid overflow. Numerical representation is part of actual execution.</p>"
+      ],
+      "example": [
+        "A weight table has 10 rows and 20 columns. Each number takes two bytes. How much storage does the table need?",
+        [
+          "Count the entries first. There are 10 × 20 = 200 numbers. This is an example of using the shape to find how many values exist; you do not need to inspect the values themselves.",
+          "Multiply the entry count by the storage per entry: 200 × 2 = 400 bytes. This is the storage for the table’s raw numbers. A program may need additional memory for bookkeeping or temporary results.",
+          "Now imagine moving 400 bytes over a connection rated at 100 bytes per second. Even with no overhead, that takes four seconds. The calculation is bytes divided by bytes per second, so its result is seconds. That is the same reasoning we will later apply to billions of model weights."
+        ]
+      ],
+      "questions": [
+        {
+          "id": "num1",
+          "level": 1,
+          "prompt": "X has shape [8,4], W has shape [4,6]. XW has shape…",
+          "options": [
+            "[8,6]",
+            "[4,4]",
+            "[6,8]"
+          ],
+          "correct": 0,
+          "why": "The shared inner dimension 4 is reduced; the outer dimensions remain. A tensor shape tells you how numbers are arranged. Units tell you what a calculation actually measures.",
+          "hint": "Track tokens on rows and output features on columns.",
+          "repair": "numbers"
+        },
+        {
+          "id": "num2",
+          "level": 2,
+          "prompt": "A billion parameters at 2 bytes each requires roughly…",
+          "options": [
+            "2 MB",
+            "2 GB for weights alone",
+            "2 GB for the entire service including every cache"
+          ],
+          "correct": 1,
+          "why": "Parameter count times storage bytes gives weights, not the full runtime footprint.",
+          "hint": "What memory has the calculation omitted?",
+          "repair": "gpu"
+        },
+        {
+          "id": "num3",
+          "level": 3,
+          "prompt": "A 4×6 times 6×5 matmul costs approximately…",
+          "options": [
+            "120 FLOPs",
+            "240 FLOPs",
+            "24 FLOPs"
+          ],
+          "correct": 1,
+          "why": "2×4×6×5 = 240, counting multiplication and addition separately.",
+          "hint": "Each of 20 outputs has 6 multiply-add terms.",
+          "repair": "numbers"
+        }
+      ],
+      "transfer": [
+        "Explain the difference between how much memory a device has and how quickly it can move data. Use a small example.",
+        [
+          "Separates capacity from transfer rate",
+          "Names bytes/s as bandwidth",
+          "Explains why both constrain inference"
+        ],
+        "Capacity tells me how much data fits at once. Bandwidth tells me how many bytes can move per second. A table containing 200 numbers at two bytes each needs 400 bytes of raw storage. If a connection moves 100 bytes per second, moving that table takes at least four seconds. Having enough room to store the table does not make that transfer instant."
+      ],
+      "sources": [
+        "transformer",
+        "roof"
+      ],
+      "takeaway": "A tensor shape tells you how numbers are arranged. Units tell you what a calculation actually measures."
+    },
+    {
+      "id": "tokens",
+      "title": "Tokens, logits and choosing what comes next",
+      "phase": "01 · Foundations",
+      "mins": 30,
+      "goal": "Follow the repeated choices that turn a prompt into a generated response.",
+      "needs": [
+        "numbers"
+      ],
+      "recall": "How is a probability different from an arbitrary numerical score?",
+      "predict": "If you raise temperature, do you add knowledge or change how the same scores are sampled?",
+      "layers": [
+        "<h2>The model does not work directly on words.</h2><p>Before the computer runs the model, a piece of software breaks your text into smaller pieces and assigns each piece an integer. That software is the <b>tokenizer</b>. The pieces are called <b>tokens</b>, and their integers are token IDs.</p><p>A token might represent a common word, part of a word, a punctuation mark, or a special marker. For example, a made-up tokenizer could split “unhelpful” into “un,” “help,” and “ful.” That is an illustration, not a claim about how a particular model splits that word. The exact split depends on the tokenizer.</p><p>This is why a limit of a thousand tokens is not the same as a limit of a thousand words. It is also why you need the correct tokenizer when you load a fine-tuned model: its weights were learned using particular token IDs.</p><h3>One calculation produces many possible next pieces.</h3><p>Suppose the input ends with “The sky is”. The model produces a numerical score for each token it could put next. Some continuations get higher scores than others. These raw scores are called <b>logits</b>. They are not yet probabilities and do not have to add up to one.</p><p>A calculation called <b>softmax</b> turns those scores into probabilities. A probability describes how likely a choice is: all the possible next-token probabilities together add up to one.</p><h3>The engine still has to choose.</h3><p>One way to choose is to take the token with the highest score every time. This is <b>greedy decoding</b>. Another way is to draw a token according to the probabilities. A less likely token can then be chosen, just as a coin can land on either side even if one side is more likely.</p><p><b>Temperature</b> changes how concentrated those probabilities are. Lower temperature gives the highest-scoring choices more of the probability. Higher temperature spreads it more widely. You are changing the choice rule, not teaching the model new facts.</p><h3>The chosen token becomes part of the next input.</h3><p>After choosing a token, the engine adds it to the sequence so far. The model then scores what could follow that longer sequence. This matters: choosing “blue” creates a different situation from choosing “clear,” so later predictions can differ too.</p><p>Repeat the score, choose, and append cycle until a stopping condition is reached. The response on your screen is the result of those repeated choices, rather than a complete paragraph retrieved in one operation.</p>",
+        "<p>In the formula below, z means the raw scores and T means temperature. Dividing by a smaller positive T makes differences between scores larger before softmax converts them to probabilities. The denominator adds the exponential scores of every candidate so the final probabilities sum to one.</p><p>You do not need to memorize the formula yet. Be able to explain what changes and what stays fixed: the scores came from the model, while temperature and candidate filtering belong to the selection process.</p><p>For logits z and temperature T &gt; 0: <code>pᵢ=exp(zᵢ/T)/Σⱼ exp(zⱼ/T)</code>. Lower temperature concentrates probability. Greedy decoding is the limiting argmax behavior, usually implemented as a separate branch.</p><p><b>Top-k</b> keeps k candidates. <b>Top-p</b> keeps a probability-mass prefix after sorting. Filtering and temperature order matter; record the actual engine configuration when comparing results.</p><p>A causal model represents <code>P(x₁…xₙ)=ΠₜP(xₜ|x&lt;ₜ)</code>. Already known prompt tokens can be evaluated together, but generated tokens depend on prior choices.</p>",
+        "<p>To compare two engines, giving them the same visible question is not enough if they turn it into different token IDs. Even with matching IDs, a different sampling rule can produce a different continuation. A useful debugging comparison controls the inputs and choices so you can find where the calculations first disagree.</p><p>A seed controls pseudorandom draws, not every numerical detail of the model. Reordered floating-point reductions may alter logits; a tiny change can alter an argmax or a sampled token and then the rest of the sequence.</p><p>Teacher forcing feeds a known continuation instead of feeding the model’s own outputs. It lets you compare next-token log probabilities at identical prefixes even when two generators would diverge. This is a powerful correctness tool.</p>"
+      ],
+      "lab": "softmax",
+      "example": [
+        "The model assigns probabilities of 66.5%, 24.5%, and 9% to three possible next tokens. What happens next?",
+        [
+          "Under greedy decoding, the engine chooses the first token because 66.5% is the largest probability. It does not need to make a random draw to decide this.",
+          "Under sampling, the first token is most likely, but either of the other two can still be drawn. Getting the second token is therefore not, by itself, evidence that the engine made a mistake.",
+          "Whichever token is chosen gets added to the sequence. The next prediction is made using that updated sequence. Raising temperature changes the probability distribution for the choice; it does not edit the model’s learned weights."
+        ]
+      ],
+      "questions": [
+        {
+          "id": "tok1",
+          "level": 1,
+          "prompt": "Temperature changes…",
+          "options": [
+            "The learned weights",
+            "The next-token sampling distribution",
+            "The tokenizer vocabulary"
+          ],
+          "correct": 1,
+          "why": "It rescales logits at sampling time. Generation repeatedly scores possible next tokens, chooses one, and adds it to the text so far.",
+          "hint": "Which part happens after the model computes its scores?",
+          "repair": "tokens"
+        },
+        {
+          "id": "tok2",
+          "level": 2,
+          "prompt": "Why can’t ordinary autoregressive generation choose 100 unknown future tokens independently in one step?",
+          "options": [
+            "Each choice conditions later predictions",
+            "All GPUs forbid matrices with 100 rows",
+            "Tokenization is random"
+          ],
+          "correct": 0,
+          "why": "Future conditional distributions depend on earlier generated tokens. Speculation proposes candidates and verifies them.",
+          "hint": "Known text and unknown text have different dependencies.",
+          "repair": "attention"
+        },
+        {
+          "id": "tok3",
+          "level": 3,
+          "prompt": "Two engines diverge on the 20th generated token. A useful next check is…",
+          "options": [
+            "Only compare the final paragraphs",
+            "Teacher-force the same prefixes and compare logits",
+            "Increase temperature until the text looks similar"
+          ],
+          "correct": 1,
+          "why": "A shared trajectory isolates numerical/model differences before divergent histories confound the comparison.",
+          "hint": "Keep the input to the comparison identical.",
+          "repair": "correctness"
+        }
+      ],
+      "transfer": [
+        "Explain how a model goes from a prompt to a longer answer. Include where choosing the next token happens.",
+        [
+          "Describes turning text into token IDs",
+          "Explains scoring, choosing, and appending a next token",
+          "Explains why the chosen token affects the next prediction"
+        ],
+        "The tokenizer turns the prompt into numbered pieces. The model calculates scores for possible next tokens, and the engine’s selection rule chooses one. That token is added to the sequence before the next prediction is made, so each choice affects later inputs. The tokenizer and stop markers must match what the model expects. Changing temperature changes the choices, rather than changing the learned weights."
+      ],
+      "sources": [
+        "template",
+        "sampler"
+      ],
+      "takeaway": "Generation repeatedly scores possible next tokens, chooses one, and adds it to the text so far."
+    },
+    {
+      "id": "attention",
+      "title": "A transformer pass and its KV cache",
+      "phase": "01 · Foundations",
+      "mins": 45,
+      "goal": "Explain how a new token uses earlier text, and what the engine remembers to avoid repeating work.",
+      "needs": [
+        "tokens"
+      ],
+      "recall": "What makes a generated token depend on earlier ones?",
+      "predict": "If you retain old keys and values, do you still need to compare a new query with them?",
+      "layers": [
+        "<h2>A token needs the surrounding text to make sense.</h2><p>Consider “The trophy would not fit in the suitcase because it was too large.” Working out what “it” refers to requires information from other parts of the sentence. A model needs a way for the representation of one position to use information from other positions.</p><p><b>Attention</b> is one mechanism for doing that. First, the model represents each token with a list of numbers, called an embedding. It then repeatedly transforms and mixes these representations through a stack of layers. A layer is one stage of the model’s calculation.</p><h3>Attention makes a weighted mixture.</h3><p>For a position being processed, the model calculates three kinds of numerical representations. A <b>query</b> is compared with <b>keys</b> from visible positions to produce matching scores. Those scores determine how to mix the corresponding <b>values</b>. A high score means that position contributes more to the mixture.</p><p>The names can sound human, but no literal question or dictionary lookup is involved. These are lists of numbers made by multiplying learned matrices. The query/key/value vocabulary tells us which role each list plays in the calculation.</p><p>When a model is trained to continue text, a position must not read the future answer. A <b>causal mask</b> enforces that rule by preventing attention to later positions. The computation for an earlier position therefore does not need to change just because you append a new token.</p><h3>That creates an opportunity to save work.</h3><p>Suppose the engine has processed “The sky is” and is now working on the next piece. It has already calculated keys and values for the earlier positions. Instead of calculating those same representations again, it can keep them in memory.</p><p>That saved state is called a <b>KV cache</b>: K for keys, V for values. The new position still needs its own calculations, and its query still needs to use the relevant saved keys and values. Caching removes repeated work; it does not remove the need to read the earlier context.</p><h3>The saved state belongs to a specific history.</h3><p>The word “bank” in a sentence about a river can develop a different representation from “bank” in a sentence about money. Deeper layers incorporate context. You cannot generally reuse a key or value merely because the same token ID appears somewhere else.</p><p>This gives us a concrete engine responsibility: remember the right state for each request, use it in the right order, and release it when it is no longer needed. A mistake here can produce wrong predictions even while every array has a perfectly valid shape.</p>",
+        "<p>The attention equation below describes the comparison-and-mixture process in compact form. Multiplying queries by transposed keys produces one score for each visible query/key pair. Softmax turns those scores into mixture weights. Multiplying by the values produces the mixed representation.</p><p>During an initial prompt pass, many queries are known at once. During generation, the next query arrives as the sequence grows. The saved keys and values let both paths represent the same causal computation without repeating all earlier work.</p><p>For one head: <code>Q=XWq; K=XWk; V=XWv</code>, then <code>A=softmax(QKᵀ/√d + causal_mask)V</code>. Multiple heads run different learned projections. A residual connection adds a layer’s input back to its output; normalization stabilizes scales.</p><p>Prefill computes many positions with a triangular mask. Decode computes a new position, appends its K/V, and attends to the prefix. Cache entries depend on layer, position and preceding context; a text token alone does not identify a reusable KV value.</p><p>Cache state belongs to a request (and model identity), not globally to the token ID.</p>",
+        "<p>The most useful first cache test uses two ways of calculating the same thing. One path recomputes the whole prefix. The other processes it incrementally while saving K/V. Compare their numerical outputs after every position. If they disagree, you have an execution problem that you can investigate before judging whether the generated prose looks convincing.</p><p>With conventional full attention, cache reuse avoids repeated prefix projections and feed-forward work, but attention for each new query still scales with visible prefix length. KV caches trade capacity and bandwidth for saved recomputation.</p><p>For correctness, compare full-prefix forward outputs to incremental outputs at every position, including after a long prefill. Test two independent requests interleaved; accidental shared cache state can pass single-request tests.</p><p>The CPU workshop implements a tiny real causal attention block. It deliberately omits production positional schemes, multiple heads and normalization so the cache mechanism stays inspectable.</p>"
+      ],
+      "example": [
+        "The prompt contains tokens A, B, and C. You now process token D. What can the engine reuse?",
+        [
+          "The engine already has saved keys and values for A, B, and C at each relevant layer. Keep those entries in the request’s cache. You do not need to rebuild them simply because D has arrived.",
+          "Calculate D’s query, key, and value. D’s query compares with the visible keys, including D’s own key, and uses the corresponding values to produce its attention result. The earlier cache is still being read.",
+          "Append D’s key and value to the saved state so the next position can use them. If the engine accidentally reads another request’s cache or puts D in the wrong position, the result can be wrong even though the cache length looks reasonable."
+        ]
+      ],
+      "questions": [
+        {
+          "id": "att1",
+          "level": 1,
+          "prompt": "A KV cache primarily saves…",
+          "options": [
+            "Recomputing earlier positions’ keys and values",
+            "All future attention calculations",
+            "The need for model weights"
+          ],
+          "correct": 0,
+          "why": "New queries still attend to cached context. The engine saves earlier attention state so each new token can use it without rebuilding it.",
+          "hint": "Saved computation does not mean zero reads.",
+          "repair": "attention"
+        },
+        {
+          "id": "att2",
+          "level": 2,
+          "prompt": "Can the same text token use the same KV vector in any sentence?",
+          "options": [
+            "Yes, keys depend only on spelling",
+            "No, hidden states depend on context and position",
+            "Only if temperature is zero"
+          ],
+          "correct": 1,
+          "why": "Later-layer representations reflect preceding tokens and position.",
+          "hint": "The token embedding is only the start of the computation.",
+          "repair": "attention"
+        },
+        {
+          "id": "att3",
+          "level": 3,
+          "prompt": "Strongest direct cache check?",
+          "options": [
+            "Generated output looks fluent",
+            "Full-forward and incremental logits agree on the same prefixes",
+            "The cache has the expected Python type"
+          ],
+          "correct": 1,
+          "why": "Numerical equivalence across positions tests the actual computation.",
+          "hint": "Compare a reference computation, not the appearance of the result.",
+          "repair": "correctness"
+        }
+      ],
+      "transfer": [
+        "Walk through what the engine does when one new token arrives. What does it calculate, and what can it reuse?",
+        [
+          "Computes a new query/key/value",
+          "Uses past keys and values",
+          "Appends request-specific state"
+        ],
+        "The new position needs its own query, key, and value. Its query uses the visible keys to work out how to mix the corresponding values. Keys and values for the earlier positions can be reused from this request’s cache instead of being recalculated. The engine then appends the new key and value. It still reads earlier state, and it must use the state from the correct history."
+      ],
+      "sources": [
+        "transformer",
+        "inference"
+      ],
+      "takeaway": "The engine saves earlier attention state so each new token can use it without rebuilding it."
+    },
+    {
+      "id": "phases",
+      "title": "Prefill, decode and what users feel",
+      "phase": "02 · Engine fundamentals",
+      "mins": 30,
+      "goal": "Separate the wait before an answer starts from the speed at which it continues.",
+      "needs": [
+        "attention"
+      ],
+      "recall": "Why are known prompt tokens different from unknown generated tokens?",
+      "predict": "A huge prompt gives a long initial pause but fast streaming. Which phase should you investigate first?",
+      "layers": [
+        "<h2>“The model is slow” can describe two different experiences.</h2><p>You send a question and wait several seconds before anything appears. Once the answer starts, it arrives quickly. In another service, the answer begins almost immediately but then trickles out painfully slowly. Those symptoms can have different causes.</p><p>Inference engines usually distinguish <b>prefill</b> from <b>decode</b>. Prefill processes the text that is already known: your prompt. Decode continues the sequence by generating new tokens.</p><h3>The prompt is already on the page.</h3><p>All prompt tokens are available before the model starts answering. A well-organized computation can process many of those positions together while preserving the rule that a position must not read future positions. This builds the attention state that generation will reuse.</p><p>For ordinary generation, the later answer tokens are not known yet. The engine chooses a token, uses it to continue the calculation, and repeats. That dependency makes the work behave differently from processing the known prompt.</p><h3>Measure the experience you want to improve.</h3><p><b>Time to first token</b>, often shortened to TTFT, measures how long it takes for the first generated token to arrive within the chosen measurement boundary. A high value can come from waiting in a queue, preparing the input, processing the prompt, or delivering the result.</p><p><b>Inter-token latency</b> measures the gaps between generated tokens. People also call it time between tokens. It describes how smoothly the answer continues after it begins.</p><p><b>Throughput</b> measures total work completed per second across requests. A server answering a hundred people can have high total throughput while each person still gets a slow answer. Always ask whether a number describes one user or the whole system.</p><h3>Use a symptom to choose the next measurement.</h3><p>If a long document causes a long initial pause but fast streaming, investigate prompt processing and everything before it first. If the initial response is quick but later tokens are slow, inspect generation. These are starting points, not proofs: queueing and network delays can also affect what a user sees.</p><p>When you later evaluate an engine for your fine-tuned model, record both the initial wait and the streaming speed. One attractive tokens-per-second number will not tell you the whole experience.</p>",
+        "<p>Break a request into timed stages instead of treating it as one opaque duration. A useful timeline has queue wait, input preparation, prefill, the first output, and later output gaps. State where your clock starts and ends. A timing taken inside an engine will omit some delays that a browser user experiences.</p><p>For a complete answer with ten tokens, there is one initial wait and nine later gaps. Counting ten gaps would add a delay that did not occur.</p><p>A useful decomposition is <code>TTFT ≈ queue + preprocessing + prefill + first-sample + delivery</code>. Total generation time is roughly TTFT plus the gaps for the remaining tokens. Decode work and prefill can compete if placed on the same accelerator.</p><p><b>Continuous batching</b> admits and removes requests between steps rather than waiting for a whole fixed batch to finish. <b>Chunked prefill</b> splits long prompt work into budgets so it can coexist more smoothly with decode.</p><p>Prefill is often compute-heavy and low-batch decode often bandwidth-heavy. Treat that as a starting hypothesis; context length, architecture and load can change the limiting resource.</p>",
+        "<p>Average latency can hide users who wait much longer. A percentile such as p99 identifies a value that 99% of measured observations are at or below. If the service is overloaded, those long waits can grow even when the GPU’s own calculation time changes very little. This is why load and arrival patterns belong in an online benchmark.</p><p>Measure p50, p95 and p99, not just means. Under saturation, queueing can dominate even if device step time barely changes. A benchmark that increases batch size while ignoring request arrivals cannot characterize an online service by itself.</p><p>Define <b>goodput</b> explicitly: useful completed tokens or requests that meet your quality and latency criteria per second. The exact definition is a product decision. Compare configurations at a matched latency constraint, not just at their highest offline throughput.</p>"
+      ],
+      "example": [
+        "The first token arrives after 400 milliseconds. Nine more tokens arrive with 50 milliseconds between them. When is the answer complete?",
+        [
+          "Count the initial wait once: the first token is already present at 400 milliseconds. That time may include queueing, input preparation, and model execution, depending on where the measurement started.",
+          "There are nine gaps after that first token. Nine times 50 milliseconds is 450 milliseconds. Those gaps describe the continuation of the answer rather than the initial wait.",
+          "Add the two parts: 400 + 450 = 850 milliseconds. A change that reduces only the initial wait affects a different part of this total from a change that shortens every later gap."
+        ]
+      ],
+      "questions": [
+        {
+          "id": "phase1",
+          "level": 1,
+          "prompt": "Long initial pause, then quick streaming. First metric?",
+          "options": [
+            "TTFT",
+            "Only final token count",
+            "Training loss"
+          ],
+          "correct": 0,
+          "why": "The symptom concerns time until the first token. Processing the known prompt and generating the unknown continuation are different kinds of work.",
+          "hint": "Match the metric to the experience.",
+          "repair": "phases"
+        },
+        {
+          "id": "phase2",
+          "level": 2,
+          "prompt": "100 requests each get 10 tokens/s. Aggregate output rate?",
+          "options": [
+            "10 tokens/s",
+            "100 tokens/s",
+            "1,000 tokens/s"
+          ],
+          "correct": 2,
+          "why": "Aggregate throughput sums per-request rates: 100×10.",
+          "hint": "Per-user and fleet metrics use different denominators.",
+          "repair": "phases"
+        },
+        {
+          "id": "phase3",
+          "level": 3,
+          "prompt": "Offline throughput improves while online p99 worsens. Is that possible?",
+          "options": [
+            "No, throughput determines all latency",
+            "Yes, batching or queueing can raise tail latency",
+            "Only if weights changed"
+          ],
+          "correct": 1,
+          "why": "The optimization objective and arrival process differ.",
+          "hint": "What happens to a request waiting to join work?",
+          "repair": "bench"
+        }
+      ],
+      "transfer": [
+        "Someone says their chatbot is slow. What would you ask and measure before choosing a fix?",
+        [
+          "Separates initial delay and streaming gaps",
+          "Includes queueing/preprocessing",
+          "Requests workload and percentile measurements"
+        ],
+        "I would ask whether the delay comes before the first token or between later tokens. The initial wait can include queueing, input preparation, and prompt processing. Later gaps concern continued generation, but delivery delays may matter too. I would measure those stages under the person’s actual input lengths and request load, including slow requests rather than only an average. That tells me where to investigate first."
+      ],
+      "sources": [
+        "inference"
+      ],
+      "takeaway": "Processing the known prompt and generating the unknown continuation are different kinds of work.",
+      "activity": {
+        "kind": "check",
+        "title": "Measure the wait a user actually sees.",
+        "intro": "A request waits in a queue for 120 milliseconds. Input preparation, prompt processing, and first-token delivery take another 180 milliseconds. The answer contains five output tokens, with 40 milliseconds between successive tokens. Use the moment the request was submitted as time zero.",
+        "fields": [
+          {
+            "id": "first",
+            "kind": "number",
+            "label": "How many milliseconds until the first output token arrives?",
+            "answer": 300,
+            "tolerance": 0,
+            "why": "The initial wait includes both the queue and the work before first delivery: 120 + 180 = 300 milliseconds."
+          },
+          {
+            "id": "last",
+            "kind": "number",
+            "label": "How many milliseconds until the fifth and final output token arrives?",
+            "answer": 460,
+            "tolerance": 0,
+            "why": "After the first token there are four gaps, not five: 300 + 4 × 40 = 460 milliseconds."
+          }
+        ],
+        "conclusion": "A timing recorded only inside the engine can omit the queue and delivery. Save the clock boundary along with the number whenever you measure your own model.",
+        "revision": "embedded-practice-2026-10-20"
+      }
+    },
+    {
+      "id": "gpu",
+      "title": "Why GPUs wait: memory, math and kernels",
+      "phase": "02 · Engine fundamentals",
+      "mins": 45,
+      "goal": "Explain why an expensive GPU can wait for data instead of doing useful arithmetic.",
+      "needs": [
+        "numbers",
+        "phases"
+      ],
+      "recall": "How do capacity and bandwidth differ?",
+      "predict": "If weights take 8 ms to read but arithmetic takes 1 ms, will twice the arithmetic speed halve the step?",
+      "layers": [
+        "<h2>Fast arithmetic is only useful when the numbers are available.</h2><p>A GPU is a processor designed to perform many numerical operations in parallel. Language models contain a great deal of arithmetic, so GPUs can be useful for running them. But the arithmetic units cannot work on numbers they have not received yet.</p><p>Model weights and working state live in memory. During execution, data must move from that memory to the parts of the device doing calculations. Some results must then be written back. That movement takes time.</p><h3>Separate fitting from moving.</h3><p><b>Memory capacity</b> tells you how much data can fit. <b>Memory bandwidth</b> tells you how many bytes can move per second. A model can fit comfortably in memory and still run slowly because each step must move a lot of data.</p><p>You will often see <b>HBM</b>, meaning high-bandwidth memory: the GPU’s large memory store. There is also smaller, faster storage closer to its arithmetic units. Engine developers try to arrange calculations so useful data stays close to where it is needed.</p><h3>Ask which cost is setting the pace.</h3><p>Imagine an operation that needs eight milliseconds to fetch its data but only one millisecond to do its arithmetic. Giving it twice as much arithmetic speed does not make the eight-millisecond transfer disappear. The operation is limited mainly by data movement.</p><p>Now imagine enough work is grouped together that the same fetched weights can be used repeatedly. More arithmetic gets done for each byte moved. This can make better use of the arithmetic units, until some other cost becomes the main limit.</p><h3>A kernel is the device program doing the work.</h3><p>At the implementation level, an engine calls <b>kernels</b>: programs that perform particular GPU operations. A better kernel might avoid writing an intermediate result to slow memory, arrange data more effectively, or combine small operations.</p><p>Using fewer bytes per stored number can help too. That is one purpose of <b>quantization</b>, which represents values in a more limited format. It also introduces questions about rounding, model quality, and whether the hardware has an efficient implementation.</p><p>When you hear “this optimization makes inference faster,” ask which cost it removes. Then check whether that cost actually dominates your workload. Saving memory capacity and reducing execution time are related possibilities, but they are different measurements.</p>",
+        "<p>A roofline calculation is a quick way to compare two limits. Divide the arithmetic work by the device’s arithmetic rate. Separately, divide the bytes that must move by the available bandwidth. Even with perfect overlap, the operation cannot finish before the larger of those two times.</p><p>This gives a lower bound under stated assumptions, not a promise about a real GPU. Additional launches, communication, temporary results, and imperfect scheduling can make actual execution slower.</p><p>A lower bound with ideal overlap is <code>time ≥ max(FLOPs / compute_rate, bytes / bandwidth)</code>. Without overlap, costs may add. <b>Arithmetic intensity</b> is FLOPs per byte moved. Batching can reuse weights across tokens and increase this ratio.</p><p><b>Fusion</b> combines operations to reduce launches and intermediate memory traffic. <b>Tiling</b> works on chunks that fit fast memory. FlashAttention is important prior art for reducing attention memory traffic; exact attention need not materialize the full score matrix in HBM.</p><p><b>Quantization</b> stores or computes values in a reduced representation. It can lower traffic and storage, but requires suitable kernels and a quality check.</p>",
+        "<p>A useful optimization report connects an observed delay to a specific resource. For example, a trace might show many small kernels separated by launch gaps, suggesting a different problem from a long kernel already saturating memory bandwidth. Profile the actual operation before deciding that a new numerical format or more hardware will help.</p><p>A roofline bound is not a measured prediction. Real kernels have layouts, occupancy limits, padding and imperfect reuse. A narrower format does not guarantee a speedup if dequantization or unsupported kernels dominate.</p><p>For a dense projection, approximate work per token is 2P FLOPs for P participating weights. An MoE has active and total weights; a single dense-model memory estimate can mislead. Profile actual traffic and per-expert batch sizes.</p><p>DeepInfer integrates specialized kernel libraries. Judge each on its actual operator, precision and target hardware rather than treating “custom kernel” as evidence of an end-to-end win.</p>"
+      ],
+      "lab": "roofline",
+      "example": [
+        "A toy operation reads 8 GB at 1,000 GB per second, and its arithmetic takes 1 millisecond. What is the main limit?",
+        [
+          "Calculate the transfer time: 8 divided by 1,000 is 0.008 seconds, or 8 milliseconds. Keep bytes and bytes per second in matching units so the result is a time.",
+          "Compare that with the one millisecond of arithmetic. Even if the two activities overlap perfectly, the operation takes at least the larger time: 8 milliseconds. With less overlap or extra overhead, it can take longer.",
+          "Doubling the arithmetic speed changes one millisecond to half a millisecond, while the eight-millisecond transfer remains. Reducing data traffic or using the same fetched data for more work is a more promising direction under these assumptions."
+        ]
+      ],
+      "questions": [
+        {
+          "id": "gpu1",
+          "level": 1,
+          "prompt": "Faster math units help least when…",
+          "options": [
+            "Memory movement dominates",
+            "Arithmetic dominates",
+            "The model has a name"
+          ],
+          "correct": 0,
+          "why": "Improving a non-limiting resource cannot remove the limiting cost. Execution time can be limited by moving data, doing arithmetic, or coordinating the work.",
+          "hint": "Compare the two time estimates.",
+          "repair": "gpu"
+        },
+        {
+          "id": "gpu2",
+          "level": 2,
+          "prompt": "8 GB / 1 TB per second equals…",
+          "options": [
+            "8 seconds",
+            "8 milliseconds",
+            "8 microseconds"
+          ],
+          "correct": 1,
+          "why": "Use consistent decimal units: 8/1000 s.",
+          "hint": "A TB is 1,000 GB here.",
+          "repair": "numbers"
+        },
+        {
+          "id": "gpu3",
+          "level": 3,
+          "prompt": "Why can fusion help without reducing mathematical FLOPs?",
+          "options": [
+            "It changes all probabilities to zero",
+            "It can remove intermediate writes and launch overhead",
+            "It trains a smaller model automatically"
+          ],
+          "correct": 1,
+          "why": "Execution costs include moving intermediate results and dispatching work.",
+          "hint": "Math count is only one budget.",
+          "repair": "gpu"
+        }
+      ],
+      "transfer": [
+        "A teammate suggests using a smaller numerical format to speed up your endpoint. What would you want to know before adopting it?",
+        [
+          "Identifies limiting operation and resource",
+          "Checks hardware/kernel support",
+          "Tests numerical/task quality and end-to-end latency"
+        ],
+        "I would first find which operation and resource are taking the time. Fewer stored bytes may help if data movement is the limit, but it will not automatically fix a scheduling delay or an inefficient conversion step. I would check hardware and kernel support, compare results with a reference, and evaluate task quality. Then I would repeat the same workload to see whether user-visible latency actually improves."
+      ],
+      "sources": [
+        "roof",
+        "flash",
+        "readme"
+      ],
+      "takeaway": "Execution time can be limited by moving data, doing arithmetic, or coordinating the work.",
+      "activity": {
+        "kind": "check",
+        "title": "Choose which limit to investigate first.",
+        "intro": "For one toy operation, the amount of arithmetic divided by the arithmetic rate gives 2 milliseconds. Moving the needed data at the available bandwidth gives 8 milliseconds. Assume ideal overlap between the two. This is an estimate for one operation, not a measured whole-model latency.",
+        "fields": [
+          {
+            "id": "bound",
+            "kind": "number",
+            "label": "What is the ideal lower bound in milliseconds?",
+            "answer": 8,
+            "tolerance": 0,
+            "why": "With ideal overlap, the lower bound is the larger cost: max(2, 8) = 8 milliseconds."
+          },
+          {
+            "id": "limit",
+            "kind": "select",
+            "label": "Which limit dominates this estimate?",
+            "options": [
+              [
+                "compute",
+                "The arithmetic rate"
+              ],
+              [
+                "memory",
+                "The rate at which data can move"
+              ]
+            ],
+            "answer": "memory",
+            "why": "The data movement takes longer than the arithmetic under these assumptions. Faster arithmetic alone would leave the 8-millisecond limit."
+          },
+          {
+            "id": "next",
+            "kind": "select",
+            "label": "Which observation would best test whether that estimate describes a real run?",
+            "options": [
+              [
+                "peak",
+                "Only the advertised peak arithmetic rate"
+              ],
+              [
+                "trace",
+                "A runtime trace showing where time and data movement go"
+              ],
+              [
+                "name",
+                "The name of the model"
+              ]
+            ],
+            "answer": "trace",
+            "why": "A trace can expose actual waiting, transfers, and execution. The toy estimate is a hypothesis about the limiting resource, not evidence that a real run reaches that limit."
+          }
+        ],
+        "conclusion": "Use a simple estimate to choose a question for the profiler. Let the observed execution determine the change you try.",
+        "revision": "embedded-practice-2026-10-20"
+      }
+    },
+    {
+      "id": "batch",
+      "title": "Batching and overlapping CPU with GPU work",
+      "phase": "02 · Engine fundamentals",
+      "mins": 35,
+      "goal": "Explain how serving requests together can save work, and why it can still make someone wait.",
+      "needs": [
+        "gpu"
+      ],
+      "recall": "Why can reusing the same weights across requests improve arithmetic intensity?",
+      "predict": "If one request finishes early in a fixed batch, must its slot stay empty?",
+      "layers": [
+        "<h2>A server usually has more than one person to answer.</h2><p>Suppose ten people are using the same model. Their questions and conversation histories differ, but the model’s weights can be the same. Rather than execute each request completely separately, an engine can organize some of their calculations together.</p><p>This is called <b>batching</b>. It can spread setup costs over more work and let the hardware use the same model weights for multiple positions. Larger groups can also turn small numerical operations into larger ones that the GPU handles more efficiently.</p><h3>The requests still have separate lives.</h3><p>One person may ask for a short answer while another requests a long report. If you start with a fixed group and keep it unchanged until everybody finishes, the short request can leave an unused place while the long one continues.</p><p><b>Continuous batching</b> lets the active group change between execution steps. When a request finishes, another waiting request can take its place. This can keep the hardware busier without pretending the requests share one conversation.</p><p>The engine’s <b>scheduler</b> decides which work runs in each step. It must respect memory limits and decide how to divide attention among short prompts, long prompts, and responses that are already streaming.</p><h3>The CPU can also make the GPU wait.</h3><p>The CPU is the general-purpose processor running much of the engine’s coordination code. It prepares work, launches GPU operations, and handles results. If the GPU finishes and then waits while the CPU prepares the next step, arithmetic capacity sits unused.</p><p>Some of that work can overlap. While the GPU runs one step, the CPU may be able to prepare safe parts of a later step. This is one reason engines use asynchronous execution: they avoid waiting earlier than a dependency requires.</p><h3>More efficiency does not mean every request gets faster.</h3><p>A larger group can take longer to process as a whole. A request might also wait for other work to join its batch. Total output per second can improve even while an individual user experiences a longer delay.</p><p>So a good scheduler is making a tradeoff under actual demand. To judge it, inspect both the amount of useful work completed and the waits experienced by individual requests.</p>",
+        "<p>Think of CPU and GPU work as two lanes on a timeline. Without overlap, the second lane stays empty while the first prepares a step. With overlap, preparation for a future step can happen while current device work runs. The important question is whether the future preparation needs results that do not exist yet.</p><p>Moving independent work earlier is safe. Reading an unfinished result, or reusing memory that an unfinished operation still needs, is not.</p><p>A serial round might spend 2 ms scheduling, 8 ms executing and 1 ms handling results: 11 ms. If dependencies allow CPU work for a future round to overlap current GPU work, steady-state gaps can shrink. Startup and draining still cost time.</p><p>The word <b>asynchronous</b> does not remove dependencies. It moves safe work earlier and waits only when a result is actually needed. Speculative scheduling must handle requests that finish or reject drafts after future work is prepared.</p><p>In DeepInfer, follow the engine’s async execution path and worker state rather than inferring behavior from the “zero-overhead” label.</p>",
+        "<p>A copy that looks wasteful may protect the lifetime of data. If an engine returns a view into a reusable buffer, a later step can overwrite that buffer while earlier results still refer to it. Before removing a copy, identify who owns the bytes and when every consumer has finished reading them.</p><p>Watch for ownership: an output buffer cannot be reused while a consumer still reads it. Deferred releases, events and pinned host buffers can be correctness mechanisms, not clutter. Preserve command ordering when changing overlap.</p><p>A good change includes a timeline or trace showing the removed idle period, plus tests for early stop, cancellation and different sequence lengths. GPU utilization alone does not show which requests benefit.</p>"
+      ],
+      "lab": "overlap",
+      "example": [
+        "A batch contains a short answer and a long answer. The short answer finishes first. What should the engine do with its place?",
+        [
+          "First, notice that the finished request no longer needs future model steps. Its request-owned state can be released when nothing still uses it. The long answer still needs its own separate state.",
+          "With a fixed batch, the engine might leave the short request’s place unused until the whole group finishes. With continuous batching, it can admit a waiting request between steps and give that new request its own state.",
+          "Now measure the result. Reusing the place can improve overall throughput, but the waiting request still has an initial delay and each step still has a duration. Check those times before claiming every user received a faster answer."
+        ]
+      ],
+      "questions": [
+        {
+          "id": "bat1",
+          "level": 1,
+          "prompt": "Continuous batching lets you…",
+          "options": [
+            "Share one request’s private history with everyone",
+            "Replace completed requests between steps",
+            "Skip attention for every request"
+          ],
+          "correct": 1,
+          "why": "The active set can change as individual requests finish. Batching shares execution costs; scheduling decides whose work gets those benefits and when.",
+          "hint": "Which unit finishes independently?",
+          "repair": "batch"
+        },
+        {
+          "id": "bat2",
+          "level": 2,
+          "prompt": "Larger batches always improve individual latency.",
+          "options": [
+            "True",
+            "False: step duration and waiting may increase",
+            "True when temperature is zero"
+          ],
+          "correct": 1,
+          "why": "More work per step can improve aggregate efficiency while slowing an individual request.",
+          "hint": "Distinguish amortization from latency.",
+          "repair": "phases"
+        },
+        {
+          "id": "bat3",
+          "level": 3,
+          "prompt": "An async rewrite reuses a buffer before its prior output is consumed. Main concern?",
+          "options": [
+            "Only code style",
+            "Data corruption from a lifetime/dependency error",
+            "A smaller tokenizer"
+          ],
+          "correct": 1,
+          "why": "Overlapping work changes when memory can safely be reused.",
+          "hint": "Who still owns a reference to those bytes?",
+          "repair": "correctness"
+        }
+      ],
+      "transfer": [
+        "Explain one useful way for CPU work and GPU work to overlap, and one moment when the engine must still wait.",
+        [
+          "Shows two execution resources",
+          "Names the data dependency causing a wait",
+          "Includes startup or draining cost"
+        ],
+        "The CPU can prepare independent metadata for a future step while the GPU calculates the current step. That avoids making the GPU wait unnecessarily afterward. But the CPU must wait before reading results that have not finished, and it cannot safely release or overwrite buffers still in use. There is also initial setup before the pipeline fills. Overlap changes the timing of safe work; it does not remove its dependencies."
+      ],
+      "sources": [
+        "engine",
+        "nanoflow"
+      ],
+      "takeaway": "Batching shares execution costs; scheduling decides whose work gets those benefits and when."
+    },
+    {
+      "id": "cache",
+      "title": "KV memory, paging and prefix reuse",
+      "phase": "02 · Engine fundamentals",
+      "mins": 40,
+      "goal": "Distinguish keeping a request’s state, organizing its memory, and reusing another request’s prefix.",
+      "needs": [
+        "attention",
+        "gpu"
+      ],
+      "recall": "What computation does a KV cache avoid, and what work remains?",
+      "predict": "If two prompts share the same first 1,000 tokens, can that prefix be reused when their model weights differ?",
+      "layers": [
+        "<h2>“Caching” describes several different ideas here.</h2><p>You have already seen a KV cache: saved attention state from earlier positions in a request. As the answer grows, that saved state grows too. Keeping it avoids rebuilding earlier keys and values at every generation step.</p><p>Once you serve many requests, two more questions arise. How should the engine allocate space for growing sequences? And can a new request reuse work that an earlier request already did?</p><h3>Paging answers the allocation question.</h3><p>If every request needed one large continuous stretch of memory, growing and shrinking requests could leave awkward gaps. An engine can instead divide state into blocks and keep a map from a request’s logical positions to its allocated blocks.</p><p>This is <b>paging</b>. The idea resembles using numbered storage blocks rather than demanding that every file occupy one uninterrupted region. The main benefit is organizing memory and sharing compatible blocks more flexibly.</p><h3>Prefix reuse answers the repeated-work question.</h3><p>Suppose many requests begin with exactly the same long instructions. An engine may be able to reuse the saved state for that common beginning instead of processing it again. This is <b>prefix caching</b>. A prefix is simply the shared beginning of a sequence.</p><p>The word “exactly” matters. The raw text, its token IDs, and the model settings must describe a compatible computation. Changing an adapter can change the keys and values even if the prompt text stays the same.</p><h3>Saved work has to outweigh the price of getting it back.</h3><p>A reused prefix might live on another machine. Looking it up, transferring it, and attaching it to the new request can take time. If recomputing the prefix would have been quicker, a cache hit can actually increase the user’s wait.</p><p>That is why hit rate alone is incomplete. It tells you how often stored work was found, not whether retrieving it improved the service.</p><h3>Memory grows with the amount of live context.</h3><p>More requests and longer histories generally mean more retained attention state. In a conventional cache, doubling both the number of requests and their context lengths makes the raw state four times larger. The exact storage formula depends on the model’s attention design; compressed designs do not necessarily use the conventional layout.</p>",
+        "<p>In the storage formula below, count keys and values separately, then multiply by layers, requests, positions, KV heads, head dimensions, and bytes per value. “Heads” are separate attention projections; some architectures share fewer key/value heads among more query heads. This sharing changes the amount of retained state.</p><p>The formula estimates raw entries only. It leaves out temporary working memory, allocation bookkeeping, and unused capacity inside partially filled blocks.</p><p>For a conventional uncompressed cache: <code>bytes = 2 × layers × batch × tokens × KV_heads × head_dim × bytes_per_element</code>. The 2 counts K and V. This formula excludes allocator overhead and is not a V4.1 cache estimate.</p><p>Grouped-query attention (GQA) shares fewer KV heads among query heads. Multi-query attention uses one KV head. These are model-architecture choices, distinct from allocating KV pages.</p><p>Prefix reuse needs a hit, retrieval, transfer and state attachment. A saved prefill can be outweighed by a slow remote fetch. Cache hit rate alone is incomplete.</p>",
+        "<p>Cache correctness is a compatibility problem. A useful test deliberately keeps the prompt fixed while changing an attention-affecting adapter. The second request must behave like an uncached computation under its own adapter, not like a mixture of the two models. Testing only that a lookup succeeds would miss the underlying error.</p><p>Correct reuse requires matching weights, adapter, tokenization, positional settings, attention semantics and compatible representation. Adapter changes can invalidate cached hidden state even if the raw prompt is unchanged. A new turn can reuse only the common valid prefix.</p><p>Test cache boundaries: lengths just below/at/above a block, cache eviction during activity, request cancellation and reusing the same prompt under different adapters. Separate allocation correctness from content correctness.</p><p>The engine’s local cache allocator and a persistent fleet-wide cache service solve different problems. Inspect which one a repository actually provides.</p>"
+      ],
+      "lab": "kv",
+      "example": [
+        "Two requests use the same prompt IDs. The second uses a different adapter that changes attention. Can it reuse the first request’s KV?",
+        [
+          "The first request’s keys and values were calculated using its base weights and adapter. They are numerical results of that particular computation, rather than copies of the raw prompt IDs.",
+          "The second adapter can produce different attention state for the same IDs. Reusing the first state would silently combine values from two different models. Equal shapes do not make the values interchangeable.",
+          "Keep compatible model and adapter identity in the cache’s namespace or invalidate the relevant state on a change. Check the behavior by comparing cached results with uncached reference results while alternating the two adapters."
+        ]
+      ],
+      "questions": [
+        {
+          "id": "cache1",
+          "level": 1,
+          "prompt": "Paging and prefix caching are…",
+          "options": [
+            "The same mechanism",
+            "Allocation management versus reuse of computed prefixes",
+            "Both just text compression"
+          ],
+          "correct": 1,
+          "why": "They can compose but address different waste. A cache must save the right computation, under a compatible model, and retrieve it cheaply enough to help.",
+          "hint": "One asks where state fits; the other asks whether it already exists.",
+          "repair": "cache"
+        },
+        {
+          "id": "cache2",
+          "level": 2,
+          "prompt": "Double batch and context length, holding all else fixed. Raw KV becomes…",
+          "options": [
+            "2×",
+            "4×",
+            "Unchanged"
+          ],
+          "correct": 1,
+          "why": "Both are multiplicative factors in the conventional cache formula.",
+          "hint": "Multiply the independent scaling factors.",
+          "repair": "cache"
+        },
+        {
+          "id": "cache3",
+          "level": 3,
+          "prompt": "Same token IDs, different LoRA adapter. Reuse old KV by default?",
+          "options": [
+            "Yes, only token IDs matter",
+            "No: adapter identity may change cached computation",
+            "Yes, if both adapters have the same rank"
+          ],
+          "correct": 1,
+          "why": "Equal dimensions do not imply equal hidden states.",
+          "hint": "What inputs determine the actual keys and values?",
+          "repair": "artifacts"
+        }
+      ],
+      "transfer": [
+        "A cache finds more matching prefixes, but requests take longer. Give a possible explanation and a measurement that would test it.",
+        [
+          "Includes transfer or lookup cost",
+          "Compares saved computation with added cost",
+          "Measures latency, not hit rate alone"
+        ],
+        "Looking up or fetching the saved state may take longer than processing the prefix again. A cache hit is evidence that stored work was found, not that retrieving it saved time overall. I would separately time lookup, transfer, and remaining prompt computation for hits and misses, then compare time to first token on a representative workload. I would also check whether transfers slow down other requests."
+      ],
+      "sources": [
+        "paged",
+        "sglang",
+        "entry"
+      ],
+      "takeaway": "A cache must save the right computation, under a compatible model, and retrieve it cheaply enough to help."
+    },
+    {
+      "id": "special",
+      "title": "Compressed attention, sliding windows and replay",
+      "phase": "03 · DeepInfer in depth",
+      "mins": 45,
+      "goal": "Understand what changes when a model compresses, shares, or reconstructs its attention state.",
+      "needs": [
+        "cache"
+      ],
+      "recall": "Why is the conventional KV formula not universal?",
+      "predict": "If each layer sees the last 128 tokens, is the entire multi-layer model’s dependence limited to 128 original tokens?",
+      "layers": [
+        "<h2>A KV cache does not have one universal format.</h2><p>Our first explanation treated attention state as a collection of keys and values saved for every relevant layer and position. That is a useful starting point, but model designers can change what is represented and how later layers use it.</p><p>Those choices matter to engine work. A memory-saving trick that fits one architecture may be invalid for another, even when both models are called transformers.</p><h3>Compression changes what is stored.</h3><p><b>Multi-head latent attention</b>, abbreviated MLA, uses a compressed numerical representation instead of the conventional full cache layout. This is a change to how the model represents attention information. It is different from paging, which organizes where allocated blocks live.</p><h3>A window changes what a query can directly read.</h3><p><b>Sliding-window attention</b> limits a position’s direct attention to a recent region. For example, a layer might allow a query to read only the last 128 positions. This can bound some local attention work and state.</p><p>But layers build on one another. A recent position’s representation may already contain information from older positions processed in earlier layers. A 128-position window in each layer does not mean the entire model has forgotten everything earlier than 128 original tokens.</p><h3>Sharing changes which layers must do separate work.</h3><p>Some architectures allow later layers to use state produced by earlier layers. YOCO, short for “You Only Cache Once,” is useful historical background for this kind of design. DeepInfer has model-specific producer and consumer layer paths; their meaning comes from the supported model configuration.</p><h3>Replaying a short segment can be an approximation.</h3><p>DeepInfer’s deployment explanation describes rebuilding local sliding-window state by replaying a recent 128-token segment with truncated visibility. It explicitly describes an approximate reconstruction. The computation deliberately avoids rebuilding every upstream dependency.</p><p>That can be a useful engineering tradeoff. The important question is what changed and how much it affects the task. Showing that two implementations of the same shortcut agree is different from showing that the shortcut equals the full original computation.</p><p>When reading this code, keep asking what is stored, what is reused, and what is recomputed. Then choose a numerical and task-level comparison that tests the actual promise being made.</p>",
+        "<p>Trace a dependency across two layers. A recent token can read an older token in the first layer. A later token can then read that recent token’s updated representation in the second layer. Information has moved farther than one layer’s direct window.</p><p>This is the missing step in the argument that replaying one local window must always reconstruct all deeper state exactly. Exact replay bounds require architectural reasoning about the whole dependency path.</p><p>DeepInfer’s YoCo code explicitly separates producer and consumer layers using the model configuration. Its compaction path gathers retained positions and updates shared metadata. This is a model-aware execution path, not a general trick you can turn on for arbitrary weights.</p><p>The deployment Q&A describes <b>SWA bounded replay</b>: reconstruct local SWA state from a recent 128-token segment with truncated visibility. It is explicitly approximate. Reusing existing block KV and rebuilding local state are separate actions.</p><p>Do not confuse “mask and compact implementations agree” with “bounded replay equals full exact reconstruction.” They are different comparisons.</p>",
+        "<p>A metadata check tests things such as retained positions, visible ranges, and storage slots. A numerical check compares the values produced under a shared trajectory. A task evaluation measures whether a difference changes useful behavior. These tests answer different questions; none should be described as proving more than it actually checks.</p><p>Approximation requires a declared reference and a quality budget: compare teacher-forced log probabilities and task outcomes on representative contexts, especially window boundaries and long dependencies.</p><p>DeepInfer’s supplied equivalence checks distinguish metadata-level checks from weight-backed logprob checks. Read the constraints on the compatible checkpoint before interpreting a pass.</p><p>Optimization judgment: identify which state is stored, reconstructed or shared; determine the dependency it relies on; then ask what its oracle proves. Generic cache intuition is not enough to modify this path safely.</p>"
+      ],
+      "example": [
+        "An engineer says a 128-token attention window proves that replaying 128 raw tokens exactly restores a 20-layer model. What is missing?",
+        [
+          "Start with the first token in the replayed region. In the original run, its deeper representation may have incorporated information that arrived through earlier layers from before the replay boundary.",
+          "If replay starts at that boundary without the missing upstream state, it can calculate a different deeper representation. Keeping the same tensor dimensions does not restore the lost numerical information.",
+          "Treat exactness as something to establish separately. Compare the replayed and full reference computations on identical continuations, including boundary and long-context cases. If approximation is acceptable, also evaluate the tasks you intend to serve."
+        ]
+      ],
+      "questions": [
+        {
+          "id": "sp1",
+          "level": 1,
+          "prompt": "MLA, paging and SWA primarily concern…",
+          "options": [
+            "They all describe the same memory-allocation technique.",
+            "They concern what is stored, how memory is organized, and which positions can be read.",
+            "They only change how text is split into tokens."
+          ],
+          "correct": 1,
+          "why": "Separate what is stored, where it is stored and what is attended to. A smaller cache can come from a different representation, different visibility, or an approximation. Those are different promises.",
+          "hint": "Ask a different question for each term.",
+          "repair": "special"
+        },
+        {
+          "id": "sp2",
+          "level": 2,
+          "prompt": "DeepInfer bounded SWA replay should be described as…",
+          "options": [
+            "Automatically exact for every transformer",
+            "An explicitly approximate reconstruction path",
+            "A method for training adapters"
+          ],
+          "correct": 1,
+          "why": "The Q&A names the approximation. Exactness is not supplied by a short window alone.",
+          "hint": "Look at the replay boundary’s missing context.",
+          "repair": "special"
+        },
+        {
+          "id": "sp3",
+          "level": 3,
+          "prompt": "Mask-vs-compact logprobs agree. This proves…",
+          "options": [
+            "Every approximation in the whole service is exact",
+            "Those implementations agree under the tested conditions",
+            "All future models are compatible"
+          ],
+          "correct": 1,
+          "why": "A comparison proves only the stated equivalence over its tested inputs and configuration.",
+          "hint": "Identify the two things actually compared.",
+          "repair": "correctness"
+        }
+      ],
+      "transfer": [
+        "Why would you avoid turning on a model-specific cache shortcut for an arbitrary model you fine-tuned?",
+        [
+          "Names architecture/config dependency",
+          "Distinguishes exactness from approximation",
+          "Requires reference and task-quality comparison"
+        ],
+        "A shortcut can depend on how that architecture produces and consumes state. Another model may not have the same layer-sharing or attention dependencies. I would establish compatibility first, then identify whether the shortcut promises exact calculation or accepts an approximation. I would compare against the appropriate reference, test boundary and long-context cases, and evaluate task quality where numerical differences are allowed."
+      ],
+      "sources": [
+        "mla",
+        "yocopaper",
+        "yoco",
+        "equiv",
+        "qa"
+      ],
+      "takeaway": "A smaller cache can come from a different representation, different visibility, or an approximation. Those are different promises."
+    },
+    {
+      "id": "parallel",
+      "title": "MoE, parallelism and the slowest worker",
+      "phase": "03 · DeepInfer in depth",
+      "mins": 45,
+      "goal": "Explain what multiple GPUs share, what they split, and why one busy worker can delay the rest.",
+      "needs": [
+        "gpu",
+        "batch"
+      ],
+      "recall": "What is the difference between total parameters and parameters used by one token?",
+      "predict": "If half the tokens choose experts on one GPU, do equal expert counts guarantee balanced work?",
+      "layers": [
+        "<h2>“Run it on more GPUs” leaves the main design question unanswered.</h2><p>To use several devices, you need to decide which device stores which weights and performs which work. Different choices create different communication requirements. Before memorizing their abbreviations, ask what is being divided.</p><p><b>Data parallelism</b> divides independent request or token work. <b>Tensor parallelism</b> divides parts of a numerical operation. <b>Pipeline parallelism</b> gives different layers to different devices. <b>Context parallelism</b> divides sequence work. Each name describes the object being split.</p><h3>Experts add another kind of division.</h3><p>A <b>mixture of experts</b>, or MoE, contains several feed-forward networks called experts. For each token, a routing mechanism chooses a small subset of them. Many learned expert weights exist, but one token uses only some of them.</p><p>This can reduce the arithmetic used for a token, but the weights still have to be stored. With <b>expert parallelism</b>, different devices own different experts. Tokens must reach the devices that hold their selected experts, and the results must be combined afterward.</p><h3>Equal storage does not guarantee equal work.</h3><p>Imagine four devices that each store the same number of experts. If the router repeatedly chooses experts on one device, that device receives much more work. The others can finish early and still have to wait for it.</p><p>This is why engine developers measure demand per expert and time per device, rather than checking expert counts alone. The communication links between devices matter as well: a fast connection within a machine may behave very differently from a slower connection between machines.</p><h3>A redundant copy is not a new learned expert.</h3><p>One response to a hot expert is to place extra physical copies of its weights where they can share the demand. DeepInfer distinguishes logical experts, which are the learned functions the router selects, from physical placements, which include redundant copies.</p><p>More copies use more memory and may require work to redistribute. Larger device groups can also add coordination costs. A good design weighs those costs against saved waiting and better use of the hardware.</p><p>When you judge a multi-GPU result, draw the ownership and movement of data first. A device count alone does not explain what the system is doing.</p>",
+        "<p>A synchronization point makes a group wait for every required participant. If four devices need 5, 5, 5, and 15 milliseconds, the group cannot pass that point in 7.5 milliseconds merely because 7.5 is the mean. The slowest required participant sets a lower bound of 15 milliseconds.</p><p>Load balancing tries to reduce that unevenness. The right measurement concerns actual token demand and runtime, not just the number of objects assigned to each device.</p><p>For EP, tokens are routed to expert owners, processed and combined. Communication and small per-expert batches can erase arithmetic savings. Fast within-node links and slower cross-node links are not interchangeable.</p><p>In DeepInfer’s expert containers, logical experts selected by the gate are distinct from physical expert copies. Redundant copies can increase placement flexibility without adding new learned functions. Placement, routing and hot-expert replication form a load-balancing problem.</p><p>The README lists attention DP/balanced CP and MoE EP/EPLB support. Available features are not identical to the production deployment recipe; inspect the Q&A and configuration for a particular run.</p>",
+        "<p>A change that spreads weights over more devices can reduce local weight storage while increasing token movement. A change that replicates hot weights can improve balance while consuming extra memory. Neither has a universal winner. Check the workload, network topology, expert selection patterns, and size of the numerical operations that remain on each device.</p><p>If rank work takes [5,5,5,15] ms before a barrier, this part costs at least 15 ms. The mean is 7.5 ms, but mean-based arithmetic hides the tail. Moving work or replicating a hot expert may help, at the cost of memory and redistribution traffic.</p><p>A larger EP group can aggregate more token work per expert and spread weight ownership, while increasing synchronization and network demands. There is no unconditional “more GPUs is faster” rule.</p><p>When judging a distributed design, sketch model state ownership, token movement, collectives and the actual link topology before reading benchmark charts.</p>"
+      ],
+      "example": [
+        "Four devices finish their required work in 5, 5, 5, and 15 milliseconds, then synchronize. When can the group continue?",
+        [
+          "At five milliseconds, three devices are ready. Their local work has finished, but the fourth device is still doing work that the next group operation needs.",
+          "The average completion time is 7.5 milliseconds, but an average does not satisfy the dependency. The group cannot continue until the fourth device finishes at fifteen milliseconds.",
+          "A useful next investigation is why that device is slower. It might have hotter experts, more tokens, slower communication, or different-sized operations. Moving or replicating the right work could help; adding devices without addressing the cause might not."
+        ]
+      ],
+      "questions": [
+        {
+          "id": "par1",
+          "level": 1,
+          "prompt": "Which scheme puts different experts on different GPUs?",
+          "options": [
+            "Expert parallelism",
+            "Tensor parallelism",
+            "Changing the sampling temperature"
+          ],
+          "correct": 0,
+          "why": "Expert parallelism partitions expert ownership. Adding devices helps only when useful work and communication are organized well enough to benefit.",
+          "hint": "Name the object being split.",
+          "repair": "parallel"
+        },
+        {
+          "id": "par2",
+          "level": 2,
+          "prompt": "Same number of experts per rank means same execution time.",
+          "options": [
+            "Always true",
+            "False when routing is skewed",
+            "True with BF16"
+          ],
+          "correct": 1,
+          "why": "Token demand per expert can be uneven.",
+          "hint": "Equal capacity is not equal demand.",
+          "repair": "parallel"
+        },
+        {
+          "id": "par3",
+          "level": 3,
+          "prompt": "Four ranks take 5,5,5,15 ms then synchronize. Phase lower bound?",
+          "options": [
+            "7.5 ms",
+            "5 ms",
+            "15 ms"
+          ],
+          "correct": 2,
+          "why": "The barrier waits for the slowest required participant.",
+          "hint": "Who has not finished at 7.5 ms?",
+          "repair": "parallel"
+        }
+      ],
+      "transfer": [
+        "An expert model gets little faster when you double its GPU count. Suggest two possible causes and how you would investigate them.",
+        [
+          "Includes routing skew or small expert batches",
+          "Includes communication/topology",
+          "Names a measurement per hypothesis"
+        ],
+        "The router might send disproportionate work to a few experts, so some devices finish early and wait. I would measure token demand and execution time per expert and device. Communication might also cost more as the group grows, especially across slower links. I would measure those transfers and inspect where experts are placed. Equal expert counts and more devices do not establish balanced useful work."
+      ],
+      "sources": [
+        "moe",
+        "readme",
+        "mla"
+      ],
+      "takeaway": "Adding devices helps only when useful work and communication are organized well enough to benefit."
+    },
+    {
+      "id": "speculate",
+      "title": "Speculative decoding and DSpark",
+      "phase": "03 · DeepInfer in depth",
+      "mins": 50,
+      "goal": "Explain how guessing several tokens can save time without letting the guesses replace the target model.",
+      "needs": [
+        "tokens",
+        "gpu",
+        "batch"
+      ],
+      "recall": "What prevents ordinary autoregressive generation from predicting many unknown steps independently?",
+      "predict": "If draft length doubles, must accepted tokens per second double?",
+      "layers": [
+        "<h2>Generation has an expensive chain of dependencies.</h2><p>In ordinary generation, the model chooses one next token before it knows the input for a later prediction. If each round is expensive, waiting for those rounds one after another can limit how quickly one person receives an answer.</p><p><b>Speculative decoding</b> tries to get more useful progress out of a target-model round. A cheaper <b>drafter</b> proposes several tokens. The main model, called the target model, then evaluates those proposed positions together.</p><h3>A proposal is not yet an answer.</h3><p>The target model checks the proposed continuation. Some draft tokens are accepted; a rejected position is corrected. The details of that acceptance and correction rule matter. Exact speculative sampling is designed to preserve the target model’s output probability distribution under its assumptions.</p><p>That promise does not mean every implementation will produce the same exact string for the same seed. Two draws from the same valid probability distribution can differ. Matching distributions and matching one random execution are different properties.</p><h3>Later guesses depend on earlier guesses surviving.</h3><p>Suppose a drafter proposes three tokens. The third proposed token is useful as part of the accepted prefix only if the earlier proposals also survive. You cannot count each position as if it contributes independently.</p><p>This makes long drafts a tradeoff. They offer a chance to advance farther, but their later positions can be unlikely to survive. Evaluating those positions still consumes work that might have served another request.</p><h3>DSpark makes that budget choice more deliberate.</h3><p>The DSpark work combines a draft design with confidence-based verification scheduling. The system estimates how likely proposed prefixes are to survive, and considers how its hardware performs at different amounts of verification work.</p><p>DeepInfer contains a related scheduling path that turns confidence information into per-request work lengths. Our small experiment isolates the intuition behind that choice; it does not reproduce the whole production scheduler.</p><p>To evaluate speculation for your model, measure useful tokens accepted per round alongside the time spent drafting and checking them. A high acceptance percentage alone does not prove a speedup, and a setting that helps one user may waste capacity when many users are active.</p>",
+        "<p>If the first draft has an 80% chance of surviving and the second has an 80% chance given that the first survived, both survive with probability 0.8 × 0.8 = 0.64. To count expected accepted drafts, add the probability that the first survives, the first two survive, and so on.</p><p>The exact acceptance-and-correction rule is more detailed than checking whether the target’s favorite token matches a guess. The formula below concerns preserving a sampling distribution.</p><p>For exact speculative sampling, a draft token drawn from q can be accepted with probability <code>min(1,p(x)/q(x))</code>, followed on rejection by sampling from a normalized positive residual <code>max(0,p−q)</code>. The full algorithm includes prefix handling and a target token after full acceptance.</p><p>Exactness here is an <b>output-distribution</b> promise, not a promise of identical random draws or identical strings for the same seed across implementations. Greedy verification has its own simpler match rule.</p><p>DSpark’s paper describes balancing prefix survival estimates against a hardware throughput profile. A late token is useful only if earlier draft tokens survive.</p>",
+        "<p>An estimate of accepted length becomes an engineering decision only after you include the cost of verifying that length. Hardware throughput is not necessarily linear in the number of proposed tokens. A practical scheduler uses a measured cost profile and handles the mandatory target work in addition to optional draft positions.</p><p>If per-position conditional acceptance probabilities are a₁…aₖ, expected accepted drafts are <code>Σᵢ Πⱼ≤ᵢ aⱼ</code>. This assumes acceptance probabilities under the reached prefix and ignores the target correction/bonus token.</p><p>DeepInfer’s confidence kernel computes cumulative products, ranks candidate positions across requests, and assigns query lengths under a total budget. Its code is the place to inspect how confidence becomes scheduled work.</p><p>Do not guess that longer drafts or higher acceptance improve goodput. Measure drafting time, verification cost, accepted output per round and inter-token latency at the intended concurrency.</p>"
+      ],
+      "lab": "spec",
+      "example": [
+        "Two proposed tokens each have a 50% conditional acceptance rate. How many accepted draft tokens do you expect?",
+        [
+          "The first token contributes one accepted token in half the cases. Its expected contribution is therefore 0.5 tokens.",
+          "The second token contributes only when the first survives and the second then survives too. That probability is 0.5 × 0.5 = 0.25. Adding 0.5 for the second directly would forget the first requirement.",
+          "Add the contributions: 0.5 + 0.25 = 0.75 accepted draft tokens on average. This count excludes a target correction or bonus token. To choose a fast setting, you still need the time spent producing and checking those proposals."
+        ]
+      ],
+      "questions": [
+        {
+          "id": "spec1",
+          "level": 1,
+          "prompt": "Why verify a draft with the target model?",
+          "options": [
+            "To preserve the target’s intended generation behavior",
+            "To avoid loading target weights forever",
+            "To train the tokenizer"
+          ],
+          "correct": 0,
+          "why": "Drafts are proposals; the target remains the reference. Drafting helps when accepted progress is worth more than the work spent drafting and verifying it.",
+          "hint": "Who decides what output is acceptable?",
+          "repair": "speculate"
+        },
+        {
+          "id": "spec2",
+          "level": 2,
+          "prompt": "Two draft positions each survive conditionally with p=0.5. Expected accepted drafts?",
+          "options": [
+            "1",
+            "0.75",
+            "2"
+          ],
+          "correct": 1,
+          "why": "0.5 + 0.5×0.5 = 0.75. The second counts only when the first survives.",
+          "hint": "Accepted prefixes must be contiguous.",
+          "repair": "numbers"
+        },
+        {
+          "id": "spec3",
+          "level": 3,
+          "prompt": "An exact speculative sampler promises…",
+          "options": [
+            "Identical strings for all hardware and seeds",
+            "The target output distribution, assuming the algorithm’s conditions",
+            "No verification cost"
+          ],
+          "correct": 1,
+          "why": "Distributional equality differs from pathwise equality.",
+          "hint": "Think about two valid random samples from the same distribution.",
+          "repair": "correctness"
+        }
+      ],
+      "transfer": [
+        "Explain how longer drafts could help one user receive tokens faster but reduce the amount of useful work the server does for everyone.",
+        [
+          "Names saved serial rounds",
+          "Names added low-value verification work",
+          "Includes concurrency or capacity constraint"
+        ],
+        "A single user may advance through several accepted tokens in one target-model round, reducing serial waits. But later draft positions have to survive all earlier positions, so some extra checking has little chance of helping. With many requests active, that verification consumes capacity that could serve other users. I would measure accepted progress, drafting and checking time, and latency at the intended concurrency rather than choosing the longest draft by default."
+      ],
+      "sources": [
+        "spec",
+        "dspark",
+        "varlen",
+        "sampler"
+      ],
+      "takeaway": "Drafting helps when accepted progress is worth more than the work spent drafting and verifying it."
+    },
+    {
+      "id": "correctness",
+      "title": "Correctness, determinism and structured output",
+      "phase": "03 · DeepInfer in depth",
+      "mins": 40,
+      "goal": "Choose a check that tests the specific kind of correctness your change promises.",
+      "needs": [
+        "speculate",
+        "special"
+      ],
+      "recall": "How does equal output distribution differ from identical outputs?",
+      "predict": "If JSON parses successfully, have you proved the answer’s facts are true?",
+      "layers": [
+        "<h2>A believable answer can still come from a broken engine.</h2><p>Suppose you change how a model reads its cache. The program runs, the response sounds fluent, and its JSON parses. Have you shown that the change preserved the model’s calculation? Each observation is useful, but none directly answers that question.</p><p>An array can have the right dimensions and contain the wrong numbers. A paragraph can sound sensible while differing from the reference model. A JSON object can be structurally valid and contain false facts.</p><p>JSON is a structured text format that programs can parse into fields and values. A grammar can restrict which continuations are allowed so an answer follows that format. This helps with structure, but a correctly formatted field can still contain the wrong date or an invented fact.</p><h3>Start by naming the property you want to preserve.</h3><p>For an exact attention implementation, you may want numerical outputs to match a reference within a stated rounding tolerance. For an exact sampling method, you may be preserving a probability distribution. For a deliberate approximation, you may accept numerical differences only if task quality stays within an agreed limit.</p><p>A <b>reference</b> is a trusted comparison path, often a simpler implementation. People sometimes call a check like this an <b>oracle</b>: something that tells you whether the property being tested holds. The name does not make the reference infallible; you still need to understand what it checks.</p><h3>Control the input when you compare outputs.</h3><p>If two generators choose different tokens, their later inputs also differ. Later output differences then become hard to interpret. You can instead feed both implementations the same known continuation and compare their predictions at the same positions. This is called <b>teacher forcing</b>.</p><p>That comparison helps locate the first disagreement before different generated histories hide its cause.</p><h3>Test the cases a pleasant example can miss.</h3><p>A cache bug might appear only when a sequence crosses a block boundary. A state leak might require two requests to run in an interleaved order. A sampling bug might appear when a stop token is proposed inside a draft. Design the case that exercises the property instead of relying only on an ordinary chat.</p><p>Deterministic sampling and batch invariance are also separate promises. A seed controls random draws; batch invariance concerns whether a request changes when its batch companions change. You need more than a seed to assume every numerical execution behaves identically.</p><p>Your job is to say exactly what your evidence establishes, then leave the other questions visible.</p>",
+        "<p>Use checks at several boundaries. Validate shapes and indexes to catch structural mistakes. Compare intermediate values and logits to test the calculation. Check generated tokens under controlled settings to test the generation loop. Finally, evaluate the tasks you care about to see whether model behavior is useful.</p><p>These checks complement one another. Passing a lower-level check does not automatically establish all the higher-level properties.</p><p>Useful checks form a ladder: shape and index invariants; reference-vs-optimized logits on shared prefixes; greedy token equality; sampling-distribution checks; task-level evaluation. Passing a lower rung does not imply the higher ones.</p><p>For grammar constraints, the automaton state tracks allowed continuations. A token mask changes the sampler’s legal set. Chunk boundaries, tokenization and stop behavior all matter.</p><p>DeepInfer’s sampler contains verification logic and structured-output masking. Its offline example enables batch-invariant behavior on its NVIDIA path; read supported platform/configuration scope before generalizing.</p>",
+        "<p>A tolerance is a declared allowance for numerical difference, not a way to ignore unexplained mismatches. Choose one appropriate to the operation and numerical format, and investigate patterns such as sudden errors at a cache boundary. An approximation deserves its own explicitly different quality contract rather than quietly weakening the promise of an exact rewrite.</p><p>Exercise adversarial boundaries: cache reset, zero/one-token lengths where valid, maximum context, EOS inside drafts, mixed request lengths, different co-batches and adapter switches. An incorrect fast path may appear correct on pleasant prompts.</p><p>For your own engine, preserve an intentionally simple reference and compare layer outputs when a mismatch appears. Final prose comparison is too weak for debugging attention or positional errors.</p><p>Quantization and approximate attention need task-level acceptance criteria. Exact-operation refactors should not silently broaden their contract into “looks about right.”</p>"
+      ],
+      "example": [
+        "A cache change produces valid JSON, but its numerical predictions disagree with the reference at a page boundary. Would you accept an exactness claim?",
+        [
+          "The JSON result tells you the output followed a structural constraint. It does not establish that attention read the correct positions or used the correct cached values.",
+          "The disagreement on identical prefixes is directly relevant to the claimed numerical equivalence. Look for the first differing position and layer, especially around the boundary where the error appears.",
+          "Investigate and repair that mismatch before accepting the exactness claim. If you instead want to allow approximation, state that different contract and test its effect on real task quality; do not infer it from valid formatting."
+        ]
+      ],
+      "questions": [
+        {
+          "id": "cor1",
+          "level": 1,
+          "prompt": "A JSON grammar proves…",
+          "options": [
+            "Truth of every field",
+            "Conformance to the supported structural constraints",
+            "That no sampling occurs"
+          ],
+          "correct": 1,
+          "why": "Structure is a different property from semantic truth. A test can pass while the important property remains untested. Match the check to the claim.",
+          "hint": "A perfectly formatted wrong answer is still possible.",
+          "repair": "correctness"
+        },
+        {
+          "id": "cor2",
+          "level": 2,
+          "prompt": "A seed by itself guarantees batch invariance.",
+          "options": [
+            "Yes",
+            "No, numerical execution and RNG assignment also matter",
+            "Only for long prompts"
+          ],
+          "correct": 1,
+          "why": "Different batching can alter reductions or draw assignment unless controlled.",
+          "hint": "What happens before random selection?",
+          "repair": "tokens"
+        },
+        {
+          "id": "cor3",
+          "level": 3,
+          "prompt": "Best first oracle for an exact attention-kernel rewrite?",
+          "options": [
+            "Matching layer outputs against a reference over varied shapes",
+            "A user says responses feel good",
+            "An aggregate throughput chart"
+          ],
+          "correct": 0,
+          "why": "Test the numerical claim at the operator boundary before measuring downstream behavior.",
+          "hint": "Pin the promised invariant directly.",
+          "repair": "correctness"
+        }
+      ],
+      "transfer": [
+        "Pick an engine change and describe what you would compare to decide whether it is correct. Say what the comparison would and would not establish.",
+        [
+          "Names a reference",
+          "States equality/tolerance/quality criterion",
+          "States tested configurations and boundaries"
+        ],
+        "For a cache-read change, I would feed identical token prefixes to the full reference calculation and the cached path, then compare the next-token scores within a stated tolerance. I would include cache boundaries and interleaved requests. That directly tests the numerical property under those conditions. It does not prove every possible configuration or that the model gives factually correct answers, so other claims need their own checks."
+      ],
+      "sources": [
+        "sampler",
+        "example",
+        "equiv"
+      ],
+      "takeaway": "A test can pass while the important property remains untested. Match the check to the claim.",
+      "activity": {
+        "kind": "check",
+        "title": "Check the numbers before judging a fluent answer.",
+        "intro": "Two paths receive the same fixed input IDs [1, 4]. The reference returns next-token scores [0.2, 0.8, -0.1]. A changed path returns [0.2, 0.805, -0.1]. Your stated rule permits an absolute difference of at most 0.001 in every score. Both paths still choose the second token when selecting the highest score.",
+        "fields": [
+          {
+            "id": "difference",
+            "kind": "number",
+            "label": "What is the largest absolute score difference?",
+            "answer": 0.005,
+            "tolerance": 1e-09,
+            "why": "The second entry differs by 0.805 − 0.8 = 0.005. The other entries match."
+          },
+          {
+            "id": "accept",
+            "kind": "select",
+            "label": "Does the changed path pass the stated numerical rule?",
+            "options": [
+              [
+                "yes",
+                "Yes, because it chooses the same token"
+              ],
+              [
+                "no",
+                "No, because one score difference exceeds the tolerance"
+              ]
+            ],
+            "answer": "no",
+            "why": "0.005 is greater than 0.001. Matching the highest-scoring token does not establish that the numerical comparison passed."
+          }
+        ],
+        "conclusion": "A useful correctness check needs fixed inputs, a reference, a comparison rule, and a boundary. Passing this one numerical case would still leave request isolation, stop behavior, and task quality to check.",
+        "revision": "embedded-practice-2026-10-20"
+      }
+    },
+    {
+      "id": "service",
+      "title": "From a fast engine to a usable service",
+      "phase": "03 · DeepInfer in depth",
+      "mins": 35,
+      "goal": "Trace the work around a model calculation and understand when separating stages is worth it.",
+      "needs": [
+        "parallel",
+        "cache",
+        "phases"
+      ],
+      "recall": "Which parts of an online service live outside an engine loop?",
+      "predict": "Can separating prefill and decode make things slower for a small workload?",
+      "layers": [
+        "<h2>The GPU calculation is only part of a request’s journey.</h2><p>A user sends a question, but a machine must receive it, check access, prepare its text, choose a worker, and perhaps wait for space. After the model runs, the response must be converted back to text and delivered. Any part of that path can add delay or fail.</p><p>This surrounding system is what turns an engine into a service. Keeping that distinction clear helps you understand both a production architecture diagram and the limits of an open-source engine release.</p><h3>Some systems put different stages on different workers.</h3><p>Prefill processes the known prompt; decode extends the answer. Because their workloads differ, a large deployment can give each stage its own resources and scheduling. Separating stages like this is called <b>disaggregation</b>.</p><p>A multimodal system may also separate the work that turns images into model representations. That does not make the stages independent: later stages need the numerical state produced by earlier ones.</p><h3>A separation creates a handoff.</h3><p>If one machine processes the prompt and another continues the answer, the necessary state must move between them. That takes bandwidth, adds a dependency, and creates another place where a failure needs handling.</p><p>Independent scaling can make those costs worthwhile for a large or uneven workload. A small workload may be better served by a simpler arrangement that keeps the stages together. You need measurements to decide.</p><h3>A queue does not create more capacity.</h3><p>When requests arrive faster than they can finish, unfinished work accumulates. Letting the queue grow without limit can make some users wait an extremely long time. A service needs a policy: how much work to admit, how long to wait, and what to do when those limits are reached.</p><p>It also needs to release resources when a user cancels or a request times out. Otherwise finished or abandoned work can keep consuming memory and scheduler slots.</p><h3>Begin with a system you can explain.</h3><p>For your first fine-tuned-model service, start with one compatible engine and a representative workload. Establish that it loads the intended model and produces the expected behavior. Then measure which part of the journey needs improvement before reproducing a much larger production architecture.</p>",
+        "<p>Draw the full request path and label each place that owns state. A queue owns pending requests. A running engine owns working attention state. A transfer protocol must define when another worker can take over. Streaming must preserve the order and ownership of output.</p><p>A boundary is useful only when you understand both what crosses it and what happens if that crossing fails.</p><p>Draw the path: request → format/tokenize → queue → prefill → transfer state → decode → detokenize/stream. Add prefix lookup, admission control and cancellation. Every arrow can add latency or fail.</p><p>The DeepSeek Q&A describes a larger E/P/D system and separate cache storage. The open-source README explicitly bounds what is included. Production architecture diagrams must not be mistaken for a runnable public deployment bundle.</p><p>Independent scaling can help when prompt work and output work vary differently. State transfer must fit the network budget and reliability requirements.</p>",
+        "<p>A distributed design is partly a failure-handling design. If a worker disappears, decide whether a request fails, retries, or resumes elsewhere. Resuming requires compatible complete state and a clear owner of future output. These are correctness responsibilities in addition to performance decisions.</p><p>Design overload behavior deliberately: reject, queue with a deadline, or reduce admitted work within an explicit product contract. Unbounded queues transform a capacity problem into extreme tail latency.</p><p>Cancellation must release cache and scheduler slots. Migration needs complete state and a single owner of further output. Cache isolation must include model/adapters and access boundaries where applicable.</p><p>For your first tuned-model service, begin with one compatible engine and a fixed representative workload. Establish observability and correctness before distributed architecture experiments.</p>"
+      ],
+      "example": [
+        "Fetching a remote prefix cache takes 18 milliseconds but saves 10 milliseconds of prefill. Does the cache hit help?",
+        [
+          "First compare the work saved with the work added. Under a simple no-overlap assumption, saving ten milliseconds while adding eighteen makes the request eight milliseconds slower.",
+          "Now ask whether fetching can overlap other useful work. Also check whether the transfer competes for bandwidth with other requests. Those details could change the result, so measure the relevant stages separately.",
+          "Report the user-visible latency result alongside hit rate. Finding more cached prefixes is only beneficial if the overall system uses that stored work effectively."
+        ]
+      ],
+      "questions": [
+        {
+          "id": "svc1",
+          "level": 1,
+          "prompt": "Disaggregation introduces a need to…",
+          "options": [
+            "Transfer compatible state between stages",
+            "Eliminate tokenization",
+            "Retrain for every request"
+          ],
+          "correct": 0,
+          "why": "The next stage needs the computed context/state. A fast engine needs queues, routing, state transfer, and failure handling around it to become a usable service.",
+          "hint": "What did prefill produce that decode consumes?",
+          "repair": "service"
+        },
+        {
+          "id": "svc2",
+          "level": 2,
+          "prompt": "Which is a good first deployment goal?",
+          "options": [
+            "Reproduce a huge production cluster immediately",
+            "A correct compatible single-engine baseline with measurements",
+            "Maximize the number of services"
+          ],
+          "correct": 1,
+          "why": "A reference baseline makes later complexity measurable.",
+          "hint": "Start where failure causes are easiest to isolate.",
+          "repair": "deploy"
+        },
+        {
+          "id": "svc3",
+          "level": 3,
+          "prompt": "Under overload, an unbounded queue primarily risks…",
+          "options": [
+            "Tail latency and resource growth",
+            "Better latency for everyone",
+            "Automatic model quality improvement"
+          ],
+          "correct": 0,
+          "why": "Excess work waits longer and consumes resources without adding capacity.",
+          "hint": "Arrival rate can exceed completion rate.",
+          "repair": "phases"
+        }
+      ],
+      "transfer": [
+        "Describe a simple service for your fine-tuned model. Where does unfinished work live, and what should happen when a user cancels?",
+        [
+          "Identifies request queue and KV ownership",
+          "Includes model/tokenizer/adapter identity",
+          "Names cancellation/timeout handling"
+        ],
+        "Requests first wait in a bounded queue and then run in a compatible engine. Each active request owns its model working state, including its attention cache. The service must know which base, adapter, and input format are in use. Completion or cancellation should release the request’s slots and state when no consumer still needs them. I would establish this simple path before adding remote transfers or separately scaled stages."
+      ],
+      "sources": [
+        "readme",
+        "qa"
+      ],
+      "takeaway": "A fast engine needs queues, routing, state transfer, and failure handling around it to become a usable service."
+    },
+    {
+      "id": "code",
+      "title": "Read DeepInfer without getting lost",
+      "phase": "04 · Build and ship your own",
+      "mins": 60,
+      "goal": "Follow one request through DeepInfer before exploring individual optimizations.",
+      "needs": [
+        "correctness",
+        "service"
+      ],
+      "recall": "What evidence separates an engine feature from a production service feature?",
+      "predict": "Will reading every kernel before the request loop give you the best first map?",
+      "layers": [
+        "<h2>You do not need to understand every file before you can understand one path.</h2><p>Opening a large engine repository can feel like being dropped into the middle of a conversation. There are kernels, worker processes, configuration options, and several ways to represent a request. Reading files alphabetically rarely explains how those pieces cooperate.</p><p>Instead, choose one concrete question: “What happens when this example asks the model to generate a response?” Follow that request from input to output. Each function you encounter should answer a smaller part of the question.</p><h3>Begin with the example’s inputs.</h3><p>Open <code>examples/offline_inference.py</code>. Find where it chooses a model, configures how many devices participate, creates the engine, and asks for outputs. You do not need to understand every option yet. Write down what the example passes into generation and what it expects back.</p><h3>Find the public entry point.</h3><p>Next open <code>deepinfer/entrypoints/llm.py</code>. The generation method admits requests and runs a loop until they finish. Follow the call that adds a request, then the loop that collects its outputs.</p><p>Ask where the request’s identity comes from, which state belongs to it, and how its results are put back in order. Those questions connect the code to the engine responsibilities you already understand.</p><h3>Then follow one execution step.</h3><p>In <code>deepinfer/engine/llm_engine.py</code>, locate the step method, scheduling, asynchronous execution, and result handling. The scheduler chooses work; the model execution performs it; post-processing updates request state. Trace that sequence before diving into its kernels.</p><h3>Choose one detail worth investigating.</h3><p>For example, the entry point clones output objects before the next step can reuse their underlying storage. That is a reason to investigate data lifetime, not automatically a copy to delete for speed.</p><p>Or follow sampling into <code>sampler.py</code> to distinguish ordinary token selection from draft verification. Pick one responsibility and find the inputs and outputs it owns.</p><p>Keep your notes honest: distinguish what you directly observed in code from what the authors report and what you infer. The source links here pin a particular revision so someone else can open the same code you read.</p>",
+        "<p>For each call, write one sentence: “This function receives ___, decides or calculates ___, and returns or changes ___.” If a sentence contains something you cannot explain, follow that one dependency. This keeps the reading task bounded and reveals where a useful test could attach.</p><p>A vertical path is a map for later exploration. It is not evidence that you have inspected every possible configuration or execution path.</p><ol><li><b>examples/offline_inference.py</b>: find EP/DP/CP arguments and model creation.</li><li><b>deepinfer/entrypoints/llm.py</b>: follow generate → _add_request → _run_engine. Notice result ordering and output cloning.</li><li><b>deepinfer/engine/llm_engine.py</b>: find step → schedule → async execution → post_process.</li><li><b>deepinfer/model_executor/layers/sampler.py</b>: distinguish logits, grammar masking and verification.</li><li><b>schedule_mtp_varlen.py</b>: find cumulative confidence, top-budget selection and query lengths.</li></ol><p>Do not begin by changing flags. First predict which function should run and prove it using a trace or a tiny test.</p>",
+        "<p>A focused first engine change can be a missing boundary test, a loader fix, or a correction to an inaccurate benchmark. Begin with a reproducible observation and an invariant you can check. The size of a kernel rewrite is not a measure of whether the contribution is valuable.</p><p>Choose one seam: confidence scheduling. Identify inputs, valid ranges, the mandatory target-token budget, tie-breaking and prefix closure. Then construct a small reference computation and compare it to the implementation.</p><p>The browser lab simplifies selection to expected accepted drafts under a fixed budget. The real engine includes target slots, hardware profiles and asynchronous metadata. Treat the lab as conceptual scaffolding, not a drop-in replacement.</p><p>A credible first contribution can be a bounded boundary test, a reproducible benchmark correction or a focused lifetime fix. A novel kernel is not the only meaningful engine work.</p>"
+      ],
+      "example": [
+        "You find an output clone inside the generation loop. How do you decide whether it is unnecessary?",
+        [
+          "Find out what raw output points to. In this entry point, the nearby code and comment concern storage that a later engine step can release or reuse. A list append alone would retain a reference rather than guarantee a stable independent value.",
+          "Trace when the consumer reads the stored result and when the producer can overwrite the underlying buffer. The copy may be the operation that keeps those lifetimes from conflicting.",
+          "Before removing it, construct a test that saves one output, forces later buffer reuse, and then reads the earlier output. Any replacement must preserve the earlier value through copying or a proven ownership protocol."
+        ]
+      ],
+      "questions": [
+        {
+          "id": "code1",
+          "level": 1,
+          "prompt": "Best first reading route?",
+          "options": [
+            "Start with an example and follow one request through to its results.",
+            "Read every file in alphabetical order before following any requests.",
+            "Read the benchmark charts without checking the execution path."
+          ],
+          "correct": 0,
+          "why": "A vertical slice builds a map tied to observable behavior. Build a map by following one request, then investigate one responsibility at a time.",
+          "hint": "Follow one request, not the directory tree.",
+          "repair": "code"
+        },
+        {
+          "id": "code2",
+          "level": 2,
+          "prompt": "A code link should pin a commit because…",
+          "options": [
+            "It makes all code correct",
+            "It identifies the revision supporting the explanation",
+            "It prevents hardware failures"
+          ],
+          "correct": 1,
+          "why": "Readers can reproduce the source context rather than opening changed main.",
+          "hint": "What will a future reader actually see?",
+          "repair": "code"
+        },
+        {
+          "id": "code3",
+          "level": 3,
+          "prompt": "An output clone before reusing buffers is likely worth checking for…",
+          "options": [
+            "A lifetime invariant",
+            "A training optimizer",
+            "An HTTP cookie"
+          ],
+          "correct": 0,
+          "why": "Removing a copy can change whether a consumer reads valid data.",
+          "hint": "Relate the copy to async reuse.",
+          "repair": "batch"
+        }
+      ],
+      "transfer": [
+        "Trace one request through DeepInfer in a few sentences. Name one property you would test at a specific boundary.",
+        [
+          "Traces entrypoint to scheduling to execution to sampling",
+          "Names request-owned state",
+          "Names an observable invariant"
+        ],
+        "The example creates the model and calls generation. The entry point admits requests, then repeatedly asks the engine to schedule and execute work. Model execution produces values used by sampling, and result handling updates the requests and collects their outputs. Each request needs its own state. At the output-collection boundary, I would test that an earlier saved output remains unchanged after a later step reuses the producer’s buffer."
+      ],
+      "sources": [
+        "example",
+        "entry",
+        "engine",
+        "sampler",
+        "varlen"
+      ],
+      "takeaway": "Build a map by following one request, then investigate one responsibility at a time.",
+      "activity": {
+        "kind": "worksheet",
+        "title": "Trace one request and name the promise at one boundary.",
+        "intro": "Open the pinned entrypoint below. Start with generate, follow the loop that collects outputs, and find where an output is copied before it is kept. You are reading a small path, not auditing the whole engine.",
+        "source": {
+          "label": "Open the pinned DeepInfer entrypoint",
+          "url": "https://github.com/deepseek-ai/DeepInfer/blob/774ce244b87cc0eb8d4b94ab9f5de2ab22049f01/deepinfer/entrypoints/llm.py"
+        },
+        "fields": [
+          {
+            "id": "path",
+            "kind": "text",
+            "label": "In your own words, what enters and leaves this path?",
+            "placeholder": "The caller provides… The engine repeatedly… The caller eventually receives…"
+          },
+          {
+            "id": "boundary",
+            "kind": "text",
+            "label": "Choose one boundary and state what must stay true.",
+            "placeholder": "At the point where an output is saved, it must…"
+          },
+          {
+            "id": "test",
+            "kind": "text",
+            "label": "What small test would expose a violation?",
+            "placeholder": "Produce one result, then… Read it again and compare…"
+          }
+        ],
+        "compare": [
+          "Follow the actual function calls and saved values. A function name alone does not explain its responsibility.",
+          "One useful promise is that a result kept for the caller stays unchanged after the engine reuses temporary storage.",
+          "Use distinguishable outputs and read the first saved value after a later engine step. Shapes alone would not expose a changed value."
+        ],
+        "example": "For the output-copy boundary, I would create an output containing token 7, let the collector save it, then reuse the producer’s storage for token 9. The saved first output should still contain 7. This checks one lifetime promise, rather than proving every engine path correct.",
+        "revision": "embedded-practice-2026-10-20"
+      }
+    },
+    {
+      "id": "artifacts",
+      "title": "Your fine-tuned model is more than a weights file",
+      "phase": "04 · Build and ship your own",
+      "mins": 45,
+      "goal": "Know which files and settings you need to reproduce the model you fine-tuned.",
+      "needs": [
+        "tokens",
+        "cache",
+        "correctness"
+      ],
+      "recall": "Why can the wrong tokenizer make correct weights behave incorrectly?",
+      "predict": "If two checkpoints share an architecture name, can you apply the same LoRA adapter to either base revision?",
+      "layers": [
+        "<h2>A file full of learned numbers is not the whole agreement.</h2><p>Suppose you fine-tune a base model and want to run the result in an inference engine. It is tempting to think the job is finished once you have a weights file. But the computer also needs to know what those numbers mean and how inputs were represented during training.</p><p>An engine must support the model’s <b>architecture</b>: the arrangement of layers and calculations described by its configuration. Fine-tuning a model does not automatically turn that architecture into a different one that another engine knows how to execute.</p><h3>An adapter may contain only the change.</h3><p>With <b>LoRA</b>, a common fine-tuning method, you train a compact update attached to selected base-model matrices. The saved adapter typically does not include all the original base weights. Running it requires the compatible base as well as the adapter’s configuration and learned values.</p><p>Two base revisions can have exactly the same dimensions and still contain different learned numbers. An adapter trained against one is not proved correct against the other merely because it loads without a shape error.</p><h3>Text formatting is part of what the model learned.</h3><p>A tokenizer assigns IDs to text pieces and special markers. A chat template arranges messages and roles into the token sequence a chat-trained model expects. A completion model may instead expect the custom format you used in training.</p><p>Changing these inputs can change behavior even while every learned weight loads successfully. Keep the intended tokenizer, input format, and stop-token behavior with the model.</p><h3>Record enough information to rebuild the same computation.</h3><p>A small <b>artifact manifest</b> is a record of the pieces you used: the exact base revision, adapter or merged weights, model configuration, tokenizer and format, numerical precision, and relevant library versions. “Latest base” is not a stable identity.</p><p>You can either serve an adapter alongside its supported base or merge its learned update into compatible full weights where the tooling allows it. Those paths need their own checks, particularly when reduced precision or quantization is involved.</p><p>Before optimizing, load the intended combination in a reference path and save a few fixed inputs with expected numerical or task-level behavior. That gives you something concrete to compare when an engine appears to run the model successfully.</p>",
+        "<p>LoRA represents a large update through two smaller matrices. Applying the update during execution and multiplying it out into a merged weight matrix are algebraically equivalent in real-number arithmetic. The equation below expresses those two routes.</p><p>Actual computers round intermediate results, so changing the order of operations can introduce small differences. Evaluate those differences under a stated numerical tolerance and task check.</p><p>For a weight W, ordinary LoRA uses <code>W′=W+sBA</code>, where A and B have small inner rank and s is a scaling factor. For row-vector input, compare <code>x(W+sBA)ᵀ</code> with <code>xWᵀ+s(xAᵀ)Bᵀ</code>.</p><p>Two deployment choices: serve a supported adapter alongside its exact base, or merge the update into a compatible floating-point model and save a complete checkpoint. Verify what your framework/version supports; quantized or variant adapters may have additional restrictions.</p><p>Merging can change rounding. Equal algebra in real numbers is not a demand for bitwise equality in every numeric format.</p>",
+        "<p>The model identity that matters for loading also matters for caching. An adapter can change intermediate attention state. If you switch adapters while reusing incompatible state from an earlier request, you can calculate a hybrid result that corresponds to neither intended model. Test adapter changes as well as initial loading.</p><p>Create an artifact manifest: base ID and immutable revision; architecture/config hash; tokenizer/template identity; adapter target modules, rank and scaling; precision/quantization method; library versions; context settings; evaluation dataset revision. Avoid mutable names as your only provenance.</p><p>Use a fixed holdout set with known desired behavior to compare base, adapted reference and engine output. Check token IDs before logits. For a base model trained as a completion model, do not invent a chat template unless your fine-tuning established one.</p><p>Adapter identity belongs in cache compatibility. Switching adapters without invalidating relevant state can silently run a hybrid computation.</p>"
+      ],
+      "example": [
+        "An adapter trained on base revision R1 loads on R2 without a shape error. Have you established that it is the model you trained?",
+        [
+          "Loading proves that at least some structural expectations were satisfied. It does not prove that R2 contains the base values the adapter was trained to modify. Matching dimensions leave that identity question unanswered.",
+          "Recover the intended base revision and the adapter configuration from the training record. Keep the tokenizer, custom prompt format, and termination settings consistent as well.",
+          "Load that exact combination in a reference implementation. Use identical tokenized inputs to compare a deployment path, and check desired behavior on a separate evaluation set. This establishes much more than successful file loading alone."
+        ]
+      ],
+      "questions": [
+        {
+          "id": "art1",
+          "level": 1,
+          "prompt": "A LoRA adapter is usually…",
+          "options": [
+            "A replacement tokenizer",
+            "A learned update requiring a compatible base",
+            "A whole inference service"
+          ],
+          "correct": 1,
+          "why": "The adapter modifies selected base operations; it typically does not include all base weights. A usable fine-tuned model includes its exact base, learned update, tokenizer, input format, and relevant settings.",
+          "hint": "Where are the original large matrices?",
+          "repair": "artifacts"
+        },
+        {
+          "id": "art2",
+          "level": 2,
+          "prompt": "The first deployment compatibility check is…",
+          "options": [
+            "Whether the model name sounds similar",
+            "Exact architecture, engine version, artifact and adapter support",
+            "Whether the checkpoint directory is short"
+          ],
+          "correct": 1,
+          "why": "Support is specific to architecture and implementation features.",
+          "hint": "A friendly model name is not an execution contract.",
+          "repair": "artifacts"
+        },
+        {
+          "id": "art3",
+          "level": 3,
+          "prompt": "Merged and unmerged LoRA differ slightly in BF16 logits. First interpretation?",
+          "options": [
+            "Always proof the adapter is invalid",
+            "Possible rounding differences; compare against a declared tolerance and task checks",
+            "They must be different architectures"
+          ],
+          "correct": 1,
+          "why": "Algebraic equivalence need not yield identical finite-precision operation order.",
+          "hint": "Consider where rounding occurs.",
+          "repair": "correctness"
+        }
+      ],
+      "transfer": [
+        "What would you save alongside a LoRA adapter so another person could run the model you actually fine-tuned?",
+        [
+          "Pins base and adapter identity",
+          "Includes tokenizer/prompt/stop/config",
+          "Includes precision, versions and evaluation fixture"
+        ],
+        "I would record the exact intended base revision and save the adapter’s configuration and learned values. I would include the model configuration, correct tokenizer, training-time input format, and stop-token behavior. Numerical precision, quantization settings, and library versions also affect reproduction. Finally, I would keep fixed tokenized inputs and a held-out evaluation record so a new loading or engine path has something concrete to compare against."
+      ],
+      "sources": [
+        "lora",
+        "template",
+        "vmodels",
+        "vlora"
+      ],
+      "takeaway": "A usable fine-tuned model includes its exact base, learned update, tokenizer, input format, and relevant settings.",
+      "activity": {
+        "kind": "worksheet",
+        "title": "Write down which model you intend to run.",
+        "intro": "Use a model you have fine-tuned, or one you plan to fine-tune. If a detail is not decided, write “not chosen yet.” The purpose is to expose missing information while you can still recover it. These notes stay in this browser and can be exported with your progress.",
+        "fields": [
+          {
+            "id": "base",
+            "kind": "text",
+            "label": "Exact base model and saved revision",
+            "placeholder": "Repository or local checkpoint, plus its immutable revision. “Latest” is not an exact version."
+          },
+          {
+            "id": "adapter",
+            "kind": "text",
+            "label": "Adapter or merged checkpoint, and its configuration",
+            "placeholder": "Saved weights, target modules, adapter settings, and the base version they were trained with."
+          },
+          {
+            "id": "format",
+            "kind": "text",
+            "label": "Tokenizer, input format, and stop rules",
+            "placeholder": "Tokenizer revision, training prompt format or template, special tokens, and when generation should stop."
+          },
+          {
+            "id": "reference",
+            "kind": "text",
+            "label": "A small reference example to save",
+            "placeholder": "One fixed formatted input, its token IDs, generation settings, and a held-out task you care about."
+          }
+        ],
+        "compare": [
+          "Another person needs the intended base version and adapter configuration as well as the learned adapter numbers.",
+          "Matching array dimensions does not prove that a different base contains the intended learned values.",
+          "The tokenizer, training input pattern, special tokens, and stop rules are part of reproducing the intended model.",
+          "An unchosen detail is a useful open question. Filling in a field does not verify that the files on disk match the note."
+        ],
+        "example": "For a planned LoRA deployment, I would record an immutable base revision, the adapter weights and configuration, the tokenizer revision, the exact completion format used during training, and stop tokens. I would save a fixed formatted input and its token IDs, then establish the adapted reference before trying a new engine.",
+        "revision": "embedded-practice-2026-10-20"
+      }
+    },
+    {
+      "id": "workshop",
+      "title": "What a cache must remember",
+      "phase": "04 · Build and ship your own",
+      "mins": 35,
+      "goal": "Read one cache slice, predict what it removes, and repair it using actual model scores.",
+      "needs": [
+        "attention",
+        "batch",
+        "artifacts"
+      ],
+      "recall": "What exact numerical comparison establishes cache correctness?",
+      "predict": "If a cache accidentally drops its first key/value, will matching tensor shapes detect it?",
+      "layers": [
+        "<div data-cache-code></div><p>This lesson teaches one thing: a cache can avoid repeating earlier calculations, but attention must still read the history it needs. You will trace two token positions, then repair a one-line change that silently removes part of that history.</p><h2>Read the slice before running the model.</h2><p>Python counts positions from zero. With two saved entries, <code>[0:]</code> selects positions 0 and 1. <code>[1:]</code> selects only position 1. The colon means “from here to the end.” The original arrays stay the same size; the slice controls which entries the calculation receives.</p><div data-cache-visibility></div><h2>What is actually stored?</h2><p>Each saved entry contains a key and a value: numerical vectors calculated from a token and its position. The query, named <code>q</code> in the code, comes from the current token. Attention compares that query with the visible keys, then uses the resulting weights to mix the corresponding values.</p><p>If you remove a saved entry from the read, you remove its possible contribution to that mixture. The rest of the model then calculates its next-token scores from a different mixture. Two arrays can still have equal lengths while representing the wrong calculation.</p><h2>Here is the question you will answer.</h2><p>When the second input arrives, why does starting at position 1 change the scores? In “See an example,” watch the actual entries and attention weights at each position. In “Try it,” change the highlighted value, predict which entries remain, and run your version. Finish by explaining why your repair is justified.</p><p>The small model uses random weights and numbered tokens. Its purpose here is to make the calculation visible, rather than produce fluent language.</p><div data-workshop-tools></div>",
+        "<p>The important property is that two implementations receive the same sequence and calculate the same next-token scores within the chosen tolerance. Generated text is a less precise debugging signal because one changed token changes all later inputs.</p><p>For a scheduler, compare each request against its own independent generation. Include requests that finish early and a new request that takes over a freed slot.</p><p>Use the code viewer in this lesson to inspect <code>attention</code>, <code>full_logits</code> and <code>cached_step</code>. Predict each tensor’s shape, then trace one prompt token by token. The reference recomputes the full prefix; the cached path retains K/V.</p><p>The broken-read experiment in “Try it” activates a deliberately wrong cache boundary. Predict the first divergent prefix, run it, then locate the one-line cause. The result table should show the detected mismatch.</p><p>The tests also compare interleaved request states and explicit versus merged low-rank output-head updates. Those updates are constructed examples, not trained adapters or PEFT checkpoint support.</p>",
+        "<p>Vectorizing the arithmetic changes how work is executed. Paging the cache changes how state is stored and addressed. Chunking prefill changes how known inputs are divided into work units. Keep those experiments separate at first, so a failure points to a specific new mechanism rather than several simultaneous changes.</p><ol><li>Add an explicit maximum-context policy. Define whether you reject or truncate; silently changing attention is not a neutral implementation detail.</li><li>Add a scheduler that admits a waiting request after another finishes. Keep separate caches; compare every request with independent generation.</li><li>Port matrix operations to NumPy or PyTorch and preserve the reference oracle.</li><li>Only then try chunked prefill or paged storage, with tests at page boundaries.</li></ol><p>For each extension, compare results with the independent reference. Include early finishes, a new request taking over a freed slot, and cases on both sides of a storage boundary. A scheduler that organizes requests is not yet a fused batched matrix operation; measure the work the implementation actually performs.</p>"
+      ],
+      "example": [
+        "We process input IDs [1, 4]. These numbers name tokens; they are not the saved attention values.",
+        [
+          "The first input creates the entry at position 0. With only one entry, attention gives it all of the weight. The cached path and the full-prefix reference use the same information.",
+          "The second input creates an additional entry at position 1. Starting the read at 0 keeps both entries. Attention distributes its weight between the two saved values, and the cached scores still agree with the reference.",
+          "Now change only the read boundary to 1. Position 0 is still stored, but attention no longer receives it. The remaining entry gets all of the weight. Inspect one next-token score to see the numerical consequence of that missing contribution."
+        ]
+      ],
+      "questions": [
+        {
+          "id": "work1",
+          "level": 1,
+          "revision": "cache-slice-v1",
+          "prompt": "The cache contains entries at positions 0 and 1. What does cache.values[1:] pass to attention?",
+          "options": [
+            "Both positions 0 and 1.",
+            "Only position 1.",
+            "Only position 0."
+          ],
+          "correct": 1,
+          "why": "The slice begins at index 1 and continues to the end. It leaves position 0 out of the values passed to attention, even though that entry still exists in the cache.",
+          "hint": "Python starts counting at zero. The number before the colon is the first included position.",
+          "repair": "workshop"
+        },
+        {
+          "id": "work2",
+          "level": 2,
+          "prompt": "A wrong cache offset can leave shapes unchanged. Needed check?",
+          "options": [
+            "Only assert list length",
+            "Compare actual logits against the full-prefix reference",
+            "Only print tokens/s"
+          ],
+          "correct": 1,
+          "why": "The values and their positions matter, not just dimensions.",
+          "hint": "A structurally valid wrong result is still wrong.",
+          "repair": "correctness"
+        },
+        {
+          "id": "work3",
+          "level": 3,
+          "prompt": "After vectorizing, the scalar reference should…",
+          "options": [
+            "Be retained as a small numerical oracle",
+            "Become the production hot path",
+            "Be replaced by “looks fluent”"
+          ],
+          "correct": 0,
+          "why": "A simple independent implementation helps catch optimized-path mistakes.",
+          "hint": "What makes later changes safe to inspect?",
+          "repair": "correctness"
+        }
+      ],
+      "transfer": [
+        "Your teammate says: “The keys and values still have equal lengths, so starting the cache read at 1 is safe.” Explain what the code actually omits, how that changes the calculation, and what comparison supports your repair.",
+        [
+          "Names the omitted cache position and its contribution",
+          "Connects the changed visible values to changed model scores",
+          "Repairs the read boundary and compares with the same full-prefix reference"
+        ],
+        "With two saved positions, starting at 1 omits position 0 from both slices. Equal slice lengths only show that keys and values are paired; they do not show that the intended history is present. Attention mixes only the remaining value, so later model calculations can produce different next-token scores. Starting at 0 restores both positions. I would compare cached and full-prefix scores on the same inputs, including the second position where this bug first appears. Matching those checks supports this repair; it does not establish a speedup."
+      ],
+      "sources": [
+        "transformer",
+        "entry"
+      ],
+      "takeaway": "A cache must preserve the right history, not merely two arrays with matching lengths.",
+      "activity": {
+        "kind": "workshop",
+        "title": "Repair the highlighted cache read.",
+        "intro": "The cache now has positions 0 and 1. Change the highlighted start value, predict which entries attention will receive, and run the selected branch of the actual CPU engine.",
+        "revision": "visible-cache-lab-2026-10-20"
+      },
+      "assessment_revision": "visible-cache-reasoning-2026-10-20"
+    },
+    {
+      "id": "deploy",
+      "title": "Serve your first real fine-tuned model",
+      "phase": "04 · Build and ship your own",
+      "mins": 90,
+      "goal": "Move your fine-tuned model into a compatible engine and check that it still behaves as intended.",
+      "needs": [
+        "artifacts",
+        "workshop"
+      ],
+      "recall": "What must match between training-time prompt formatting and inference?",
+      "predict": "If the server returns HTTP 200, do you know it is using your adapter?",
+      "layers": [
+        "<h2>Make the first deployment a controlled comparison.</h2><p>You now have two related goals: run the model you actually trained, and run it efficiently. Establish the first before using the second to justify changes. Otherwise, an output difference can be hard to attribute to the model files, input format, numerical format, or engine.</p><h3>Choose an engine by the calculations it supports.</h3><p>Start with the exact architecture and configuration of your base model. Check whether the engine supports that architecture, the adapter path you use, and the numerical format you plan to serve.</p><p>DeepInfer is our advanced case study. Its model-specific design is not a promise that it can execute any model fine-tuned from any base. A compatible general-purpose engine may be a more practical first deployment target for your own model.</p><h3>Save a small set of fixed inputs.</h3><p>Use the correct tokenizer and training-time format to produce prompt IDs. Record the stop behavior and generation settings. Keep these inputs fixed when comparing the reference and engine.</p><p>This prevents a common confusion: two systems receive the same visible question but actually run different token sequences because their formatting differs.</p><h3>Check the model before putting an API around it.</h3><p>Load the intended base plus adapter, or the intended merged checkpoint, in the direct reference path. Save numerical predictions where practical and evaluate examples from a held-out task set. A held-out set contains cases you did not use to fit the model, helping you assess behavior beyond the training examples.</p><p>Then run the compatible engine on the same inputs. Compare next-token probabilities where available, controlled greedy outputs, and the task results you care about. Be clear when the available comparison is weaker than a direct numerical check.</p><h3>Add complexity one change at a time.</h3><p>Once offline generation is correct, add a local endpoint and concurrent requests. Test limits, cancellation, different input lengths, and reloading. Evaluate quantization separately so a quality difference has an identifiable cause.</p><p>An HTTP success response tells you that an endpoint answered. It does not, by itself, show that the intended adapter was active or that the model’s behavior was preserved. Keep the artifact identity and reference comparisons alongside the service measurements.</p>",
+        "<p>A useful comparison has separate rows for the base reference, the adapted reference, and the adapted model in the engine. An optional fourth row tests quantization. This makes it easier to see whether a difference came from learning, execution, or numerical representation.</p><p>Record both task behavior and resource use. A faster configuration is useful only under the quality and latency requirements you actually intend to meet.</p><ol><li><b>Freeze inputs:</b> save prompt IDs, expected stop behavior and generation settings.</li><li><b>Load reference:</b> exact base plus adapter or merged checkpoint; evaluation mode and no gradients.</li><li><b>Compare:</b> teacher-forced logprobs if exposed; otherwise controlled greedy continuations plus task checks, acknowledging the weaker oracle.</li><li><b>Serve:</b> use the engine’s documented offline/API entrypoint and confirm the requested adapter/model identity.</li><li><b>Stress:</b> mixed lengths, cancellation, limits, concurrent requests and a restart/reload.</li></ol><p>The activity in this lesson links official support documentation and helps you record the comparison you plan to run. Commands and installation depend on your chosen architecture, accelerator and engine version; do not infer them from DeepInfer examples.</p>",
+        "<p>A focused first optimization starts with a trace: which stage consumes time, which resource constrains it, and under what request pattern? Change that one part, preserve the reference checks, and repeat the same workload. This is the bridge between understanding inference vocabulary and doing useful engine work.</p><p>Build a controlled comparison table: reference base, reference adapted, engine adapted, optionally engine quantized. Record token agreement, holdout task score, weights/KV memory, TTFT/ITL and throughput. Evaluate quantization as a separate change.</p><p>A credible engine contribution for this model is one focused patch backed by a failing oracle, a passing fix and a representative benchmark. A config change, loader support or scheduling correction can qualify if it changes real behavior.</p><p>Before paying for hardware, calculate weight plus KV capacity with headroom for activations/workspace. For actual commands, bring your architecture/config and artifact manifest into the tutor; hardware is not assumed by this prototype.</p>"
+      ],
+      "example": [
+        "The endpoint returns HTTP 200 and says your adapter’s name. What further evidence would show that it runs your adapted model?",
+        [
+          "Confirm the actual base and adapter artifact identities used by the engine. A response label alone can describe the intended configuration without proving which learned values were loaded.",
+          "Compare fixed inputs against the adapted reference. Include a held-out task where the adapted model behaves meaningfully differently from the base, and compare numerical predictions where the engine exposes them.",
+          "After establishing that behavior, test concurrent requests, limits, and restart/reload behavior. These service checks complement the model comparison; they do not replace it."
+        ]
+      ],
+      "questions": [
+        {
+          "id": "dep1",
+          "level": 1,
+          "prompt": "A successful HTTP response proves…",
+          "options": [
+            "The endpoint answered; model identity and behavior still need their own checks.",
+            "All intended weights and adapters were definitely loaded correctly.",
+            "The result cannot change with batch composition."
+          ],
+          "correct": 0,
+          "why": "Transport success is a lower-level property than correct model execution. Establish the intended model in a reference path, then change one execution variable at a time.",
+          "hint": "Match the observation to what it can establish.",
+          "repair": "deploy"
+        },
+        {
+          "id": "dep2",
+          "level": 2,
+          "prompt": "Before an engine comparison, hold fixed…",
+          "options": [
+            "Prompt IDs, artifacts and generation settings",
+            "Only the visible question text",
+            "Only the maximum output length"
+          ],
+          "correct": 0,
+          "why": "Tokenizer/template differences otherwise confound the comparison.",
+          "hint": "Compare the same numerical task.",
+          "repair": "artifacts"
+        },
+        {
+          "id": "dep3",
+          "level": 3,
+          "prompt": "Safest first speed experiment?",
+          "options": [
+            "Change precision, batching and tokenizer at once",
+            "Change one measured bottleneck while keeping a reference and workload",
+            "Only increase concurrency until it crashes"
+          ],
+          "correct": 1,
+          "why": "A controlled experiment makes improvements and regressions attributable.",
+          "hint": "Which comparison could explain the result?",
+          "repair": "bench"
+        }
+      ],
+      "transfer": [
+        "Describe your first experiment moving a fine-tuned model into an inference engine. How will you tell what caused a difference?",
+        [
+          "Names architecture/artifacts and compatible engine",
+          "Defines reference and quality criteria",
+          "Defines workload and latency/throughput measurements"
+        ],
+        "I would start with the exact base, adapter, configuration, tokenizer, and training-time input format in a direct reference implementation. I would save fixed token IDs, generation settings, and held-out task results. Then I would select an engine supporting that architecture and adapter path and compare it on the same inputs. I would test quantization separately, so an observed difference can be attributed to a particular change."
+      ],
+      "sources": [
+        "vmodels",
+        "vlora",
+        "template"
+      ],
+      "takeaway": "Establish the intended model in a reference path, then change one execution variable at a time.",
+      "activity": {
+        "kind": "worksheet",
+        "title": "Plan the first reference-to-engine comparison.",
+        "intro": "Bring forward the model record from the previous lesson. Choose one compatible engine and one small comparison you could run first. Keep the first experiment offline so endpoint behavior does not hide a model or input mismatch.",
+        "bring": [
+          "artifacts"
+        ],
+        "source": {
+          "label": "Check official vLLM model support as one starting point",
+          "url": "https://docs.vllm.ai/en/latest/models/supported_models/"
+        },
+        "fields": [
+          {
+            "id": "support",
+            "kind": "text",
+            "label": "Engine, version, and support evidence",
+            "placeholder": "Which exact architecture and adapter path are supported? Link the documentation you checked and note unresolved limits."
+          },
+          {
+            "id": "inputs",
+            "kind": "text",
+            "label": "Fixed inputs and reference command or procedure",
+            "placeholder": "Which saved prompt IDs, generation settings, adapted reference, and held-out examples will both paths use?"
+          },
+          {
+            "id": "comparison",
+            "kind": "text",
+            "label": "What will you compare, and what difference will you allow?",
+            "placeholder": "Next-token scores if exposed, a stated tolerance, controlled generation and task behavior. Say which checks are unavailable."
+          },
+          {
+            "id": "sequence",
+            "kind": "text",
+            "label": "Which change comes first, and what waits until later?",
+            "placeholder": "First establish the exact adapted reference. Then change only… Evaluate quantization separately. Add the endpoint and concurrent requests after…"
+          }
+        ],
+        "compare": [
+          "Check the exact architecture, adapter mechanism, numerical format, and supported engine version. DeepInfer is not a generic loader for every fine-tuned base.",
+          "Give both paths the same token IDs and generation rules. Identical visible text can become different inputs under different formatting.",
+          "A direct numerical comparison and a held-out task answer different questions. If only controlled generation is available, state that weaker boundary.",
+          "Establish the adapted reference before changing the engine. Evaluate quantization separately, then test service behavior after offline correctness."
+        ],
+        "example": "I would first run the exact base and adapter in a direct reference and save fixed prompt IDs plus task results. I would select an engine version whose documentation supports that architecture and adapter path, then compare the same inputs and stop rules. I would state a numerical tolerance where scores are available, check controlled outputs and held-out tasks, and leave quantization and online concurrency for separate experiments.",
+        "revision": "embedded-practice-2026-10-20"
+      }
+    },
+    {
+      "id": "bench",
+      "title": "Judge a performance claim and test one change",
+      "phase": "04 · Build and ship your own",
+      "mins": 75,
+      "goal": "Explain whether an engine change helped, using evidence another person can reproduce.",
+      "needs": [
+        "code",
+        "deploy"
+      ],
+      "recall": "Which correctness promise did your last optimization actually make?",
+      "predict": "A chart says 2× faster. What information would let you decide whether that helps your workload?",
+      "layers": [
+        "<h2>A faster-looking chart is the beginning of a question.</h2><p>Imagine a benchmark claiming twice as many tokens per second. You might want the same improvement for your fine-tuned model. Before deciding, ask what was compared and which conditions made that result possible.</p><p>A change in GPU count, numerical format, request length, batch size, or cache state can change the number. If several conditions changed together, the result does not isolate which change caused the gain.</p><h3>Describe the workload as well as the model.</h3><p>Record how long the prompts and outputs are, how requests arrive, how many run at once, and whether prefixes are already cached. These conditions determine the kind of work the engine performs.</p><p>A configuration that does well on many short requests can behave differently on a small number of long-context requests. “The same model” does not make those workloads equivalent.</p><h3>Keep quality and latency requirements in the comparison.</h3><p>If users need a smooth answer, total throughput alone is insufficient. Measure the initial wait, later token gaps, and the slow tail of requests. State which observed percentile must meet your target.</p><p>Also keep the correctness promise visible. A numerical approximation that changes task quality is a different tradeoff from an exact rewrite that removes redundant work. Report those differences rather than hiding them in a headline speedup.</p><h3>Make the result reproducible.</h3><p>Save the exact model and adapter identities, code revision, hardware, library versions, precision settings, workload, warmup procedure, and measurement commands. Another engineer should be able to tell what ran and what the reported numbers include.</p><p>Do not change the workload after seeing a disappointing result without labeling it as a different experiment. Learning that an optimization helps one case and hurts another is useful engineering information.</p><h3>Apply the comparison in this lesson.</h3><p>Use the notes and checks you have built during the lessons to choose one justified code or configuration change for a supported deployment of your fine-tuned model. Show the reference comparison, the bottleneck evidence, the modification, and the repeated benchmark. Explain both the gain and its limits.</p><p>That is stronger evidence of working understanding than memorizing framework names. It gives you a method you can apply when the next model or engine behaves differently.</p>",
+        "<p>Use a matched comparison when you want to isolate one cause: keep artifacts, hardware, inputs, arrival patterns, precision, and cache policy fixed, then change the mechanism under investigation. If perfect matching is impossible, say which differences remain and what narrower conclusion the data supports.</p><p>Cost efficiency needs actual cost information and comparable useful work. Counting devices alone is not a complete cost measurement.</p><p>Record immutable model/adapter and code revisions; hardware and topology; versions; numeric formats; context and output distributions; arrival process; warmup; cache policy; sample count; failures; p50/p95/p99 TTFT and ITL; useful throughput; memory peaks; task score and tolerances.</p><p>Compare at a matched latency/quality requirement. Report both gains and regressions. If the authors report a production improvement, preserve its baseline and operating point rather than turning it into a universal speedup.</p><p>Useful experiment sequence: establish correctness → collect a trace → name the bottleneck → change one thing → recheck correctness → rerun the same workload.</p>",
+        "<p>A negative result can improve your design judgment. If a longer draft helps one user but reduces useful throughput at your target concurrency, record that tradeoff and the workload where it appears.</p><p>Use the work saved inside the lessons to make one comparison reproducible: identify the intended model files, keep a reference, state the workload and quality rule, collect evidence of a limiting resource, then change one mechanism. Keep commands, numerical or task comparisons, measurements, and remaining questions together.</p><p>Choose one DeepInfer mechanism—overlap, expert replication, speculative budget, or bounded replay. Explain the resource it might save, the dependency it relies on, and the evidence you would need before using it for your model. A result on one workload should not become a universal recommendation.</p>"
+      ],
+      "example": [
+        "Configuration A produces 2,000 tokens/s with p99 token gaps of 180 ms. B produces 1,600 tokens/s with p99 gaps of 60 ms. Your limit is 80 ms. Which qualifies?",
+        [
+          "Apply the requirement before maximizing the attractive number. A’s p99 gap of 180 milliseconds exceeds the stated 80-millisecond limit. B’s 60-millisecond result is within it.",
+          "Among these two measured configurations, B qualifies for that latency requirement even though its aggregate throughput is lower. This conclusion assumes their quality checks and measurement boundaries are comparable.",
+          "To compare cost efficiency or generalize to another workload, you need more information. Record hardware cost, workload details, and the other relevant measurements rather than treating this small table as a universal ranking."
+        ]
+      ],
+      "questions": [
+        {
+          "id": "ben1",
+          "level": 1,
+          "prompt": "A universal speedup can be inferred from one author benchmark.",
+          "options": [
+            "True",
+            "False; workload and configuration constrain the claim",
+            "True if the chart is attractive"
+          ],
+          "correct": 1,
+          "why": "A result is evidence for its measured conditions. A useful speed claim names its baseline, workload, correctness promise, and measurement boundary.",
+          "hint": "What variables were held fixed?",
+          "repair": "bench"
+        },
+        {
+          "id": "ben2",
+          "level": 2,
+          "prompt": "A: 2,000 tok/s, p99 ITL 180 ms. B: 1,600 tok/s, p99 60 ms. Limit 80 ms. Choose…",
+          "options": [
+            "A because throughput is larger",
+            "B among these measured configurations",
+            "Either; p99 is irrelevant"
+          ],
+          "correct": 1,
+          "why": "B meets the stated latency constraint.",
+          "hint": "Filter by the actual requirement before maximizing throughput.",
+          "repair": "phases"
+        },
+        {
+          "id": "ben3",
+          "level": 3,
+          "prompt": "What completes the practical track?",
+          "options": [
+            "Memorizing all acronyms",
+            "A reproducible model-serving change with correctness and performance evidence",
+            "Installing every inference framework"
+          ],
+          "correct": 1,
+          "why": "Practical competence requires changing and measuring a real system, not recognition alone.",
+          "hint": "Can another engineer reproduce your conclusion?",
+          "repair": "bench"
+        }
+      ],
+      "transfer": [
+        "Choose one DeepInfer idea and explain whether you would adopt it for your own model. What evidence would you need?",
+        [
+          "Names saved resource and new cost",
+          "States architectural and hardware assumptions",
+          "Defines a correctness oracle and matched benchmark"
+        ],
+        "For confidence-based draft scheduling, I would first check that my model and engine support the required drafting and verification path. I would measure acceptance and verification cost under my target request load. I would preserve the intended sampling behavior with appropriate reference checks, then compare useful throughput at matched latency and quality targets. I would adopt the mechanism only if those measurements show a worthwhile benefit for that workload."
+      ],
+      "sources": [
+        "qa",
+        "dspark",
+        "inference"
+      ],
+      "takeaway": "A useful speed claim names its baseline, workload, correctness promise, and measurement boundary.",
+      "activity": {
+        "kind": "worksheet",
+        "title": "Make one change and decide what the evidence supports.",
+        "intro": "Use your own model experiment when you have one. Until then, write a proposed experiment and label every unmeasured result as “not measured.” Choose one mechanism from the lessons; you do not need a separate final project to begin applying it.",
+        "bring": [
+          "artifacts",
+          "deploy",
+          "workshop"
+        ],
+        "fields": [
+          {
+            "id": "workload",
+            "kind": "text",
+            "label": "What workload and user requirement will you keep fixed?",
+            "placeholder": "Prompt/output lengths, request arrivals, concurrency, cache state, hardware, numerical format, quality requirement, and a latency target."
+          },
+          {
+            "id": "change",
+            "kind": "text",
+            "label": "What one change will you try, and why?",
+            "placeholder": "The trace or other evidence suggests… I will change… I expect this tradeoff…"
+          },
+          {
+            "id": "evidence",
+            "kind": "text",
+            "label": "What did the matched comparison actually show?",
+            "placeholder": "Correctness checks and tolerance, before/after timing and useful throughput, memory, task quality, and limits. Write “not measured” for missing evidence."
+          },
+          {
+            "id": "decision",
+            "kind": "text",
+            "label": "Would you keep the change, and where might it fail?",
+            "placeholder": "Adopt, reject, or investigate further because… The result applies to… It does not establish…"
+          }
+        ],
+        "compare": [
+          "State exactly which model files, engine revision, hardware, inputs, numeric format, and cache conditions ran.",
+          "Use observed evidence to name a limiting resource. A plausible explanation alone is a hypothesis.",
+          "Change one mechanism, repeat the correctness checks, and rerun the same workload. Explain any remaining differences between configurations.",
+          "Keep latency and task quality requirements visible. A larger combined output rate does not establish lower user waiting time or equal cost.",
+          "A plan is useful before you have hardware, but it is still a plan. A decision about a measured gain needs the actual results and their limits."
+        ],
+        "example": "If a trace suggests repeated weight reads dominate my workload, I might test a different batch policy while keeping the model, hardware, inputs, numerical format, and cache state fixed. I would rerun reference checks and compare user waiting times, useful output rate, memory, and task quality under the same arrival pattern. I would keep the change only if the relevant requirement improves without an unacceptable regression. Before collecting those measurements, I would record this as a proposed experiment.",
+        "revision": "embedded-practice-2026-10-20"
+      }
+    }
+  ],
+  "CARDS": [
+    [
+      "Model vs engine",
+      "What changes during fine-tuning, and what does an engine optimize?",
+      "Fine-tuning changes weights/adapters. The engine executes the model efficiently, managing kernels, requests and state.",
+      "map"
+    ],
+    [
+      "Matmul shapes",
+      "X[B,d] W[d,h] produces what shape and approximate FLOPs?",
+      "[B,h], about 2Bdh FLOPs. Check the library’s storage orientation.",
+      "numbers"
+    ],
+    [
+      "Tokens vs words",
+      "Why does “one word = one token” fail?",
+      "Tokenization may use word pieces, punctuation, bytes and control markers. Exact IDs matter.",
+      "tokens"
+    ],
+    [
+      "KV purpose",
+      "What does KV caching save, and what work remains?",
+      "It avoids recomputing past K/V and upstream prefix processing; new queries still read and attend to cached state.",
+      "attention"
+    ],
+    [
+      "Latency boundary",
+      "Name two reasons TTFT can be high before GPU prefill starts.",
+      "Queueing and preprocessing/tokenization; also network or routing within the measured boundary.",
+      "phases"
+    ],
+    [
+      "Roofline",
+      "Write the ideal-overlap lower bound on operator time.",
+      "max(FLOPs/compute_rate, bytes/bandwidth), before additional overheads and imperfect overlap.",
+      "gpu"
+    ],
+    [
+      "Batch tradeoff",
+      "Why can more batch throughput worsen user latency?",
+      "Larger steps and waiting to batch can delay each user even while more total work is completed.",
+      "batch"
+    ],
+    [
+      "Cache scale",
+      "Double batch and context. How does conventional raw KV scale?",
+      "Fourfold, assuming all other dimensions fixed.",
+      "cache"
+    ],
+    [
+      "Cache identity",
+      "Can two adapters safely share arbitrary prefix state?",
+      "Not by default. Cached computation can depend on adapter and base weights; compatibility identity must include them.",
+      "artifacts"
+    ],
+    [
+      "Replay",
+      "Why is bounded SWA replay not automatically exact?",
+      "Multi-layer state has upstream dependencies beyond a single local replay segment; truncated reconstruction can approximate it.",
+      "special"
+    ],
+    [
+      "MoE balance",
+      "Why don’t equal expert counts guarantee equal rank time?",
+      "Router demand and per-expert token work can be skewed; synchronization waits for the slowest required rank.",
+      "parallel"
+    ],
+    [
+      "Speculation",
+      "For conditional acceptance 0.8 over three drafts, expected accepted drafts?",
+      "0.8+0.64+0.512=1.952, excluding correction/bonus target tokens.",
+      "speculate"
+    ],
+    [
+      "Exactness",
+      "Does equal output distribution imply the same string for the same seed across engines?",
+      "No. Distributional equality is distinct from identical random paths or numerical execution.",
+      "correctness"
+    ],
+    [
+      "Disaggregation",
+      "Name a benefit and a cost of splitting prefill and decode.",
+      "Independent resource/scheduling choices; state transfer, networking and coordination overhead.",
+      "service"
+    ],
+    [
+      "LoRA algebra",
+      "Write merged and unmerged LoRA outputs for column-vector x.",
+      "(W+sBA)x = Wx+sB(Ax). Floating-point rounding can differ.",
+      "artifacts"
+    ],
+    [
+      "Reference oracle",
+      "How do you isolate a cache bug before text trajectories diverge?",
+      "Use identical prefixes/teacher forcing and compare logits or layer outputs against a full-forward reference.",
+      "workshop"
+    ],
+    [
+      "Benchmark",
+      "What must a “2× faster” claim include to be useful?",
+      "Baseline, artifacts, hardware, workload, cache/precision settings, quality contract and latency/throughput measurement.",
+      "bench"
+    ],
+    [
+      "Graduation",
+      "What evidence shows you can work on an engine?",
+      "A reproducible real-model change with an explicit correctness oracle, representative measurements and a justified design tradeoff.",
+      "bench"
+    ]
+  ],
+  "GLOSSARY": {
+    "Activation": "An intermediate numerical value produced while executing the model.",
+    "Adapter": "A learned modification attached to compatible base weights; LoRA is one family.",
+    "Autoregressive": "Each next-token prediction conditions on earlier tokens.",
+    "Bandwidth": "How many bytes can move per second; distinct from memory capacity.",
+    "Batch invariance": "A supported guarantee that changing co-batch membership does not change a request’s result.",
+    "BF16 / FP16": "Two-byte floating-point formats with different precision/range tradeoffs.",
+    "Checkpoint": "Saved model parameters/configuration at a particular point; may be full weights or only an adapter.",
+    "Collective": "A coordinated communication operation among device ranks, such as all-reduce.",
+    "CP": "Context parallelism: divide sequence work among devices.",
+    "CUDA graph": "A captured device-work graph reused to reduce launch overhead, under shape and memory constraints.",
+    "Decode": "Iteratively extend a sequence using retained model state.",
+    "DP": "Data parallelism: split independent work, with details depending on the layer/system.",
+    "EPLB": "Expert-parallel load balancing: place/map expert work to reduce skew.",
+    "EP": "Expert parallelism: distribute expert ownership across devices.",
+    "EOS": "End-of-sequence marker or corresponding termination condition.",
+    "FLOP": "One floating-point arithmetic operation; FLOP/s measures a rate.",
+    "GEMM": "General matrix multiplication, a central building block of model execution.",
+    "GQA": "Grouped-query attention: query heads share fewer KV heads.",
+    "HBM": "High-bandwidth accelerator memory; capacity and transfer bandwidth are separate limits.",
+    "Kernel": "A device program implementing one or more numerical operations.",
+    "KV cache": "Retained keys and values or compatible attention state for preceding tokens.",
+    "Logit": "An unnormalized next-token score.",
+    "LoRA": "Low-rank adaptation: a compact parameter update to selected base-model matrices.",
+    "MLA": "Multi-head latent attention: compressed attention representations; not a paging scheme.",
+    "MoE": "Mixture of experts: selectively activate expert networks for each token.",
+    "Oracle": "A reference computation or criterion that decides whether a property holds.",
+    "P99": "The value at or below which 99% of measured samples fall; state the sampling boundary.",
+    "Paging": "Block-based allocation/addressing of growing state.",
+    "Prefill": "Process known input tokens and build attention state.",
+    "Rank": "One participant in a distributed process group.",
+    "RoPE": "Rotary positional embeddings: a positional transformation of attention representations.",
+    "SLO": "Service-level objective: a measurable target such as a latency percentile.",
+    "Softmax": "Convert arbitrary scores to nonnegative probabilities summing to one.",
+    "SWA": "Sliding-window attention: limit directly visible local key positions.",
+    "Teacher forcing": "Feed a known continuation to compare model predictions on identical prefixes.",
+    "Tensor": "A multidimensional array of numerical values.",
+    "TP": "Tensor parallelism: split an operation/tensor across devices.",
+    "TTFT / ITL": "Time to first token / inter-token latency. Specify queueing and delivery boundaries.",
+    "Weights": "Learned numerical parameters defining the model’s calculations."
+  },
+  "CONTENT_REVISION": "guided-plain-english-2026-10-20",
+  "META": {
+    "id": "deepinfer",
+    "title": "Inside Inference",
+    "progress_key": "inside-inference-v1",
+    "eyebrow": "YOUR INFERENCE COURSE",
+    "heading": "Learn to run your own models.",
+    "introduction": "We’ll start with what happens when a model answers a question. Then we’ll build up to reading DeepInfer, changing a small engine, and serving a model you fine-tune.",
+    "start_label": "START HERE · NO ML BACKGROUND NEEDED",
+    "footnote": "The early lessons and CPU workshop run without a GPU. Later, we’ll choose an engine that supports the architecture of your own fine-tuned model.",
+    "depth_labels": [
+      "Show me how the calculation works",
+      "What should an engine developer check?"
+    ],
+    "about_html": "<span class=\"eyebrow\">EVIDENCE & METHOD</span><h1>What this is built on.</h1><p class=\"lede\">Technical claims come from official source, papers and author documentation. Explanations and toy exercises are original teaching material. Production results remain author-reported; we have not run DeepInfer on a GPU.</p><div class=\"note\">Source snapshot: <a href=\"https://github.com/deepseek-ai/DeepInfer/tree/774ce244b87cc0eb8d4b94ab9f5de2ab22049f01\" target=\"_blank\" rel=\"noopener\">774ce244b87cc0eb8d4b94ab9f5de2ab22049f01</a>. Checked October 20, 2026. Live documentation may change; runtime model availability depends on your account.</div><h2>The learning choices</h2><div class=\"grid\"><div class=\"panel\"><h3>Recall plus worked practice</h3><p class=\"small\">Try a solution step before revealing it, then practice both recall and new scenarios. This draws on retrieval research and mnemonic-medium design; it does not imply this course has been experimentally validated.</p><div class=\"source-links\"><a href=\"https://doi.org/10.1016/j.learninstruc.2025.102196\" target=\"_blank\" rel=\"noopener\">Retrieval inside worked examples (2025) ↗</a><a href=\"https://andymatuschak.org/hmwl/\" target=\"_blank\" rel=\"noopener\">How Might We Learn? ↗</a></div></div><div class=\"panel\"><h3>Assistance is not mastery</h3><p class=\"small\">Hints, example solutions and AI grades help practice. First attempts, later unassisted explanations and runnable checks provide different evidence. Learning studies in math and physics are informative but do not establish outcomes for GPU engineering.</p><div class=\"source-links\"><a href=\"https://hamsabastani.github.io/education_llm.pdf\" target=\"_blank\" rel=\"noopener\">AI assistance and learning (Bastani et al.) ↗</a><a href=\"https://www.nature.com/articles/s41598-025-97652-6\" target=\"_blank\" rel=\"noopener\">AI tutoring design study (2025) ↗</a></div></div><div class=\"panel\"><h3>Transfer beyond recognition</h3><p class=\"small\">Code critiques, counterexamples, broken claims and a real project test whether you can apply ideas. A plausible paragraph is evaluated against an explicit rubric, not keywords.</p></div><div class=\"panel\"><h3>Skills are prior art, not authority</h3><p class=\"small\">Searched the skills ecosystem and inspected a course-specific LangChain tutor. Its active-teaching ideas are useful inspiration; no external tutor skill was installed. Use papers and observed learning behavior to judge efficacy.</p><div class=\"source-links\"><a href=\"https://github.com/langchain-ai/lca-tutors\" target=\"_blank\" rel=\"noopener\">LangChain Academy tutor skill ↗</a></div></div></div>"
+  },
+  "LABS": [
+    "tiny-engine"
+  ]
+}

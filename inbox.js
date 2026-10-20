@@ -1,0 +1,161 @@
+'use strict';
+
+const $ = selector => document.querySelector(selector);
+const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+const activeStates = ['researching','writing','checking'];
+const stateNames = {queued:'Queued',researching:'Reading sources',writing:'Writing lessons',checking:'Editing & checking',ready:'Ready to learn',needs_input:'Needs your input',failed:'Couldn’t finish',cancelled:'Stopped'};
+let inbox = null, filter = 'all', detailId = null, detailRecord = null, lastList = '', toastTimer;
+let refreshing = false, lastControls = '';
+
+async function api(path, body) {
+  const response = await fetch('/api/inbox' + path, body === undefined ? {} : {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const value = await response.json();
+  if (!response.ok) throw Error(value.error || 'The request could not finish. Try again.');
+  return value;
+}
+function toast(message) {
+  clearTimeout(toastTimer);
+  $('#toast').textContent = message;
+  $('#toast').classList.add('show');
+  toastTimer = setTimeout(() => $('#toast').classList.remove('show'), 3500);
+}
+function domain(url) {
+  try { const parsed = new URL(url);if(parsed.hostname==='web.archive.org'){const original=parsed.pathname.split('/').slice(3).join('/');return new URL(original).hostname.replace(/^www\./,'')+' · archived';}return parsed.hostname.replace(/^www\./,''); }
+  catch { return 'Saved source'; }
+}
+function age(seconds) {
+  const minutes = Math.max(0, Math.floor((Date.now()/1000-seconds)/60));
+  return minutes<1?'Just added':minutes<60?minutes+'m ago':minutes<1440?Math.floor(minutes/60)+'h ago':Math.floor(minutes/1440)+'d ago';
+}
+function stateClass(state) { return activeStates.includes(state)?'active':state==='needs_input'?'needs':state; }
+function badge(state) { return `<span class="state ${stateClass(state)}">${escapeHTML(stateNames[state]||state)}</span>`; }
+function row(item) {
+  const ready=item.state==='ready',active=activeStates.includes(item.state);
+  const content=`<span class="source-icon" aria-hidden="true">${domain(item.url).startsWith('github')?'⌘':'↗'}</span><span class="item-copy"><span class="item-title">${escapeHTML(item.title)}</span><span class="item-domain">${escapeHTML(domain(item.url))}</span>${item.note?`<span class="item-note">${escapeHTML(item.note)}</span>`:''}${active?`<span class="item-progress">${escapeHTML(item.message)}</span>`:''}</span><span class="item-end">${badge(item.state)}${ready?'<span class="row-link">Open course ↗</span>':''}<span class="row-time">${age(item.created)}</span></span>`;
+  return ready?`<div class="item-entry"><a class="item-row ready-row" href="${escapeHTML(item.course_url)}">${content}</a><button class="item-more" data-item="${escapeHTML(item.id)}" aria-label="Details and sharing for ${escapeHTML(item.title)}" title="Details and sharing">···</button></div>`:`<button class="item-row" data-item="${escapeHTML(item.id)}">${content}</button>`;
+}
+
+function sampleRow() {
+  return `<a class="item-row sample-row" href="${escapeHTML(inbox.sample.url)}"><span class="source-icon" aria-hidden="true">i</span><span class="item-copy"><span class="item-title">${escapeHTML(inbox.sample.title)}</span><span class="item-domain">Included course · DeepInfer</span><span class="item-note">Start with the basics. Read real code, change a cache read, and compare the results.</span></span><span class="item-end"><span class="state ready">${inbox.sample.lessons} lessons</span><span class="row-link">Open course ↗</span></span></a>`;
+}
+function renderList() {
+  if(!inbox)return;
+  const learning=location.hash==='#learning',query=$('#search').value.trim().toLowerCase();
+  const active=inbox.items.filter(item=>activeStates.includes(item.state)),queued=inbox.items.filter(item=>item.state==='queued'),needs=inbox.items.filter(item=>['needs_input','failed'].includes(item.state));
+  $('#inbox-count').textContent=inbox.items.filter(item=>item.state!=='cancelled').length;
+  $('#learning-count').textContent=inbox.items.filter(item=>item.state==='ready').length+1;
+  $('#nav-inbox').toggleAttribute('aria-current',!learning);$('#nav-learning').toggleAttribute('aria-current',learning);
+  if(!learning)$('#nav-inbox').setAttribute('aria-current','page');else $('#nav-learning').setAttribute('aria-current','page');
+  $('#capture').hidden=learning;$('#filters').hidden=learning;
+  $('#breadcrumb').textContent=learning?'Your learning':'Your inbox';
+  $('#collection-title').textContent=learning?'Ready when you are':'Your links';
+  $('#collection-summary').textContent=learning?'Your courses, with your place saved as you go.':active.length?active.length+' preparing'+(queued.length?' · '+queued.length+' queued':''):queued.length?queued.length+' queued'+(inbox.settings.enabled?'':' · preparation paused'):needs.length?needs.length+' '+(needs.length===1?'item needs':'items need')+' your attention':inbox.items.length?'A little more understood, one link at a time.':'Save something you’d like to understand.';
+  const configured=inbox.settings.provider!=='none',running=inbox.settings.enabled;
+  const controls=`<div class="queue-status ${running?'running':''}"><span aria-hidden="true"></span><span>${running?'Queue running':configured?'Queue paused':'Preparation not connected'}</span>${configured?`<button data-toggle-queue>${running?'Pause':'Resume'}</button>`:''}<button data-settings>${configured?'Settings':'Connect a model'}</button></div>`;
+  if(controls!==lastControls){$('#queue-control').innerHTML=controls;lastControls=controls;}
+  $('#worker-note').textContent=running?'Preparation continues while this server is running.':'Links are saved even while preparation is paused.';
+  let items=inbox.items.filter(item=>!learning||item.state==='ready');
+  if(!learning&&filter!=='all')items=items.filter(item=>filter==='preparing'?['queued',...activeStates].includes(item.state):filter==='needs'?['needs_input','failed'].includes(item.state):item.state==='ready');
+  if(query)items=items.filter(item=>[item.title,item.url,item.note].join(' ').toLowerCase().includes(query));
+  let content=items.map(row).join('');
+  if(learning&&(!query||'inside inference deepinfer'.includes(query)))content+=sampleRow();
+  if(!content)content=`<div class="empty"><span class="empty-mark" aria-hidden="true">${query?'⌕':'n'}</span><h3>${query?'No matching links':filter!=='all'?'Nothing here yet':'A good question is a place to start.'}</h3><p>${query?'Try a different word or clear your search.':filter==='ready'?'Finished courses will appear here. You can try Inside Inference while you wait.':filter==='needs'?'Items that need more source text or a retry will appear here.':'Save a link above. You’ll see its progress here, then open the lessons when they’re ready.'}</p>${!query&&filter==='all'?'<a class="quiet" href="/learn/deepinfer/">Explore the included course ↗</a>':''}</div>`;
+  if(content!==lastList){$('#items').innerHTML=content;lastList=content;}
+  document.querySelectorAll('[data-filter]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.filter===filter)));
+}
+async function refresh() {
+  if(refreshing)return;
+  refreshing=true;
+  try {
+    inbox=await api('');$('#connection-error').hidden=true;renderList();
+    if(detailId&&$('#item-dialog').open)await refreshDetail();
+  }catch(error){$('#connection-error').textContent='Couldn’t reach the local server. Your saved links are still on disk. '+error.message;$('#connection-error').hidden=false;}
+  finally{refreshing=false;}
+}
+function timeline(events) {
+  return `<ol class="event-list">${events.slice(-8).map(event=>`<li>${escapeHTML(event.message)}<time datetime="${new Date(event.at*1000).toISOString()}">${escapeHTML(new Date(event.at*1000).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}))}</time></li>`).join('')}</ol>`;
+}
+function detailActions(item) {
+  if(item.state==='ready')return `<div class="detail-actions"><a class="primary" href="${escapeHTML(item.course_url)}">Start learning <span>↗</span></a><a href="/share/${item.id}.zip" download>Download to share</a></div>`;
+  if(['failed','cancelled'].includes(item.state))return `<button class="primary" data-action="retry">Try again</button>`;
+  if(['queued',...activeStates].includes(item.state))return '<button class="quiet" data-action="cancel">Stop preparing this item</button>';
+  return '';
+}
+function detailHTML(item) {
+  return `<div class="dialog-heading"><h2 id="item-title">${escapeHTML(item.title)}</h2><button class="close" data-close="item-dialog" aria-label="Close item">×</button></div><p class="detail-link"><a href="${escapeHTML(item.url)}" target="_blank" rel="noopener">${escapeHTML(item.url)} ↗</a></p><div class="detail-status"><div id="detail-badge">${badge(item.state)}</div><p id="detail-message">${escapeHTML(item.message)}</p></div>${item.note?`<details class="detail-section"><summary>Your note</summary><p class="detail-note">${escapeHTML(item.note)}</p></details>`:''}<div id="provide-text-area">${item.state==='needs_input'?`<form id="provide-text-form"><label class="source-box-label" for="replacement-text">Paste the post or article text</label><textarea id="replacement-text" class="source-box" minlength="100" maxlength="100000" required placeholder="Copy the text you want to learn from. Noema will use this excerpt and keep the original link for reference.">${escapeHTML(item.source_text||'')}</textarea><p class="detail-explanation">This works for a tweet, a thread you’ve copied, or an excerpt from a page that needs a login.</p><button class="primary" type="submit">Continue with this text <span>↗</span></button></form>`:''}</div><div class="detail-section" id="detail-actions">${detailActions(item)}</div><p id="item-error" class="error" role="alert" hidden></p><section class="detail-section"><h3>Activity</h3><div id="detail-timeline">${timeline(item.events)}</div></section>`;
+}
+async function refreshDetail(force=false) {
+  const id=detailId,item=await api('/items/'+id);
+  if(id!==detailId)return;
+  if(force||!detailRecord||detailRecord.state!==item.state){$('#item-content').innerHTML=detailHTML(item);}
+  else {$('#item-title').textContent=item.title;$('#detail-message').textContent=item.message;$('#detail-timeline').innerHTML=timeline(item.events);}
+  detailRecord=item;
+}
+async function openItem(id) {
+  detailId=id;detailRecord=null;
+  try{await refreshDetail(true);$('#item-dialog').showModal();}
+  catch(error){toast(error.message);}
+}
+function openSettings() {
+  if(!inbox)return;
+  $('#provider').value=inbox.settings.provider==='none'?(inbox.providers.claude?'claude':'codex'):inbox.settings.provider;
+  $('#generation-model').value=inbox.settings.model||'';
+  $('#settings-error').hidden=true;$('#save-settings').textContent=inbox.settings.enabled?'Save changes':'Start preparing';
+  updateProviderHelp();$('#settings-dialog').showModal();
+}
+function updateProviderHelp() {
+  const provider=$('#provider').value,installed=inbox.providers[provider];
+  $('#provider-help').textContent=installed?'Detected on this computer. Make sure you’re signed in to the CLI.':`The ${provider==='claude'?'Claude Code':'Codex'} CLI isn’t installed on this computer yet. Install it and sign in, then return here.`;
+}
+$('#capture-form').addEventListener('submit',async event=>{
+  event.preventDefault();$('#capture-error').hidden=true;
+  const urls=$('#links').value.split(/\s+/).filter(Boolean);
+  $('#add-button').disabled=true;
+  try{
+    const result=await api('/items',{urls,note:$('#intent').value,source_text:$('#source-text').value});
+    $('#links').value='';$('#intent').value='';$('#source-text').value='';$('#capture-context').open=false;
+    toast(result.added.length?(result.added.length===1?'Saved to your queue.':result.added.length+' links saved to your queue.'):(result.existing.length===1?'That link is already in your inbox.':'Those links are already in your inbox.'));
+    filter='all';await refresh();$('#links').focus();
+  }catch(error){$('#capture-error').textContent=error.message;$('#capture-error').hidden=false;}
+  finally{$('#add-button').disabled=false;}
+});
+$('#settings-form').addEventListener('submit',async event=>{
+  event.preventDefault();$('#settings-error').hidden=true;$('#save-settings').disabled=true;
+  try{await api('/settings',{provider:$('#provider').value,model:$('#generation-model').value,enabled:true});$('#settings-dialog').close();toast('Preparation is connected. Your queue will begin shortly.');await refresh();}
+  catch(error){$('#settings-error').textContent=error.message;$('#settings-error').hidden=false;}
+  finally{$('#save-settings').disabled=false;}
+});
+document.addEventListener('submit',async event=>{
+  if(event.target.id!=='provide-text-form')return;
+  event.preventDefault();const button=event.target.querySelector('button');button.disabled=true;
+  try{await api('/items/'+detailId+'/action',{action:'provide_text',source_text:$('#replacement-text').value});await refreshDetail(true);await refresh();toast('Text saved. This item is back in the queue.');}
+  catch(error){$('#item-error').textContent=error.message;$('#item-error').hidden=false;button.disabled=false;}
+});
+document.addEventListener('click',async event=>{
+  const button=event.target.closest('button');if(!button)return;
+  if(button.dataset.close){$('#'+button.dataset.close).close();return;}
+  if(button.id==='settings-button'||button.hasAttribute('data-settings')){openSettings();return;}
+  if(button.dataset.filter){filter=button.dataset.filter;renderList();return;}
+  if(button.dataset.item){await openItem(button.dataset.item);return;}
+  if(button.hasAttribute('data-toggle-queue')){
+    button.disabled=true;
+    try{await api('/settings',{...inbox.settings,enabled:!inbox.settings.enabled});await refresh();}
+    catch(error){toast(error.message);button.disabled=false;}
+  }
+  if(button.dataset.action&&detailId){
+    button.disabled=true;
+    try{await api('/items/'+detailId+'/action',{action:button.dataset.action});await refreshDetail(true);await refresh();}
+    catch(error){$('#item-error').textContent=error.message;$('#item-error').hidden=false;button.disabled=false;}
+  }
+});
+$('#search').addEventListener('input',renderList);
+$('#provider').addEventListener('change',updateProviderHelp);
+window.addEventListener('hashchange',renderList);
+$('#item-dialog').addEventListener('close',()=>{detailId=null;detailRecord=null;});
+for(const dialog of document.querySelectorAll('dialog'))dialog.addEventListener('click',event=>{if(event.target===dialog){const box=dialog.getBoundingClientRect();if(event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom)dialog.close();}});
+$('#capture').addEventListener('dragover',event=>{if([...event.dataTransfer.types].some(type=>['text/plain','text/uri-list'].includes(type))){event.preventDefault();document.body.classList.add('drop-active');}});
+$('#capture').addEventListener('dragleave',event=>{if(!$('#capture').contains(event.relatedTarget))document.body.classList.remove('drop-active');});
+$('#capture').addEventListener('drop',event=>{const text=event.dataTransfer.getData('text/uri-list')||event.dataTransfer.getData('text/plain');if(!text)return;event.preventDefault();document.body.classList.remove('drop-active');$('#links').value=text.split('\n').filter(line=>line&&!line.startsWith('#')).join('\n');$('#links').focus();});
+refresh();
+setInterval(()=>{if(!document.hidden)refresh();},2500);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});

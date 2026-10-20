@@ -1,0 +1,618 @@
+[
+  {
+    "id": "cache-key",
+    "kind": "Patch review",
+    "lesson": "cache",
+    "title": "Can two models share this cache?",
+    "difficulty": "Intermediate",
+    "prompt": "A teammate wants more requests to reuse the cache and proposes the change below. Would you accept it? Walk through two requests, explain whether they may share the saved work, say what you would keep or change, and describe a test of the actual results. Assume the adapters can change calculations in attention layers.",
+    "artifact": "# Before\ncache_key = (base_revision, adapter_id, tuple(prompt_ids))\n# Proposed change\ncache_key = tuple(prompt_ids)",
+    "context": "Cached keys/values depend on model parameters and the preceding token trajectory, not only the literal input IDs. Distinct adapters can have equal shapes and different learned values.",
+    "repo_paths": [
+      "deepinfer/entrypoints/llm.py"
+    ],
+    "hint": "Hold the prompt fixed, then change a parameter that affects attention.",
+    "criteria": [
+      {
+        "id": "cause",
+        "label": "Explains when saved work belongs to a different model",
+        "rule": "Explains that removing base/adapter identity can reuse KV computed under different model parameters, producing incorrect hidden state or logits.",
+        "feedback": "Connect cached numerical state to the weights/adapters that produced it."
+      },
+      {
+        "id": "example",
+        "label": "Walks through two requests",
+        "rule": "Uses the same prompt IDs with two different bases or attention-affecting adapters and describes the second request hitting the first request's incompatible state.",
+        "feedback": "Give two concrete requests sharing prompt IDs and differing in model or adapter."
+      },
+      {
+        "id": "repair",
+        "label": "Keeps the needed model information in the cache label",
+        "rule": "Includes immutable base and adapter identity in a compatibility key, and acknowledges other settings that affect state or requires cache invalidation on model changes.",
+        "feedback": "Restore parameter identity; dimensions alone are not enough."
+      },
+      {
+        "id": "test",
+        "label": "Checks results against fresh computation",
+        "rule": "Compares cache-hit output/logits with an uncached reference for two model/adapter identities rather than checking only key shape or successful execution.",
+        "feedback": "Compare cached and uncached results while alternating adapters."
+      }
+    ],
+    "solution": "The key now aliases two distinct numerical computations. Run prompt IDs [1,2,3] under adapter A, then under attention-changing adapter B: B can hit A's KV and produce a hybrid result. Include immutable base/adapter and relevant positional/precision identity in the compatibility namespace. Test A→B→A with the same IDs against uncached reference logits; include a legitimate same-model hit.",
+    "follow_up": "If an adapter changes only the final output head, could some earlier-layer cache be shared? State the dependency you would need to prove.",
+    "revision": "guided-review-2026-10-20",
+    "guide": {
+      "needs": [
+        "attention",
+        "cache",
+        "artifacts"
+      ],
+      "setup": [
+        "Imagine that you run two versions of a model: one writes customer-support replies and another writes legal summaries. They start from the same base model, but you fine-tuned them with different adapters. An adapter is a smaller set of learned changes applied to a base model. Using a different adapter can change the calculations even when the model has the same size.",
+        "When a model reads a prompt, its attention layers produce intermediate numbers. The engine can save some of those numbers in a cache so that a later request with a matching beginning can avoid repeating work. These saved numbers are usually called keys and values, or KV. They are results of a calculation; they are not just a copy of the original text.",
+        "A cache key is the label the engine uses to decide whether saved work belongs to the request it is about to run. This example asks you to review a change to that label. The teammate wants more requests to find an existing entry, which is called a cache hit. Your job is to decide when a hit actually represents work the new request is allowed to reuse. Assume here that the adapters change calculations in the attention layers."
+      ],
+      "terms": [
+        [
+          "base_revision",
+          "The exact saved version of the base model, before applying an adapter."
+        ],
+        [
+          "adapter_id",
+          "The identity of the learned adapter used for this request."
+        ],
+        [
+          "prompt_ids",
+          "The numbered text pieces that make up the input."
+        ],
+        [
+          "cache_key",
+          "A label used to find a saved result; matching labels cause the engine to try reusing it."
+        ]
+      ],
+      "reading": [
+        [
+          "The original line",
+          "The parentheses group the base version, adapter identity, and input IDs into one cache label. Two requests must match all three parts to use the same entry."
+        ],
+        [
+          "tuple(prompt_ids)",
+          "In Python, tuple makes an ordered collection that can be used inside a dictionary key. It does not recalculate the saved attention values."
+        ],
+        [
+          "The proposed line",
+          "Only the input IDs remain in the label. Think through what information the lookup now uses, and what information it no longer uses."
+        ]
+      ],
+      "trace": "Request A uses adapter A with input IDs [1, 2, 3] and fills the cache. Request B uses adapter B with those same input IDs. What label does each request produce before and after the change, and what saved work would B receive?",
+      "trace_hint": "Keep the input IDs fixed. Ask which learned numbers produced the saved result and which learned numbers B expects.",
+      "takeaway": "Reusing work is safe only when you can show that the saved calculation matches the new request. A higher cache-hit rate does not establish that."
+    }
+  },
+  {
+    "id": "prefix-sum",
+    "kind": "Patch review",
+    "lesson": "speculate",
+    "title": "Can we simplify this draft estimate?",
+    "difficulty": "Advanced",
+    "prompt": "A teammate replaces the loop with a shorter sum. Does it still estimate the average number of accepted draft tokens? Try two positions, show your calculation, say what code you would use, and describe how you would check it. The input rates are conditional, and accepted drafts must form an unbroken beginning.",
+    "artifact": "# Before\nsurvival = 1.0\nexpected = 0.0\nfor rate in conditional_rates:\n    survival *= rate\n    expected += survival\n\n# Proposed replacement\nexpected = sum(conditional_rates)",
+    "context": "A later draft contributes only if all earlier drafts survive. For conditional rates a[0:i], the marginal contribution at i is their product.",
+    "repo_paths": [
+      "deepinfer/model_executor/layers/tilelang_ops/cuda/schedule_mtp_varlen.py"
+    ],
+    "hint": "For [0.5, 0.5], the second draft is accepted only when both events happen.",
+    "criteria": [
+      {
+        "id": "cause",
+        "label": "Explains why later drafts depend on earlier ones",
+        "rule": "States that a later accepted draft requires every previous draft to be accepted, so individual conditional probabilities cannot simply be summed.",
+        "feedback": "Distinguish a conditional probability from whole-prefix survival."
+      },
+      {
+        "id": "example",
+        "label": "Works through a small numerical example",
+        "rule": "Provides valid rates with correct cumulative-product expectation and contrasts it with the incorrect sum, e.g. [0.5,0.5] gives 0.75 vs 1.0.",
+        "feedback": "For [0.5,0.5], use 0.5 + 0.25, not 0.5 + 0.5."
+      },
+      {
+        "id": "repair",
+        "label": "Estimates the intended kind of tokens",
+        "rule": "Uses sum of cumulative products and states this estimates accepted draft tokens, excluding target correction or bonus tokens.",
+        "feedback": "Restore cumulative products and identify which output tokens the estimate counts."
+      },
+      {
+        "id": "test",
+        "label": "Checks simple boundary cases against a separate reference",
+        "rule": "Proposes checking against an independent simple reference or enumeration, including a zero-probability early position or all-one rates.",
+        "feedback": "Try [0,1], [1,1] and a mixed case against a reference."
+      }
+    ],
+    "solution": "The new sum treats conditional survival as unconditional independent contributions. [0.5,0.5] yields 1.0 in the patch but 0.5+0.25=0.75 accepted drafts. Restore sum(cumprod(rates)); this excludes correction/bonus target tokens. Compare to a simple enumerated prefix distribution for zero, one and mixed rates.",
+    "follow_up": "Why could the correct expected accepted length still be insufficient to choose the fastest verification budget?",
+    "revision": "guided-review-2026-10-20",
+    "guide": {
+      "needs": [
+        "numbers",
+        "speculate"
+      ],
+      "setup": [
+        "Some inference engines ask a cheaper method to draft several possible next tokens. The main model then checks those drafts. This is called speculative decoding. A draft is useful only if the check accepts it; a rejected draft must be corrected or replaced.",
+        "For this exercise, accepted drafts have to form an unbroken beginning, or prefix. If the first draft is rejected, the second draft cannot count as an accepted continuation. If the first is accepted but the second is rejected, only the first counts. We are counting accepted draft tokens here, not extra correction or bonus tokens from the main model.",
+        "The scheduler wants an estimate of how many drafts will be useful. Its inputs are conditional acceptance rates: the rate for position two describes acceptance assuming position one has already survived. That is different from saying position two survives in half of all attempts. The proposed patch replaces a short loop with a simple sum. Review whether the shorter expression still measures the same thing."
+      ],
+      "terms": [
+        [
+          "conditional rate",
+          "A probability under an assumption, such as acceptance given that all earlier drafts were accepted."
+        ],
+        [
+          "survival",
+          "The probability that the entire draft prefix up to the current position is accepted."
+        ],
+        [
+          "expected",
+          "An average across many repetitions; it can be fractional even though each run accepts a whole number of tokens."
+        ]
+      ],
+      "reading": [
+        [
+          "survival = 1.0",
+          "Before checking any drafts, the empty beginning has survived. The variable starts at probability one."
+        ],
+        [
+          "survival *= rate",
+          "The *= operator multiplies the current value by the next rate and stores the result back in the same variable."
+        ],
+        [
+          "expected += survival",
+          "The += operator adds the current prefix contribution to the total. The proposed replacement instead adds the original rates directly."
+        ]
+      ],
+      "trace": "Try conditional rates [0.5, 0.5]. Imagine 100 attempts: how many reach the second position, and how many of those accept it? Use those counts to estimate accepted drafts per attempt, then compare the two expressions.",
+      "trace_hint": "Draw three possible outcomes: zero accepted drafts, one accepted draft, or two accepted drafts. Their probabilities must add to one.",
+      "takeaway": "When a later result requires earlier successes, its contribution must include the chance of reaching it. A conditional rate alone leaves out that dependency."
+    }
+  },
+  {
+    "id": "async-buffer",
+    "kind": "Patch review",
+    "lesson": "batch",
+    "title": "Can we remove this output copy?",
+    "difficulty": "Advanced",
+    "prompt": "Would you remove this copy? Assume raw_output refers to storage the engine overwrites on its next step. Walk through saving one output and reading it after the next step, explain your decision, and describe a repair if needed and a test. Appending an object does not automatically copy it.",
+    "artifact": "# Before\noutputs[request_id].append(RequestOutput.clone(raw_output))\n# Proposed change\noutputs[request_id].append(raw_output)\n# The next engine step reuses the buffer.",
+    "context": "A consumer must retain a stable value after producer buffer reuse. Python lists retain references. The original DeepInfer entrypoint clones request outputs before the next step releases/reuses them.",
+    "repo_paths": [
+      "deepinfer/entrypoints/llm.py"
+    ],
+    "hint": "Append token 7, overwrite the same buffer with token 9, then inspect both saved entries.",
+    "criteria": [
+      {
+        "id": "cause",
+        "label": "Explains how a saved result can change",
+        "rule": "Explains that saved references alias a buffer which is later overwritten or released, corrupting prior outputs.",
+        "feedback": "Name aliasing or use-after-reuse, not just vague async risk."
+      },
+      {
+        "id": "example",
+        "label": "Walks through saving, overwriting, and reading",
+        "rule": "Describes saving a first output, producer reuse/overwrite on a later step, and reading the changed old output.",
+        "feedback": "Walk through produce → save reference → overwrite → consume."
+      },
+      {
+        "id": "repair",
+        "label": "Keeps saved output stable",
+        "rule": "Retains a copy/clone or introduces explicit ownership/lifetime transfer that prevents reuse until consumption.",
+        "feedback": "A copy is one repair; a proven lifetime protocol can be another."
+      },
+      {
+        "id": "test",
+        "label": "Checks earlier outputs after later work",
+        "rule": "Asserts old output values remain unchanged after later steps or a deliberate buffer overwrite, with distinguishable token values.",
+        "feedback": "Read the earlier result after later producer activity."
+      }
+    ],
+    "solution": "Appending keeps a reference to mutable/reusable storage. If step 1 records token 7 and step 2 overwrites the same buffer with token 9, the saved step-1 result may now say 9. Keep the clone or transfer ownership with delayed reuse. Test two distinct outputs while forcing buffer reuse, then verify the first remains unchanged.",
+    "follow_up": "What evidence would justify replacing the clone with an ownership transfer?",
+    "revision": "guided-review-2026-10-20",
+    "guide": {
+      "needs": [
+        "batch",
+        "correctness"
+      ],
+      "setup": [
+        "An engine produces output in small steps. One piece of code writes the latest result, while another collects results to show the caller later. To avoid repeatedly allocating memory, the producer may use the same storage area again on its next step. That storage area is a reusable buffer.",
+        "A useful Python distinction matters here. A list can hold a reference to an object, which is a way to reach that object. Appending an object to a list does not automatically create a separate copy of its contents. Two list entries can therefore point to the same mutable object. Mutable means that the object can change after it is created.",
+        "The current code clones each output before keeping it. In this exercise, clone means making a stable copy of the output data that will outlive the producer buffer. A teammate proposes removing that copy to save time. Assume the next engine step overwrites the original buffer, and the caller may read saved outputs afterward. Your review needs to account for that sequence, rather than only looking at the value at the instant it is appended."
+      ],
+      "terms": [
+        [
+          "raw_output",
+          "The latest output object backed by storage the engine will reuse."
+        ],
+        [
+          "outputs[request_id]",
+          "The list collecting outputs for a particular request."
+        ],
+        [
+          "append",
+          "Keep another list entry; this does not promise to copy the object."
+        ],
+        [
+          "clone",
+          "For this exercise, make a stable copy of the output data."
+        ]
+      ],
+      "reading": [
+        [
+          "The original line",
+          "It creates a stable output copy first, then appends that copy to the request’s saved results."
+        ],
+        [
+          "The proposed line",
+          "It appends raw_output directly. Follow the identity of that object across more than one engine step."
+        ],
+        [
+          "The final comment",
+          "This is a stated behavior of the producer, not an optional possibility: the next step reuses the buffer."
+        ]
+      ],
+      "trace": "The buffer first contains token 7. The collector appends the output. The engine then reuses that same buffer for token 9. Only afterward does the caller inspect the first saved entry. Predict what each version of the code allows the caller to observe.",
+      "trace_hint": "Draw the list entry and the buffer as separate boxes. Does the list hold its own data, or a way to reach the producer’s data?",
+      "takeaway": "Before removing a copy, prove who owns the data and how long it stays unchanged. Saving a reference is different from saving a stable value."
+    }
+  },
+  {
+    "id": "benchmark-claim",
+    "kind": "Claim critique",
+    "lesson": "bench",
+    "title": "Does “twice as fast” mean what the blog claims?",
+    "difficulty": "Beginner",
+    "prompt": "What does this experiment show, and which parts of the conclusion still need evidence? Explain the difference in ordinary language, point to the changed conditions, and propose a fair follow-up comparison.",
+    "artifact": "Baseline: 1 GPU, BF16, batch=1, cold cache, 256 prompt tokens.\nNew engine: 2 GPUs, FP8, batch=64, warm prefix cache, 4096 prompt tokens.\nMeasured aggregate tokens/s is 2× higher.\nConclusion: 'The new scheduler halves every user's latency at equal cost.'",
+    "context": "Throughput aggregates work across requests. Latency concerns an individual request and its measurement boundary. Multiple changed variables confound attribution. Device count alone is not a cost measurement.",
+    "repo_paths": [],
+    "hint": "Which variables changed, and which claimed quantities were never measured?",
+    "criteria": [
+      {
+        "id": "cause",
+        "label": "Names conditions that changed",
+        "rule": "Names at least two concrete changed variables, such as GPU count, precision, batch size, cache policy or prompt length.",
+        "feedback": "Name the actual changed conditions."
+      },
+      {
+        "id": "latency",
+        "label": "Separates combined output rate from user waiting time",
+        "rule": "Explains aggregate throughput does not establish per-user latency and requests TTFT/ITL or equivalent per-request timing.",
+        "feedback": "Ask for the time a user actually waits."
+      },
+      {
+        "id": "cost",
+        "label": "Explains which cost and scheduler claims need evidence",
+        "rule": "Explains neither equal cost nor a scheduler-specific improvement follows from these measurements.",
+        "feedback": "Identify the missing cost and attribution evidence."
+      },
+      {
+        "id": "experiment",
+        "label": "Designs a fair comparison",
+        "rule": "Proposes matched artifacts/hardware/workload/precision/cache settings or a controlled ablation, plus quality and latency measurements.",
+        "feedback": "Hold conditions fixed or use an ablation to isolate the scheduler."
+      }
+    ],
+    "solution": "The observed configurations differ in hardware, precision, batching, cache and input length, so only their reported aggregate rates can be compared. There is no measured per-user latency, equal-cost result or isolated scheduler effect. Hold the model, hardware, numeric format, cache policy and arrival/length distribution fixed, change the scheduler alone, and compare quality plus TTFT/ITL/goodput and measured cost.",
+    "follow_up": "If hardware cannot be matched, what normalized comparison would still be useful, and what limitations would remain?",
+    "revision": "guided-review-2026-10-20",
+    "guide": {
+      "needs": [
+        "phases",
+        "bench"
+      ],
+      "setup": [
+        "You read that a new engine is twice as fast. That sounds useful, but faster can mean several different things. A user may care about how long they wait for the first output or how smoothly the answer continues. An operator may care about the total amount of work a machine completes across many users.",
+        "Throughput measures that total rate of completed work. Latency measures how long an individual request or part of a request takes. A restaurant can serve more meals per hour by adding tables while each diner still waits just as long for dinner. A larger throughput number therefore needs interpretation before you use it to make a promise about waiting time.",
+        "A comparison also depends on its conditions. The number of GPUs, how many requests run together, the length of the inputs, and whether earlier work is already cached can all affect a measurement. BF16 and FP8 are different numerical formats; you do not need their bit layouts for this review. Simply notice that the format changed. Your task is to distinguish the observation in the table from the stronger explanation and promises attached to it."
+      ],
+      "terms": [
+        [
+          "batch",
+          "A group of token positions or requests processed together."
+        ],
+        [
+          "cold versus warm cache",
+          "Cold starts without the reusable work; warm can start with relevant work already saved."
+        ],
+        [
+          "aggregate tokens/s",
+          "The combined output rate across requests, not an individual user’s waiting time."
+        ],
+        [
+          "equal cost",
+          "A claim that needs a defined cost boundary and actual cost measurements."
+        ]
+      ],
+      "reading": [
+        [
+          "Baseline and new engine",
+          "Read them as two experiment setups. Mark every condition that differs."
+        ],
+        [
+          "Measured result",
+          "This sentence reports a combined output rate. Ask which quantities it actually measures."
+        ],
+        [
+          "Conclusion",
+          "This sentence adds claims about the scheduler, every user’s latency, and cost. Check each claim against the measured result."
+        ]
+      ],
+      "trace": "Imagine that the combined rate doubles because twice as many machines work at once. Must any one person receive their first token sooner? Write what you could conclude from the rate alone and what you would still need to measure.",
+      "trace_hint": "Make two columns: directly observed, and asserted without a matching measurement. A useful critique can accept the observation while questioning the conclusion.",
+      "takeaway": "A performance claim should name the workload, what was measured, and what stayed fixed. Throughput, latency, quality, and cost answer different questions."
+    }
+  },
+  {
+    "id": "replay-argument",
+    "kind": "Explain the flaw",
+    "lesson": "special",
+    "title": "Does a short attention window prove exact replay?",
+    "difficulty": "Advanced",
+    "prompt": "Does this argument establish that replay produces exactly the same result? Trace where information can come from across layers, explain what the shape test establishes, and describe the comparisons you would need before using this approach.",
+    "artifact": "Each attention layer has a 128-token sliding window.\nTherefore, a 20-layer network can reconstruct its final local state exactly by replaying only the last 128 raw tokens.\nA metadata test confirms all replay tensors have the expected shapes.\nTherefore the reconstruction is exact for every prompt.",
+    "context": "Layered representations can carry information from farther back than one layer's local visibility. Shape agreement does not establish equality of numerical state. DeepInfer describes bounded SWA replay as approximate.",
+    "repo_paths": [
+      "deepinfer/model_executor/models/v4_modules/yoco.py"
+    ],
+    "hint": "What earlier positions may have influenced the first replayed token's deeper-layer state?",
+    "criteria": [
+      {
+        "id": "cause",
+        "label": "Traces information through more than one layer",
+        "rule": "Explains that a token within the local window can itself encode older context through prior layers, so receptive fields compose.",
+        "feedback": "Trace information through more than one layer."
+      },
+      {
+        "id": "exactness",
+        "label": "Separates exact reproduction from approximation",
+        "rule": "Rejects automatic exactness and recognizes bounded replay may be an approximate reconstruction under a quality contract.",
+        "feedback": "Approximate can be useful; it is a different promise."
+      },
+      {
+        "id": "oracle",
+        "label": "Explains what array sizes can and cannot prove",
+        "rule": "Explains that tensor shapes/metadata tests alone cannot establish logit or state equality.",
+        "feedback": "Correct indices and shapes do not imply correct values."
+      },
+      {
+        "id": "experiment",
+        "label": "Compares reconstructed results with a full reference",
+        "rule": "Compares full reference and replayed logits/state on long and boundary contexts, plus representative downstream task quality if approximation is accepted.",
+        "feedback": "Test both the numerical deviation and whether it matters to the task."
+      }
+    ],
+    "solution": "The first replayed token's deeper representation may depend on older information carried through earlier layers. Limiting each direct attention window does not bound all upstream dependencies to the same 128 raw tokens. Shapes only prove structure. Treat truncated replay as approximate, compare fixed-trajectory state/logits at boundaries and long contexts, and evaluate task quality before accepting the tradeoff.",
+    "follow_up": "What stronger architectural restriction could make a finite exact replay bound possible?",
+    "revision": "guided-review-2026-10-20",
+    "guide": {
+      "needs": [
+        "attention",
+        "special",
+        "correctness"
+      ],
+      "setup": [
+        "Attention allows a token’s representation to incorporate information from other token positions. A representation is a list of numbers the model uses internally. In sliding-window attention, a layer can look directly at only a nearby span of positions. That restriction can reduce the amount of state the engine needs to keep.",
+        "A network has several layers. A later layer does not always receive the original raw token; it receives a representation already calculated by earlier layers. To understand the whole network, you need to track what information those earlier calculations may contain. A limit on one direct lookup is a statement about that lookup. You still need to reason about the chain of calculations leading to it.",
+        "Replay means reconstructing working state by running some input tokens through the model again. The argument in this exercise claims a particular short replay is exact for every prompt. Exact means reproducing the intended state or output under a stated numerical contract. It also cites a shape test, which checks the sizes of arrays. Review whether the premises are enough to justify the claimed equality of the numbers inside those arrays."
+      ],
+      "terms": [
+        [
+          "128-token window",
+          "The stated limit on which nearby positions a single attention layer can read directly."
+        ],
+        [
+          "20 layers",
+          "Twenty successive transformations; later transformations use earlier representations."
+        ],
+        [
+          "replay",
+          "Run input positions again to reconstruct saved working state."
+        ],
+        [
+          "tensor shape",
+          "The dimensions of an array, such as 128 rows by 64 columns; this does not state its numerical contents."
+        ]
+      ],
+      "reading": [
+        [
+          "The first sentence",
+          "It describes direct visibility at each individual attention layer."
+        ],
+        [
+          "The first “therefore”",
+          "It extends that local restriction into a statement about reconstructing the whole network. Trace which dependencies would need to be covered."
+        ],
+        [
+          "The shape test",
+          "It checks array structure. Decide which part of an exactness claim that evidence can establish."
+        ]
+      ],
+      "trace": "Start with the first token included in the replay. Ask which positions influenced its first-layer representation, then which representations its next layer reads. Can you justify ignoring every token before the replay boundary?",
+      "trace_hint": "Use two layers and a very small window on paper. Draw arrows for information flow, then compare the oldest indirect dependency with the replay boundary.",
+      "takeaway": "A local visibility rule is not automatically a proof about all earlier dependencies. Separate structural checks, numerical equivalence, and acceptable approximation."
+    }
+  },
+  {
+    "id": "artifact-plan",
+    "kind": "Design review",
+    "lesson": "artifacts",
+    "title": "Will this deployment run the model you trained?",
+    "difficulty": "Intermediate",
+    "prompt": "Will this plan reliably run the model that training intended? Explain what could change its behavior and propose a better sequence. Include how you would compare the served model with a trusted reference.",
+    "artifact": "1. Fine-tune base revision R1 with LoRA and a custom completion format.\n2. Upload only adapter.safetensors.\n3. Load latest base R2 with the same dimensions.\n4. Apply an unrelated chat template.\n5. Enable 4-bit quantization and a new engine at once.\n6. If HTTP 200 returns, call it validated.",
+    "context": "An adapter is tied to a base and target modules. Tokenizer, prompt format, config and numeric representation affect execution. Transport success does not establish correct artifact loading, numerical equivalence or task quality.",
+    "repo_paths": [],
+    "hint": "First reconstruct the exact adapted reference that training intended.",
+    "criteria": [
+      {
+        "id": "identity",
+        "label": "Keeps the intended base and adapter versions",
+        "rule": "Requires the exact intended base revision, adapter config/weights and compatible target modules, not just equal dimensions.",
+        "feedback": "Equal shapes do not establish the intended learned model."
+      },
+      {
+        "id": "format",
+        "label": "Keeps the intended input and stop rules",
+        "rule": "Preserves tokenizer, custom training prompt format and relevant special/stop tokens instead of inventing a new chat template.",
+        "feedback": "The prompt format is part of what was learned."
+      },
+      {
+        "id": "sequence",
+        "label": "Changes one execution choice at a time",
+        "rule": "Establishes the adapted reference before changing engine and quantization, then evaluates those changes separately.",
+        "feedback": "Change one execution variable at a time."
+      },
+      {
+        "id": "oracle",
+        "label": "Compares the intended computation and task behavior",
+        "rule": "Uses identical token IDs with numerical/greedy and holdout task comparisons plus confirmed artifact identity, rather than HTTP success alone.",
+        "feedback": "Test the computation and desired behavior, not only the endpoint."
+      }
+    ],
+    "solution": "Recover a manifest with R1, adapter configuration/weights, tokenizer, custom completion format and stop behavior. Load that exact adapted model in a reference path and save fixed prompt IDs and holdout results. Choose an engine supporting its architecture/adapter, compare the same inputs, and evaluate quantization separately. Verify loaded identity, numerical or controlled-generation behavior and task quality; HTTP success is only transport evidence.",
+    "follow_up": "What would you record to reproduce the model after a framework version upgrade?",
+    "revision": "guided-review-2026-10-20",
+    "guide": {
+      "needs": [
+        "map",
+        "artifacts",
+        "deploy"
+      ],
+      "setup": [
+        "Your fine-tuned model is more than a file with “adapter” in its name. With LoRA, training learns a smaller update to selected model calculations. Loading that update together with the intended base model reconstructs the adapted model. The exact base version matters because it supplies the learned numbers the update was trained alongside.",
+        "Text preparation also matters. A tokenizer turns text into numbered pieces. A prompt format arranges the instructions, examples, user text, and special markers before the model sees them. Training taught the model to respond to a particular input pattern. A new serving setup needs to reproduce that intended pattern and know when generation should stop.",
+        "The plan below changes the base version, prompt format, numerical representation, and engine. Quantization means representing learned numbers using fewer bits; a 4-bit setting is one such choice. Each change may need its own validation. HTTP 200 only says the server returned a successful response at the transport level. Review how you would first reconstruct the intended model, then determine whether the new serving path preserves the behavior you need."
+      ],
+      "terms": [
+        [
+          "R1 and R2",
+          "Two saved base-model versions. Matching dimensions means they fit the same array sizes, not that they contain the same learned values."
+        ],
+        [
+          "adapter.safetensors",
+          "A file containing learned adapter numbers; the filename alone does not identify all required configuration."
+        ],
+        [
+          "chat template",
+          "Rules that format messages and special markers before tokenization or model execution."
+        ],
+        [
+          "reference",
+          "A trusted, explicit way to run the intended adapted model so a new execution path has something to compare against."
+        ]
+      ],
+      "reading": [
+        [
+          "Steps 1–3",
+          "Identify what training used and what deployment actually loads. Keep model identity separate from array dimensions."
+        ],
+        [
+          "Steps 4–5",
+          "List the additional changes to input preparation and execution. Think about how you would isolate a failure."
+        ],
+        [
+          "Step 6",
+          "Ask whether a successful network response proves the correct model was loaded or that its answers meet your task requirements."
+        ]
+      ],
+      "trace": "Suppose the server responds fluently, but its answers no longer follow your training examples. Which saved versions and input IDs would you need to reproduce the problem, and which change would you evaluate first?",
+      "trace_hint": "Write a minimal record of what training intended. Then establish one working reference before introducing new execution choices.",
+      "takeaway": "Deployment should preserve an explicit model and input contract. First reconstruct the intended reference, then evaluate engine and precision changes separately."
+    }
+  },
+  {
+    "id": "stable-softmax",
+    "kind": "Approve or reject",
+    "lesson": "numbers",
+    "title": "Does this numerical change preserve the probabilities?",
+    "difficulty": "Intermediate",
+    "prompt": "Would you approve this change? Explain whether it preserves the intended probabilities, how it affects the computer’s calculation, what assumptions your conclusion needs, and which examples you would test. Assume the input list is nonempty and every score is finite.",
+    "artifact": "# Before\nweights = [exp(x) for x in logits]\nprobs = [w / sum(weights) for w in weights]\n\n# Proposed change\nshift = max(logits)\nweights = [exp(x - shift) for x in logits]\nprobs = [w / sum(weights) for w in weights]",
+    "context": "All logits are finite, and the list is nonempty. Subtracting a common constant factors the same positive multiplier from every exponential in exact arithmetic. Floating-point exponentials can overflow on large positive logits. Invalid inputs such as NaN, infinity or an empty list are outside these assumptions.",
+    "repo_paths": [],
+    "hint": "Factor exp(-shift) out of the numerator and denominator.",
+    "criteria": [
+      {
+        "id": "algebra",
+        "label": "Explains whether the probabilities are preserved",
+        "rule": "Approves the common-shift transformation under the stated assumptions and explains that the common exponential factor cancels in numerator and denominator.",
+        "feedback": "Show why subtracting one common constant preserves softmax in exact arithmetic."
+      },
+      {
+        "id": "stability",
+        "label": "Explains how the change avoids large exponentials",
+        "rule": "Explains that shifted logits are nonpositive and at least one is zero, preventing large-positive exponential overflow and keeping the denominator nonzero for finite inputs.",
+        "feedback": "Connect the maximum shift to safe exponential magnitudes."
+      },
+      {
+        "id": "limits",
+        "label": "States the limits of the conclusion",
+        "rule": "Distinguishes mathematical equivalence from bitwise floating-point identity and keeps invalid/nonfinite/empty inputs outside the claimed contract or handles them explicitly.",
+        "feedback": "Real-number algebra is not a universal bitwise guarantee."
+      },
+      {
+        "id": "test",
+        "label": "Checks ordinary and extreme finite scores",
+        "rule": "Tests ordinary logits against a reference within tolerance, plus extreme finite logits for finite normalized outputs or common-shift invariance.",
+        "feedback": "Use both an ordinary reference comparison and a large-magnitude case."
+      }
+    ],
+    "solution": "Approve under the stated contract. The factor exp(-max(logits)) cancels from numerator and denominator in exact arithmetic. Every shifted logit is nonpositive, and one is zero, so the largest exponential is 1 and the finite-input denominator is positive. This improves stability without promising bitwise identity. Compare ordinary inputs with a reference within tolerance and test [1000,999] for finite probabilities summing approximately to one. Define separate behavior for nonfinite and empty inputs.",
+    "follow_up": "Why can subtracting a different constant from each logit change the distribution?",
+    "revision": "guided-review-2026-10-20",
+    "guide": {
+      "needs": [
+        "numbers",
+        "tokens"
+      ],
+      "setup": [
+        "A model produces scores for possible next tokens. These scores are called logits. Softmax turns a list of scores into probabilities: take the exponential of each score, then divide each result by the sum of all the exponentials. The probabilities should add to one.",
+        "The exponential function, written exp(x), grows quickly for large positive x. Computers represent numbers with limited range and precision, so a direct calculation can overflow: its result becomes too large to represent as a finite number. A mathematically meaningful formula can therefore be a poor way to calculate a result on a real machine.",
+        "The proposed change subtracts the largest score from every score before applying exp. Your job is to judge both the mathematical relationship and the behavior of the calculation with finite precision. Assume the list is nonempty and every input score is finite. You do not need to reject the change just because it changes intermediate numbers. Decide what result the code is meant to preserve and what evidence supports your decision. Some review exercises should end in approval."
+      ],
+      "terms": [
+        [
+          "logits",
+          "The model’s scores before converting them into next-token probabilities."
+        ],
+        [
+          "exp(x)",
+          "The exponential function; exp(a + b) = exp(a) × exp(b)."
+        ],
+        [
+          "max(logits)",
+          "The largest input score. The proposed code subtracts this one common value from every score."
+        ],
+        [
+          "floating point",
+          "The computer’s finite-precision representation of real numbers; rounding and range limits affect calculations."
+        ]
+      ],
+      "reading": [
+        [
+          "[exp(x) for x in logits]",
+          "Python builds a new list by applying exp to each input score."
+        ],
+        [
+          "w / sum(weights)",
+          "Each weight is divided by the same total to obtain a probability."
+        ],
+        [
+          "x - shift",
+          "Every score uses the same shift. Use the exponential identity above to compare the original and changed fraction."
+        ]
+      ],
+      "trace": "First try scores [2, 1]. Compare the probability fractions symbolically before and after subtracting 2. Then consider [1000, 999]: which exponential magnitudes does each implementation ask the computer to represent?",
+      "trace_hint": "Factor the same exp(-shift) term out of the numerator and denominator. Separately, find the largest shifted score and its exponential.",
+      "takeaway": "Review the result a change promises to preserve, rather than demanding identical intermediate steps. Real-number equivalence and stable finite-precision execution are related but different checks."
+    }
+  }
+]

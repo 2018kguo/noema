@@ -1,0 +1,23 @@
+name: Checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python3 course.py validate courses/deepinfer
+      - run: python3 -m unittest test_grader test_workshop test_portability test_crawl test_inbox test_generation -v
+      - run: python3 tiny_engine.py test
+      - run: node --check app.js
+      - run: node --check inbox.js
+      - run: npm install -g agent-browser@0.37.1
+      - run: agent-browser install --with-deps
+      - run: python3 -m unittest test_learning_flow test_inbox_browser -v
