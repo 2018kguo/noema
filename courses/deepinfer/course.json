@@ -309,6 +309,30 @@
         ],
         "conclusion": "These boundaries help you investigate a problem. A model change affects predictions, an engine change affects execution, and a service change affects how people reach that execution.",
         "revision": "embedded-practice-2026-10-20"
+      },
+      "example_title": "Three changes. Which part owns each one?",
+      "visual": {
+        "kind": "flow",
+        "title": "Model → engine → service",
+        "caption": "An authored example. These are three responsibilities in one system; a change in one can affect the others.",
+        "source_ids": [],
+        "nodes": [
+          {
+            "label": "Model: change the learned behavior",
+            "detail": "Fine-tuning changes weights or an adapter. The same input can produce different predictions.",
+            "step": 0
+          },
+          {
+            "label": "Engine: change how work runs",
+            "detail": "Batching combines requests on the computer. Compare predictions to check that the scheduling change preserves the intended behavior.",
+            "step": 1
+          },
+          {
+            "label": "Service: get the request to a machine",
+            "detail": "Sign-in, routing and availability surround model execution. A delay here also affects the user’s wait.",
+            "step": 2
+          }
+        ]
       }
     },
     {

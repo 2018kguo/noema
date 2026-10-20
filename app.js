@@ -68,6 +68,10 @@ function setStep(id, step, part=0) {
   render();
   window.scrollTo(0,0);
   focusContent();
+  if(step==='example'&&part>0)requestAnimationFrame(()=>{
+    const current=flowFor(id);
+    if(current.step===step&&current.part===part)document.querySelector('.worked-example')?.scrollIntoView({block:'start'});
+  });
 }
 function finishedCount() { return LESSONS.filter(l => state.completed[l.id]).length; }
 function resumeLesson() {
@@ -109,7 +113,7 @@ function question(q,{guided=false}={}) {
 }
 function readStep(l) {
   const reading=l.layers[0].replace('<div data-cache-code></div>',()=>cacheCode(0,false)).replace('<div data-cache-visibility></div>',()=>cachePositions([0,1])).replace('<div data-workshop-tools></div>',workshopTools);
-  return `<h1>${e(l.title)}</h1><p class="lesson-goal">${e(l.goal)}</p><article class="prose">${reading}</article><div class="remember"><span class="eyebrow">THE IDEA TO KEEP</span><p>${e(l.takeaway)}</p></div><section class="optional-reading"><p class="small">Want more detail? These are optional on your first pass.</p><details><summary>${e(META.depth_labels[0])}</summary><div class="prose">${l.layers[1]}</div></details><details><summary>${e(META.depth_labels[1])}</summary><div class="prose">${l.layers[2]}</div></details></section>${background(l)}${footer(l,{primary:'next-example',primaryText:'Next: see an example'})}`;
+  return `<h1>${e(l.title)}</h1><p class="lesson-goal">${e(l.goal)}</p><article class="prose">${reading}</article><div class="remember"><span class="eyebrow">THE IDEA TO KEEP</span><p>${e(l.takeaway)}</p></div><section class="optional-reading"><p class="small">Want more detail? These are optional on your first pass.</p><wa-details summary="${e(META.depth_labels[0])}"><div class="prose">${l.layers[1]}</div></wa-details><wa-details summary="${e(META.depth_labels[1])}"><div class="prose">${l.layers[2]}</div></wa-details></section>${background(l)}${footer(l,{primary:'next-example',primaryText:'Next: see an example'})}`;
 }
 function cacheCode(start,editable) {
   return `<section class="cache-code-panel"><div class="cache-code-heading"><span>Cache read · two saved positions</span><span>${editable?'Change the highlighted value':'Follow the highlighted value'}</span></div><pre class="cache-code" aria-label="Cache read code"><code><span class="code-line active"><span class="line-number">1</span>start = ${editable?`<select id="cache-start" aria-label="First saved position to read"><option value="0" ${start===0?'selected':''}>0</option><option value="1" ${start===1?'selected':''}>1</option></select>`:`<mark>${start}</mark>`}</span><span class="code-line"><span class="line-number">2</span>keys = cache.keys[start:]</span><span class="code-line"><span class="line-number">3</span>values = cache.values[start:]</span><span class="code-line"><span class="line-number">4</span>attended = self.attention(q, keys, values)</span></code></pre><div class="code-explanation"><p><b>1 · Choose where the read begins.</b> Position 0 is the first saved entry. Position 1 is the second.</p><p><b>2–3 · Select matching keys and values.</b> <code>[start:]</code> means “from start to the end.” It does not delete anything from the original cache.</p><p><b>4 · Calculate attention.</b> The current query, <code>q</code>, determines how the visible values are mixed.</p></div><p class="small code-caption">This expands the cache-read lines of <code>cached_step</code> for the two-entry case. The exercise selects the corresponding branch of that function.</p></section>`;
@@ -238,7 +242,7 @@ function exampleStep(l,flow) {
   if(l.activity?.kind==='workshop')return workshopExample(l,flow);
   const part = Math.max(0,Math.min(flow.part||0,l.example[1].length-1));
   const last = part === l.example[1].length-1;
-  return `<span class="eyebrow">LET’S MAKE IT CONCRETE</span><h1>Walk through an example.</h1><p class="example-scenario">${e(l.example[0])}</p><section class="worked-example"><div class="example-progress"><span>Part ${part+1} of ${l.example[1].length}</span><div>${l.example[1].map((_,i)=>`<span class="${i<=part?'filled':''}"></span>`).join('')}</div></div><p>${e(l.example[1][part])}</p></section>${part?`<details class="background"><summary>Read the earlier ${part===1?'part':'parts'} again</summary>${l.example[1].slice(0,part).map((s,i)=>`<p><b>${i+1}.</b> ${e(s)}</p>`).join('')}</details>`:''}${last&&l.lab?`<div class="experiment-intro"><h2>Now change one thing.</h2><p>The controls below let you try this idea yourself. Move one control, notice what changes, and connect the result to the example.</p></div>${lab(l.lab)}`:''}${footer(l,{back:part?'example':'learn',primary:last?'next-check':'example-next',primaryText:last?'Next: try one question':'Continue the example'})}`;
+  return `<span class="eyebrow">WORKED EXAMPLE</span><h1>${e(l.example_title||'Walk through an example.')}</h1><p class="example-scenario">${e(l.example[0])}</p><wa-card class="worked-example"><div class="example-progress"><span>Step ${part+1} of ${l.example[1].length}</span><wa-progress-bar value="${100*(part+1)/l.example[1].length}" label="Example progress"></wa-progress-bar></div><p class="current-step">${e(l.example[1][part])}</p>${NoemaVisuals.render(l.visual,part,l.id)}</wa-card>${part?`<ol class="example-history" aria-label="Earlier steps">${l.example[1].slice(0,part).map((s,i)=>`<li><span>${i+1}</span><p>${e(s)}</p></li>`).join('')}</ol>`:''}${last&&l.lab?`<div class="experiment-intro"><h2>Now change one thing.</h2><p>The controls below let you try this idea yourself. Move one control, notice what changes, and connect the result to the example.</p></div>${lab(l.lab)}`:''}${footer(l,{back:part?'example':'learn',primary:last?'next-check':'example-next',primaryText:last?'Next: try one question':'Continue the example'})}`;
 }
 function checkStep(l) {
   if(l.activity&&flowFor(l.id).part===1)return appliedStep(l);
@@ -480,6 +484,7 @@ function render() {
   const views={home,practice:()=>parts[1]?advancedPractice(parts[1],Number(parts[2])):practiceHome(),lesson:()=>lesson(parts[1]),labs,review,glossary,sources,challenges:()=>challengePage(parts[1]),settings};
   if(!Object.hasOwn(views,parts[0])){history.replaceState(null,'','#home');render();return;}
   $('#main').innerHTML=(views[parts[0]]||home)();
+  NoemaVisuals.mount(LESSONS);
   calculateLabs();
   loadWorkshopSource();
   loadCacheWalkthrough();
@@ -499,6 +504,7 @@ document.addEventListener('submit',event=>{
 });
 document.addEventListener('input',event=>{
   const el=event.target;
+  if(el.dataset.visualRate){NoemaVisuals.updateExperiment(lookup(el.dataset.visualRate),Number(el.value)/100);return;}
   recordActivityField(el);
   if(el.dataset.note){state.notes[el.dataset.note]=el.value;save();
     if(el.dataset.note.startsWith('teach-'))refreshAssessmentView();
@@ -527,6 +533,7 @@ document.addEventListener('change',event=>{
 document.addEventListener('click',async event=>{
   const button=event.target.closest('button');if(!button)return;
   const b=button.dataset;
+  if(b.visualReset){const l=lookup(b.visualReset),slider=document.querySelector('#visual-rate');slider.value=l.visual.stages[l.visual.adjustable_stage].rate*100;NoemaVisuals.updateExperiment(l,Number(slider.value)/100);return;}
   if(b.go){go(b.go);return;}
   if(b.runReferenceChecks){await runReferenceChecks();return;}
   if(b.retryEngineSource){workshopSource={kind:'idle'};await loadWorkshopSource();return;}

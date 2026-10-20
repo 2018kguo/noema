@@ -59,6 +59,60 @@ Three questions correspond to the three depth levels. `needs` references earlier
 lesson ids. Keep the beginner question answerable from the main explanation.
 Optional `lab` refers to a shipped inference calculator; omit it in other courses.
 
+`example_title` optionally names the concrete question the example answers.
+Earlier steps remain visible below the current explanation. Use `visual: null`
+or omit it when a visual adds nothing. Otherwise use one of these validated
+structures; the runtime renders it without executing generated code:
+
+```json
+{
+  "kind": "flow",
+  "title": "Where does each responsibility belong?",
+  "caption": "An authored example of three responsibilities in one system.",
+  "source_ids": [],
+  "nodes": [
+    {"label": "Model", "detail": "Change learned weights or an adapter.", "step": 0},
+    {"label": "Engine", "detail": "Change how requests run on the computer.", "step": 1},
+    {"label": "Service", "detail": "Route requests to available machines.", "step": 2}
+  ]
+}
+```
+
+Flow nodes use zero-based example steps, in order, with two to six nodes. Show a
+relationship the learner must reason about; do not repeat three headings.
+
+```json
+{
+  "kind": "funnel",
+  "title": "How many parts survive all three checks?",
+  "caption": "Invented rates for an arithmetic exercise, not production measurements.",
+  "source_ids": [],
+  "initial": 100,
+  "unit": "parts",
+  "start_label": "Start inspection",
+  "adjustable_stage": 1,
+  "stages": [
+    {"label": "Pass size check", "rate": 0.8},
+    {"label": "Pass strength check", "rate": 0.5},
+    {"label": "Pass final inspection", "rate": 0.75}
+  ]
+}
+```
+
+A funnel has one gate per example step. Each rate applies to the survivors of
+the previous gate. Counts are computed by the runtime, without rounding between
+gates. `adjustable_stage` chooses the zero-based gate for the what-if slider.
+The original example remains fixed while a separate table shows the changed
+case. Captions must explain assumptions, fractional expected counts and scope
+where relevant. `source_ids` must reference sources already on that lesson;
+use an empty array for wholly invented examples. Never relabel an intermediate
+gate as proof of the ultimate outcome.
+
+Cards, disclosures and progress indicators use the free MIT-licensed Web Awesome
+components. Their pinned assets ship locally and inside exported ZIPs. Add new
+teaching patterns to the shared renderer, validator and generator schema together;
+do not put custom controls, scripts or raw SVG into generated course HTML.
+
 Optional `activity` has kind `check` (select/numeric fields), `worksheet` (a saved
 plan with a worked comparison), or `workshop` (the fixed cache experiment).
 Inspect the sample's `map`, `phases`, `artifacts`, `bench`, and `workshop` lessons

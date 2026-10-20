@@ -15,6 +15,12 @@ Article courses must work without the inference-specific plugin.
 Run `python3 -m unittest test_grader test_workshop test_portability test_crawl test_inbox test_generation -v`
 and `node --check app.js`. For UI changes also run `python3 -m unittest
 test_learning_flow test_inbox_browser -v` with agent-browser 0.37.1 installed and its browser ready.
+For structured teaching visuals, also run `python3 -m unittest test_visuals -v`
+and `node --test test_visuals.js`. Keep visual validation, rendering and generation
+schemas aligned. Preserve the original example when changing an assumption.
+UI dependencies are pinned and built into `vendor/`; run `npm ci --ignore-scripts
+&& npm run build:ui` when updating them. Running or sharing a course needs no Node
+install. Do not add CDN-only assets or generated executable teaching content.
 These tests use no model credits. `evaluate_grader.py` makes real provider calls;
 use it only when live evaluation is requested or clearly within the authorized work.
 

@@ -41,3 +41,34 @@ Use a second pass to ask:
 Read several paragraphs aloud. Rewrite anything that sounds like a pitch deck,
 an evaluation report, or a compressed research abstract. Check the whole course
 for repeated filler. Do not satisfy a word target by restating the same point.
+
+## Worked examples and visuals
+
+Give the example a title that names the question being answered. Keep the setup
+short. Introduce each new assumption when the reader needs it, and show the
+earlier results beside the current step. Do not make the learner reopen a
+disclosure to find the denominator for the calculation in front of them.
+
+For percentages, say which group the percentage describes. “33% of the 70
+remaining” explains more than “multiply the rates.” Name the endpoint of every
+gate. Passing a test, preparing an application, receiving approval and improving
+an outcome are different events. A decimal count is an expected value across
+repeated groups, not a fraction of an actual person or program.
+
+Do not multiply averages from different populations and present the product as
+an observed overall success rate. Use explicitly invented assumptions to teach
+the arithmetic when source definitions do not establish a common cohort and
+endpoint. Distinguish the arithmetic exercise from a forecast.
+
+Choose a visual that answers the example’s question. Use the runtime’s `flow`
+for relationships or sequences and `funnel` for successive conditional retention
+rates. Label arrows and stages with what happens. Give quantities units and
+state what the diagram leaves out. Use `null` when neither fits; decorative
+cards do not explain a mechanism. Write the example and diagram together, then
+check that every highlighted step agrees with the prose.
+
+Offer a small prediction before a slider or experiment. Change one assumption
+and explain which results depend on it. Keep the original example visible
+beside the changed case. Motion should show a meaningful change, stop on its
+own, and respect reduced-motion settings. Do not generate bespoke JavaScript
+or fetch an external animation just to illustrate a paragraph.

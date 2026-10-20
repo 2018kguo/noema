@@ -86,6 +86,8 @@ For a single course without the inbox:
 python3 serve.py --course courses/deepinfer
 ```
 
+![A worked example with the current step and its visual context](docs/assets/lesson-example.png)
+
 ## Add live feedback
 
 You can compare every written answer with a worked explanation for free. Live
@@ -211,10 +213,23 @@ outside this local prototype.
 
 ## Develop and verify
 
+The reader uses locally bundled [Web Awesome](https://webawesome.com/) cards,
+disclosures and progress indicators. Structured flow and cohort visuals follow
+the worked example step by step. Cohort experiments keep the original calculation
+beside a changed assumption; motion respects the reader's reduced-motion setting.
+See [the authoring guide](docs/AUTHORING.md) for the data shapes and writing rules.
+Generated lessons use these shared components instead of generating scripts.
+
+Running Noema and sharing a course still require only Python. To change the
+pinned UI dependencies, use Node and `npm ci --ignore-scripts && npm run build:ui`.
+Commit the rebuilt `vendor/` assets; they are included in portable downloads and
+require no CDN connection. Licenses and provenance are in [vendor/](vendor/README.md).
+
 ```bash
-python3 -m unittest test_grader test_workshop test_portability test_crawl test_inbox test_generation -v
+python3 -m unittest test_grader test_workshop test_portability test_crawl test_inbox test_generation test_visuals -v
 python3 tiny_engine.py test
 node --check app.js
+node --test test_visuals.js
 ```
 
 Browser tests need [agent-browser](https://github.com/vercel-labs/agent-browser)
@@ -243,7 +258,8 @@ grader benchmark.
 | `source_reader.py`, `generate_course.py` | Bounded source collection and checkpointed course writing |
 | `inbox.html`, `inbox.js`, `inbox.css` | Daily link inbox |
 | `inbox.py` | Same queue operations for a terminal or coding agent |
-| `app.js`, `style.css`, `index.html` | Shared learner interface |
+| `app.js`, `style.css`, `lesson-ui.css`, `index.html` | Shared learner interface |
+| `visuals.js`, `vendor/` | Validated teaching visuals and pinned open-source components |
 | `tiny_engine.py` | Sample's fixed CPU exercise plugin |
 | `crawl.py` | Resumable source discovery and archive coverage |
 | `local-data/`, `local-courses/`, `dist/` | Ignored queue, private work, and share bundles |

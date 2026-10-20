@@ -84,6 +84,15 @@ class PortabilityTests(unittest.TestCase):
             self.assertEqual(assessor.call_args.args[-1], 'article-revision-1')
             self.assertEqual(assessor.call_args.args[0]['revision'], 'article-revision-1')
 
+    def test_reader_components_are_local_allowlisted_assets(self):
+        origin = self.server()
+        for name in serve.READER_ASSETS:
+            with urlopen(origin + '/' + name) as response:
+                self.assertEqual(response.read(), (serve.ROOT / name).read_bytes())
+        with self.assertRaises(HTTPError) as error:
+            urlopen(origin + '/vendor/../.env')
+        self.assertEqual(error.exception.code, 404)
+
     def test_share_bundle_excludes_sources_keys_and_progress_and_loads_after_unpacking(self):
         (self.path / '.env').write_text('SECRET=do-not-copy')
         (self.path / 'sources').mkdir()

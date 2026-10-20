@@ -20,8 +20,16 @@ def obj(**fields):
 
 
 QUESTION = obj(prompt=TEXT, options=array(TEXT, 3, 3), correct={'type': 'integer', 'minimum': 0, 'maximum': 2}, why=TEXT, hint=TEXT)
+FLOW_VISUAL = obj(kind={'type': 'string', 'enum': ['flow']}, title=TEXT, caption=TEXT,
+                  source_ids=array(TEXT, 0, 10), nodes=array(obj(label=TEXT, detail=TEXT,
+                  step={'type': 'integer', 'minimum': 0, 'maximum': 2}), 2, 6))
+FUNNEL_VISUAL = obj(kind={'type': 'string', 'enum': ['funnel']}, title=TEXT, caption=TEXT,
+                    source_ids=array(TEXT, 0, 10), initial={'type': 'number', 'minimum': 0.000001, 'maximum': 1e12},
+                    unit=TEXT, start_label=TEXT, adjustable_stage={'type': 'integer', 'minimum': 0, 'maximum': 2},
+                    stages=array(obj(label=TEXT, rate={'type': 'number', 'minimum': 0, 'maximum': 1}), 3, 3))
 LESSON = obj(beginner_html=TEXT, mechanism_html=TEXT, judgment_html=TEXT,
-             example_setup=TEXT, example_steps=array(TEXT, 3, 3), questions=array(QUESTION, 3, 3),
+             example_title=TEXT, example_setup=TEXT, example_steps=array(TEXT, 3, 3),
+             visual={'anyOf': [FLOW_VISUAL, FUNNEL_VISUAL, {'type': 'null'}]}, questions=array(QUESTION, 3, 3),
              transfer_prompt=TEXT, rubric=array(TEXT, 3, 4), transfer_example=TEXT, takeaway=TEXT)
 PAIR = obj(name=TEXT, explanation=TEXT)
 REVIEW = obj(title=TEXT, prompt=TEXT, artifact=TEXT, context=TEXT, setup=array(TEXT, 2, 4),
@@ -142,6 +150,13 @@ def generate(item, reading, directory, settings, stage, cancelled):
         stage('writing', f"Writing lesson {i + 1} of {len(plan['lessons'])}: {outline['title']}", plan['title'])
         result = checkpoint('lesson-' + str(i + 1), 'Write this single lesson. Its beginner explanation must be 300–500 words of connected prose '
             'and its two optional depths 150–250 words each. Introduce every prerequisite this lesson needs. Use one small worked example in three steps. '
+            'Give the example a concrete descriptive title. Keep its setup short; introduce each new fact in the step that uses it. '
+            'Use a structured visual when it explains a relationship: flow nodes for a sequence or comparison, funnel for successive conditional retention rates. '
+            'A flow node step is its zero-based example step; order nodes by step. A funnel must have exactly three gates, one per example step. '
+            'Rates are fractions of the group entering each gate, not of the original group. State units, denominator, assumptions and the exact endpoint. '
+            'Use null when neither visual fits; never force a funnel onto non-comparable populations or use invented rates as empirical predictions. '
+            'A visual caption labels invented data or explains its source and limitations; source_ids must be drawn from this lesson’s sources. '
+            'Explain fractional expected counts, and distinguish passing a gate from proving the ultimate outcome. '
             'Questions: beginner application, mechanism, evidence/design judgment, in that order. Each needs three plausible options and an explanation. '
             'The transfer task must be new, concrete and answerable from the lesson; its rubric must test reasoning. All numerical examples are invented unless explicitly sourced.\n'
             + json.dumps({'outline': outline, 'earlier_lessons': plan['lessons'][:i], 'course_title': plan['title'],
@@ -152,19 +167,26 @@ def generate(item, reading, directory, settings, stage, cancelled):
             'recall': result['transfer_prompt'], 'predict': result['questions'][1]['prompt'],
             'layers': [clean_html(result[k]) for k in ('beginner_html', 'mechanism_html', 'judgment_html')],
             'example': [result['example_setup'], result['example_steps']],
+            'example_title': result.get('example_title', 'Walk through an example.'),
+            'visual': result.get('visual'),
             'questions': [dict(q, id=lesson_id + '-q' + str(n + 1), level=n + 1, repair=lesson_id) for n, q in enumerate(result['questions'])],
             'transfer': [result['transfer_prompt'], result['rubric'], result['transfer_example']],
             'sources': outline['sources'], 'takeaway': result['takeaway']})
     stage('checking', 'Editing the explanations for clarity and checking the teaching sequence.', plan['title'])
-    editorial_schema = obj(lessons=array(obj(id=TEXT, beginner_html=TEXT), len(lessons), len(lessons)))
-    edited = checkpoint('editorial', 'Edit the beginner explanations below. Preserve all facts and correct reasoning, fix undefined terms and jumps in logic, '
+    editorial_schema = obj(lessons=array(obj(id=TEXT, beginner_html=TEXT, example_setup=TEXT,
+                           example_steps=array(TEXT, 3, 3)), len(lessons), len(lessons)))
+    edited = checkpoint('editorial-v2', 'Edit the beginner explanations and worked examples below. Preserve all facts and correct reasoning, fix undefined terms and jumps in logic, '
         'and keep 300–500 words per lesson. Replace slogans with concrete explanations. Preserve lesson ids and do not invent facts. '
-        'Keep each explanation consistent with its quiz and transfer task.\n' + json.dumps(lessons, ensure_ascii=False), editorial_schema)
-    edits = {e['id']: e['beginner_html'] for e in edited['lessons']}
+        'Keep each explanation consistent with its quiz, transfer task and structured visual. Do not change numerical assumptions. '
+        'Keep three example steps aligned with the visual. State which group every percentage describes; explain decimals as expected counts. '
+        'Remove vague milestones such as next step. Do not conflate an intermediate measurement, submission, approval or a final outcome.\n' + json.dumps(lessons, ensure_ascii=False), editorial_schema)
+    edits = {e['id']: e for e in edited['lessons']}
     if set(edits) != {l['id'] for l in lessons}:
         raise ValueError('The editorial pass omitted a lesson. Retry to keep the saved drafts.')
     for lesson in lessons:
-        lesson['layers'][0] = clean_html(edits[lesson['id']])
+        edit = edits[lesson['id']]
+        lesson['layers'][0] = clean_html(edit['beginner_html'])
+        lesson['example'] = [edit['example_setup'], edit['example_steps']]
     reviews = []
     for i, proposal in enumerate(plan['reviews']):
         stage('checking', f'Preparing guided review {i + 1} of {len(plan["reviews"])}.', plan['title'])

@@ -14,10 +14,12 @@ jobs:
         with:
           node-version: '22'
       - run: python3 course.py validate courses/deepinfer
-      - run: python3 -m unittest test_grader test_workshop test_portability test_crawl test_inbox test_generation -v
+      - run: python3 -m unittest test_grader test_workshop test_portability test_crawl test_inbox test_generation test_visuals -v
       - run: python3 tiny_engine.py test
       - run: node --check app.js
       - run: node --check inbox.js
+      - run: node --test test_visuals.js
+      - run: npm ci --ignore-scripts && npm run build:ui && git diff --exit-code -- vendor
       - run: npm install -g agent-browser@0.37.1
       - run: agent-browser install --with-deps
       - run: python3 -m unittest test_learning_flow test_inbox_browser -v

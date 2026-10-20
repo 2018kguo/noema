@@ -26,7 +26,7 @@ from urllib.error import HTTPError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 from tiny_engine import lesson_experiment, workshop_sources
-from course_bundle import load_bundle
+from course_bundle import load_bundle, READER_ASSETS
 from structured_cli import run_structured
 
 ROOT = Path(__file__).resolve().parent
@@ -325,6 +325,7 @@ class Handler(BaseHTTPRequestHandler):
         allowed = {'/': 'index.html', '/index.html': 'index.html', '/tiny_engine.py': 'tiny_engine.py',
                    '/course.json': 'course.json', '/app.js': 'app.js', '/style.css': 'style.css',
                    '/challenges.json': 'challenges.json'}
+        allowed.update(('/' + name, name) for name in READER_ASSETS)
         filename = allowed.get(path)
         if filename is None:
             return self.send_json(404, {'error': 'Not found'})

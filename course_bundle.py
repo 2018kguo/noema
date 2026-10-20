@@ -3,6 +3,50 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 import re
+import math
+
+READER_ASSETS = ('index.html', 'app.js', 'style.css', 'lesson-ui.css', 'visuals.js',
+                 'vendor/components.js', 'vendor/components.js.LEGAL.txt', 'vendor/theme.css',
+                 'vendor/Web-Awesome-LICENSE.md', 'vendor/Lit-LICENSE.txt', 'vendor/manifest.json')
+
+
+def validate_visual(visual, lesson):
+    """Validate diagram data before serving it; visuals cannot supply code or markup."""
+    if visual is None:
+        return
+    def require(ok, message):
+        if not ok:
+            raise ValueError(lesson['id'] + ': visual ' + message)
+    def text(value):
+        return isinstance(value, str) and 0 < len(value.strip()) <= 1500
+    def number(value):
+        return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+    require(isinstance(visual, dict), 'must be an object')
+    kind = visual.get('kind')
+    require(kind in ('funnel', 'flow'), 'kind must be funnel or flow')
+    common = {'kind', 'title', 'caption', 'source_ids'}
+    fields = {'initial', 'unit', 'start_label', 'stages', 'adjustable_stage'} if kind == 'funnel' else {'nodes'}
+    require(set(visual) == common | fields, 'has missing or unknown fields')
+    require(text(visual['title']) and text(visual['caption']), 'needs a title and explanatory caption')
+    require(isinstance(visual['source_ids'], list) and all(isinstance(x, str) for x in visual['source_ids']) and
+            set(visual['source_ids']) <= set(lesson['sources']), 'references an unknown lesson source')
+    steps = len(lesson['example'][1])
+    if kind == 'funnel':
+        require(number(visual['initial']) and 0 < visual['initial'] <= 1e12, 'needs a positive, bounded starting count')
+        require(text(visual['unit']) and text(visual['start_label']), 'needs units and a starting label')
+        require(isinstance(visual['stages'], list) and len(visual['stages']) == steps, 'must have one gate per example step')
+        require(type(visual['adjustable_stage']) is int and 0 <= visual['adjustable_stage'] < steps, 'has an invalid adjustable gate')
+        for stage in visual['stages']:
+            require(isinstance(stage, dict) and set(stage) == {'label', 'rate'}, 'gate needs a label and rate')
+            require(text(stage['label']) and number(stage['rate']) and 0 <= stage['rate'] <= 1, 'rate must be between 0 and 1')
+    else:
+        nodes = visual['nodes']
+        require(isinstance(nodes, list) and 2 <= len(nodes) <= 6, 'flow needs two to six nodes')
+        for node in nodes:
+            require(isinstance(node, dict) and set(node) == {'label', 'detail', 'step'}, 'node needs label, detail and step')
+            require(text(node['label']) and text(node['detail']) and type(node['step']) is int and
+                    0 <= node['step'] < steps, 'has an invalid flow node')
+        require([n['step'] for n in nodes] == sorted(n['step'] for n in nodes), 'flow nodes must follow example order')
 
 
 @dataclass
@@ -64,6 +108,7 @@ def validate(course, challenges):
         require(set(lesson['sources']) <= set(course['SOURCES']), label + ': unknown source')
         require(len(lesson['layers']) == 3 and all(map(text, lesson['layers'])), label + ': need three depth layers')
         require(len(lesson['example']) == 2 and len(lesson['example'][1]) >= 2, label + ': need a worked example')
+        validate_visual(lesson.get('visual'), lesson)
         require(len(lesson['questions']) == 3, label + ': need three questions, one per depth level')
         require(len(lesson['transfer']) == 3 and lesson['transfer'][1], label + ': need transfer prompt, rubric, example')
         for q in lesson['questions']:

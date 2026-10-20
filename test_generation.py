@@ -36,11 +36,14 @@ class GenerationTests(unittest.TestCase):
             return {'beginner_html': self.lesson['layers'][0], 'mechanism_html': self.lesson['layers'][1],
                     'judgment_html': self.lesson['layers'][2], 'example_setup': self.lesson['example'][0],
                     'example_steps': self.lesson['example'][1],
+                    'example_title': 'Follow three changes', 'visual': self.lesson.get('visual'),
                     'questions': [{k: q[k] for k in ('prompt', 'options', 'correct', 'why', 'hint')} for q in self.lesson['questions']],
                     'transfer_prompt': self.lesson['transfer'][0], 'rubric': self.lesson['transfer'][1],
                     'transfer_example': self.lesson['transfer'][2], 'takeaway': self.lesson['takeaway']}
         if set(schema['properties']) == {'lessons'}:
-            return {'lessons': [{'id': 'idea-' + str(i + 1), 'beginner_html': self.lesson['layers'][0]} for i in range(5)]}
+            return {'lessons': [{'id': 'idea-' + str(i + 1), 'beginner_html': self.lesson['layers'][0],
+                                'example_setup': self.lesson['example'][0],
+                                'example_steps': self.lesson['example'][1]} for i in range(5)]}
         challenge = self.sample.challenges['cache-key']
         return {'title': challenge['title'], 'prompt': challenge['prompt'], 'artifact': challenge['artifact'],
                 'context': challenge['context'], 'setup': challenge['guide']['setup'],

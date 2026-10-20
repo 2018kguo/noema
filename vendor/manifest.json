@@ -1,0 +1,13 @@
+{
+  "package": "@awesome.me/webawesome",
+  "version": "3.14.0",
+  "license": "MIT",
+  "source": "https://github.com/shoelace-style/webawesome",
+  "sha256": {
+    "components.js": "5fde1b5f9b44d89e2284c910e59806607ee4b5b31c207b7815718d31cfd73315",
+    "components.js.LEGAL.txt": "83e1411cb33027d1e3179764829dc19f611530a2270d7cd20d04bfab13501fb9",
+    "theme.css": "305220884e052cf511cd14ec490ea9d116476755ee393472e795056c0ae802f5",
+    "Web-Awesome-LICENSE.md": "e024db6c0a83b08f33eedda3eb92d90439169903f7d9d7cfeb200c989cd62881",
+    "Lit-LICENSE.txt": "2d020f2411f86da60ae4f433debac5f6bfe0d2e3c624517b4eadac8ead2599db"
+  }
+}

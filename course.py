@@ -4,10 +4,10 @@ import argparse
 import json
 from pathlib import Path
 import zipfile
-from course_bundle import load_bundle
+from course_bundle import load_bundle, READER_ASSETS
 
 ROOT = Path(__file__).resolve().parent
-RUNTIME = ('serve.py', 'course_bundle.py', 'structured_cli.py', 'tiny_engine.py', 'index.html', 'app.js', 'style.css')
+RUNTIME = ('serve.py', 'course_bundle.py', 'structured_cli.py', 'tiny_engine.py') + READER_ASSETS
 
 
 def bundle(course_path, destination):

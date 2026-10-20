@@ -5,6 +5,7 @@ Requires agent-browser with Chrome. Uses an isolated local origin and browser
 namespace, deterministic grader fixtures, and no model account or API key.
 """
 import json
+import copy
 import os
 import shutil
 import subprocess
@@ -13,10 +14,20 @@ import unittest
 from urllib.parse import urlparse
 
 import serve
+from test_visuals import FUNNEL
 BUNDLE = serve.load_bundle(serve.ROOT / "courses/deepinfer")
 
 
 class FixtureHandler(serve.Handler):
+    def do_GET(self):
+        if urlparse(self.path).path == '/course.json' and self.server.funnel_fixture:
+            course = copy.deepcopy(BUNDLE.course)
+            course['LESSONS'][0].update(visual=FUNNEL, example_title='Follow parts through three checks',
+                example=['Invented parts inspection.', ['Keep 80% of the starting 100.',
+                         'Keep 50% of the remaining 80.', 'Keep 75% of the remaining 40.']])
+            return self.send_json(200, course)
+        return super().do_GET()
+
     def do_POST(self):
         if urlparse(self.path).path == '/api/workshop' and self.server.fail_workshop:
             return self.send_json(422, {'error': 'A test fixture comparison failed.'})
@@ -51,6 +62,7 @@ class LearningFlowTests(unittest.TestCase):
         cls.server.started, cls.server.release = threading.Event(), threading.Event()
         cls.server.fail_grade = False
         cls.server.fail_workshop = False
+        cls.server.funnel_fixture = False
         cls.server.release.set()
         cls.thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
         cls.thread.start()
@@ -85,6 +97,7 @@ class LearningFlowTests(unittest.TestCase):
         self.wait("document.querySelector('.flow-footer') !== null")
 
     def setUp(self):
+        self.server.funnel_fixture = False
         self.server.fail_grade = False
         self.server.fail_workshop = False
         self.server.started.clear()
@@ -137,6 +150,52 @@ class LearningFlowTests(unittest.TestCase):
             self.assertFalse(self.js("!!document.querySelector('[data-finish-review].primary')"))
             self.click('[data-finish-review]')
             self.assertIn('Keep this check in mind.', self.js("document.querySelector('h1').textContent"))
+
+    def test_visual_counts_follow_steps_and_keyboard_experiment_preserves_original(self):
+        self.server.funnel_fixture = True
+        self.command('reload')
+        self.wait("document.querySelector('[data-step=example]') !== null")
+        self.click('[data-step=example]')
+        self.assertEqual(self.js("Number(document.querySelector('[data-funnel]').dataset.value)"), 80)
+        self.click('[data-example-next]')
+        self.assertEqual(self.js("Number(document.querySelector('[data-funnel]').dataset.value)"), 40)
+        self.assertIn('80 entering this gate', self.js("document.querySelector('.visual-equation').textContent"))
+        self.assertEqual(self.js("document.querySelectorAll('.example-history li').length"), 1)
+        self.click('[data-example-next]')
+        self.assertEqual(self.js("Number(document.querySelector('[data-funnel]').dataset.value)"), 30)
+        self.command('find', 'role', 'button', 'click', '--name', 'What if one rate changes?')
+        self.wait("document.querySelector('wa-details.visual-experiment').open")
+        self.command('focus', '#visual-rate')
+        self.command('press', 'ArrowRight')
+        self.assertEqual(self.js("document.querySelector('#visual-rate').value"), '50.5')
+        self.assertIn('30.3', self.js("document.querySelector('[data-visual-experiment-result]').textContent"))
+        self.assertEqual(self.js("Number(document.querySelector('[data-funnel]').dataset.value)"), 30)
+        self.click('[data-visual-reset]')
+        self.assertEqual(self.js("document.querySelector('#visual-rate').value"), '50')
+        self.click('.flow-footer [data-step]')
+        self.assertEqual(self.js("Number(document.querySelector('[data-funnel]').dataset.value)"), 40)
+        self.assertEqual(self.js("document.querySelectorAll('.primary').length"), 1)
+
+    def test_visual_mobile_layout_and_reduced_motion_need_no_external_assets(self):
+        self.server.funnel_fixture = True
+        self.command('set', 'media', 'light', 'reduced-motion')
+        try:
+            self.command('set', 'viewport', '390', '844')
+            self.command('reload')
+            self.wait("document.querySelector('[data-step=example]') !== null")
+            self.click('[data-step=example]')
+            self.click('[data-example-next]')
+            self.assertEqual(self.js("Number(document.querySelector('[data-funnel]').dataset.value)"), 40)
+            self.assertEqual(self.js("document.querySelectorAll('.cohort-dots span').length"), 100)
+            self.assertEqual(self.js("document.querySelector('.cohort-dots').getAnimations({subtree:true}).length"), 0)
+            self.assertFalse(self.js("document.documentElement.scrollWidth > innerWidth"))
+            self.assertEqual(self.js("performance.getEntriesByType('resource').filter(r=>!r.name.startsWith(location.origin)).length"), 0)
+            self.click('[data-example-next]')
+            self.command('find', 'role', 'button', 'click', '--name', 'What if one rate changes?')
+            self.wait("document.querySelector('wa-details.visual-experiment').open")
+            self.assertFalse(self.js("document.documentElement.scrollWidth > innerWidth"))
+        finally:
+            self.command('set', 'media', 'light')
 
     def test_lesson_comparison_is_for_the_answer_compared(self):
         self.lesson_answer()
