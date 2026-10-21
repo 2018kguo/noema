@@ -248,8 +248,17 @@
     window.scrollTo(0, 0);
     focusContent();
   }
-  function readingHTML(l, level = shownLevel(l)) {
-    const reading = l.levels[level].replace("<div data-cache-code></div>", () => cacheCode(0, false)).replace("<div data-cache-visibility></div>", () => cachePositions([0, 1])).replace("<div data-workshop-tools></div>", workshopTools);
+  var PLACEHOLDER = /<div data-(cache-code|cache-visibility|workshop-tools)><\/div>/g;
+  function levelText(l, level, folded) {
+    const text = l.levels[level] || "";
+    if (folded) return text.replace(PLACEHOLDER, "");
+    const missing = [
+      ...new Set(Object.values(l.levels).flatMap((t) => String(t).match(PLACEHOLDER) || []))
+    ].filter((p) => !text.includes(p));
+    return text + missing.join("");
+  }
+  function readingHTML(l, level = shownLevel(l), folded = false) {
+    const reading = levelText(l, level, folded).replace("<div data-cache-code></div>", () => cacheCode(0, false)).replace("<div data-cache-visibility></div>", () => cachePositions([0, 1])).replace("<div data-workshop-tools></div>", workshopTools);
     const container = document.createElement("div");
     container.innerHTML = reading;
     const paragraphs = [...container.children].filter((node) => node.tagName === "P");
@@ -267,14 +276,19 @@
     const shown = shownLevel(l), others = available(l).filter((n) => n !== shown);
     if (!others.length) return "";
     return `<section class="optional-reading"><div data-depths>${others.map(
-      (n) => `<details data-level-section="${n}"><summary>${n < shown ? "Need the basics?" : "Go deeper"} \xB7 ${LEVEL_NAMES[n]}</summary><div class="prose">${readingHTML(l, n)}</div></details>`
+      (n) => `<details data-level-section="${n}"><summary>${n < shown ? "Need the basics?" : "Go deeper"} \xB7 ${LEVEL_NAMES[n]}</summary><div class="prose">${readingHTML(l, n, true)}</div></details>`
     ).join("")}</div></section>`;
   }
+  var LEVEL_HINTS = {
+    1: "The situation, the core idea and why it matters",
+    2: "The moving parts, numbers and trade-offs",
+    3: "The evidence, where it breaks and what\u2019s still open"
+  };
   function levelBar(l) {
     const v = view(l, state), have = available(l);
     const note = v.status === "above" ? `<p class="level-note">Written only at ${have.map((n) => LEVEL_NAMES[n]).join(" and ")} depth, deeper than your level here. Treat it as a stretch.</p>` : v.status === "below" ? `<p class="level-note">Your placement skips this topic. It\u2019s here if you want a refresher.</p>` : "";
     return `<div class="level-bar" role="group" aria-label="Depth for this topic">${have.map(
-      (n) => `<button type="button" data-topic-level="${l.id}:${n}" aria-pressed="${n === v.level}">${LEVEL_NAMES[n]}</button>`
+      (n) => `<button type="button" data-topic-level="${l.id}:${n}" aria-pressed="${n === v.level}" title="${LEVEL_HINTS[n]}">${LEVEL_NAMES[n]}</button>`
     ).join("")}</div>${note}`;
   }
   function blockPage(id, step = "read") {

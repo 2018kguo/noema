@@ -137,7 +137,7 @@ export function CourseHome({
             block.
           </p>
         </header>
-        {placement && !placement.placed && !started && (
+        {placement && !placement.placed && (
           <Card className="ui:mb-6 ui:gap-4 ui:rounded-lg ui:shadow-none" data-course-placement>
             <CardHeader className="ui:gap-3">
               <CardTitle className="ui:text-xl ui:font-semibold ui:leading-7">
@@ -146,6 +146,7 @@ export function CourseHome({
               <CardDescription className="ui:text-base ui:leading-7">
                 Each topic is written at up to three depths: Intuition, Mechanism and Frontier. A
                 few questions per section show what you already know, so you skip what’s too easy.
+                {started && " Your progress so far is kept."}
               </CardDescription>
             </CardHeader>
             <CardContent>

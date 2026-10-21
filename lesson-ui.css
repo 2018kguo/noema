@@ -903,7 +903,7 @@ main h3 {
   display: inline-flex;
   flex-wrap: wrap;
   gap: 0.25rem;
-  margin: 0.75rem 0 0;
+  margin: 0.75rem 0 1.5rem;
   padding: 0.25rem;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -963,4 +963,7 @@ main h3 {
 .level-key dd {
   margin: 0;
   color: var(--muted);
+}
+.level-bar + .level-note {
+  margin: -1rem 0 1.5rem;
 }

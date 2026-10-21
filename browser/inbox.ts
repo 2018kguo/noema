@@ -160,6 +160,7 @@ function renderList() {
   $("#capture").hidden = learning;
   $("#filters").hidden = learning;
   $("#collection-title").textContent = learning ? "Your courses" : "Your links";
+  $("#search").placeholder = learning ? "Find a course" : "Find a link";
 
   $("#collection-title").setAttribute("aria-level", learning ? "1" : "2");
   document.querySelector(".collection").classList.toggle("learning", learning);

@@ -254,8 +254,19 @@ function checkBlock(block) {
   window.scrollTo(0, 0);
   focusContent();
 }
-function readingHTML(l, level: Level = shownLevel(l)) {
-  const reading = l.levels[level]
+// Interactive pieces (code labs) belong to the topic, not one level: the shown level gets every
+// placeholder any level has, and folded levels never repeat them.
+const PLACEHOLDER = /<div data-(cache-code|cache-visibility|workshop-tools)><\/div>/g;
+function levelText(l, level: Level, folded: boolean) {
+  const text = l.levels[level] || "";
+  if (folded) return text.replace(PLACEHOLDER, "");
+  const missing = [
+    ...new Set(Object.values(l.levels).flatMap((t) => String(t).match(PLACEHOLDER) || [])),
+  ].filter((p) => !text.includes(p));
+  return text + missing.join("");
+}
+function readingHTML(l, level: Level = shownLevel(l), folded = false) {
+  const reading = levelText(l, level, folded)
     .replace("<div data-cache-code></div>", () => cacheCode(0, false))
     .replace("<div data-cache-visibility></div>", () => cachePositions([0, 1]))
     .replace("<div data-workshop-tools></div>", workshopTools);
@@ -283,10 +294,15 @@ function depthHTML(l) {
   return `<section class="optional-reading"><div data-depths>${others
     .map(
       (n) =>
-        `<details data-level-section="${n}"><summary>${n < shown ? "Need the basics?" : "Go deeper"} · ${LEVEL_NAMES[n]}</summary><div class="prose">${readingHTML(l, n)}</div></details>`,
+        `<details data-level-section="${n}"><summary>${n < shown ? "Need the basics?" : "Go deeper"} · ${LEVEL_NAMES[n]}</summary><div class="prose">${readingHTML(l, n, true)}</div></details>`,
     )
     .join("")}</div></section>`;
 }
+const LEVEL_HINTS = {
+  1: "The situation, the core idea and why it matters",
+  2: "The moving parts, numbers and trade-offs",
+  3: "The evidence, where it breaks and what’s still open",
+};
 // Which levels this topic is written at, and a note when it differs from the learner's level.
 function levelBar(l) {
   const v = view(l, state),
@@ -300,7 +316,7 @@ function levelBar(l) {
   return `<div class="level-bar" role="group" aria-label="Depth for this topic">${have
     .map(
       (n) =>
-        `<button type="button" data-topic-level="${l.id}:${n}" aria-pressed="${n === v.level}">${LEVEL_NAMES[n]}</button>`,
+        `<button type="button" data-topic-level="${l.id}:${n}" aria-pressed="${n === v.level}" title="${LEVEL_HINTS[n]}">${LEVEL_NAMES[n]}</button>`,
     )
     .join("")}</div>${note}`;
 }
