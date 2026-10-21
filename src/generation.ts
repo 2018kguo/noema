@@ -235,7 +235,7 @@ export async function generate(
   const plan = await checkpoint(
     "plan",
     "",
-    'Plan 8–12 topics, up to 20 for a broad goal. Order prerequisite concepts before applications. Name phases as "01 · Foundations". Each focus names one concrete idea; group related topics into roughly 30-minute reading blocks before quizzes. Introduce terms in plain English. Introductions use two short sentences. Review descriptions give situations without revealing verdicts. For every phase, write placement probes: one level-2 (Mechanism) and one level-3 (Frontier) multiple-choice question that a reader who already works at that depth answers quickly and a newcomer cannot guess; never test vocabulary alone.' +
+    'Plan 8–12 topics, up to 20 for a broad goal. Order prerequisite concepts before applications. Name phases as "01 · Foundations". Each focus names one concrete idea; group related topics into roughly 30-minute reading blocks before quizzes. Introduce terms in plain English. Introductions use two short sentences. Review descriptions give situations without revealing verdicts. For every phase, write placement probes: one level-2 (Mechanism) and one level-3 (Frontier) multiple-choice question that a reader who already works at that depth answers quickly and a newcomer cannot guess; test understanding of ideas, never vocabulary alone or arithmetic.' +
       " Cite sources only by their id field.",
     planSchema
       .refine((p) => p.lessons.every((l) => l.sources.every((id) => sourceIds.includes(id))), {
