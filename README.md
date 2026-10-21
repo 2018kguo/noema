@@ -4,6 +4,11 @@ Save links you want to understand, then work through the lessons Noema prepares
 for you. The inbox keeps your reading ideas in one place: a tweet, an article,
 a repository, or several links you have been meaning to explore.
 
+<p align="center">
+  <img src="docs/assets/demo.gif" alt="Reading the Inside Inference course: choosing between the Intro, High level and Depth passes, hovering a glossary term and a source citation, switching to High level without losing your place, then answering the block's questions." width="900">
+</p>
+<p align="center"><sub>The bundled <b>Inside Inference</b> course, built from the DeepInfer repository: three passes over the same subject, glossary and source previews on hover, and questions at the end of each reading block.</sub></p>
+
 ![Noema's inbox](docs/assets/inbox.png)
 
 ## Start Noema
