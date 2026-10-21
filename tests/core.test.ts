@@ -20,6 +20,7 @@ import { runStructured } from "../src/structured-cli";
 import { z } from "zod";
 import { view, place } from "../browser/levels";
 import { sourceHref } from "../browser/links";
+import { tells } from "../src/tells";
 const cleanups: (() => void)[] = [];
 afterEach(() => {
   for (const f of cleanups.splice(0).reverse()) f();
@@ -534,4 +535,15 @@ test("quoted citations link to a highlighted passage", () => {
     "https://x.org/a#:~:text=one%20two%20three%20four%20five,nine%20ten%20eleven%20twelve%20thirteen",
   );
   expect(sourceHref("https://x.org/a")).toBe("https://x.org/a");
+});
+test("tell detector names the sentences an editor must rewrite", () => {
+  const found = tells(
+    "<p>Three changes. A cache is not a log, but a ledger. The curve is the honest unit. Prefill reads the prompt once.</p>",
+  );
+  expect(found.map((f) => f.kind).sort()).toEqual([
+    "announced count",
+    "antithesis",
+    "signature word",
+  ]);
+  expect(found.every((f) => !f.sentence.includes("Prefill"))).toBe(true);
 });

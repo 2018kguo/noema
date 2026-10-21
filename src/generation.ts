@@ -15,6 +15,7 @@ import { type Item, type Settings } from "./inbox-store";
 import { type Reading } from "./source-reader";
 import { runStructured, Cancelled } from "./structured-cli";
 import { cleanHTML, escapeHTML, paragraphCount } from "./html";
+import { tells } from "./tells";
 import schemas from "./generation-schemas.json";
 const t = z.string(),
   arr = (min: number, max: number) => z.array(t).min(min).max(max);
@@ -303,10 +304,15 @@ export async function generate(
       ).flatMap(([n, html]) => (html ? [[String(n), html]] : [])),
     );
     // A separate editing pass per topic: tone, definitions and logic, across every written level.
+    const flagged = Object.values(levels).flatMap(tells);
     const edited = await checkpoint(
       "edit-" + (i + 1),
-      JSON.stringify({ levels, example: [result.example_setup, result.example_steps] }),
-      "Edit this topic as a demanding editor using the writing guide's second-pass questions. Remove LLM tics, slogans and self-narration; define terms before use; fix jumps in logic. Preserve every fact, number, level, paragraph count and the paragraph each illustration follows. Return the same levels (null for a level that is absent) and three example steps.",
+      JSON.stringify({
+        levels,
+        example: [result.example_setup, result.example_steps],
+        rewrite_these_sentences: flagged,
+      }),
+      "Edit this topic as a demanding editor using the writing guide's second-pass questions. Remove LLM tics, slogans and self-narration; define terms before use; fix jumps in logic. Preserve every fact, number, level, paragraph count and the paragraph each illustration follows. Rewrite every sentence listed in rewrite_these_sentences so the named tell is gone. Return the same levels (null for a level that is absent) and three example steps.",
       editSchema,
       undefined,
       base,
