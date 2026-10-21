@@ -148,10 +148,10 @@
         <h3>Model</h3>
         <p>Used to prepare courses from your links and to check written answers.</p>
         <label for="provider">Use</label
-        ><select id="provider">
+        ><select id="provider" autofocus>
           <option value="claude">Claude Code</option>
           <option value="codex">Codex</option></select
-        ><label for="generation-model">Model <span>Optional</span></label
+        ><label for="generation-model">Model</label
         ><input id="generation-model" placeholder="The CLI’s default model" maxlength="120" />
         <p class="form-help">
           For Claude, <code>sonnet</code> writes better courses; <code>haiku</code> is cheaper.

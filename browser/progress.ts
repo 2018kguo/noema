@@ -85,7 +85,9 @@ function path<T extends Topic>(lessons: T[], state: LevelState = {}): T[] {
   return lessons
     .filter((l) => inPath(l, state))
     .map((l) => {
-      const level = view(l, state).level,
+      // Time topics at their section's level, not a one-topic override, so switching depth on
+      // one topic never regroups the blocks (block ids come from their topics).
+      const level = view(l, { ...state, lessonLevels: {} }).level,
         stored = l.levels?.[level];
       return {
         ...l,

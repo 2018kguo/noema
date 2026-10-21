@@ -71,7 +71,7 @@
   }
   function path(lessons, state = {}) {
     return lessons.filter((l) => inPath(l, state)).map((l) => {
-      const level = view(l, state).level, stored = l.levels?.[level];
+      const level = view(l, { ...state, lessonLevels: {} }).level, stored = l.levels?.[level];
       return {
         ...l,
         reading_minutes: l.reading_minutes || (typeof stored === "number" ? stored : minutes(l, level))

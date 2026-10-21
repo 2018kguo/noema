@@ -668,6 +668,13 @@ textarea::placeholder {
   align-items: center;
   gap: 13px;
   margin-top: 25px;
+  /* Stay visible when a tall dialog scrolls, so Save is never below the fold. */
+  position: sticky;
+  bottom: -29px;
+  margin-bottom: -29px;
+  padding: 14px 0 29px;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
 }
 .detail-link {
   font-size: 0.875rem !important;
@@ -738,7 +745,7 @@ textarea::placeholder {
   align-items: center;
   flex-wrap: wrap;
 }
-.detail-actions > a {
+.detail-actions > a:not(.primary) {
   font-size: 0.875rem;
   color: var(--muted);
 }
@@ -1174,4 +1181,12 @@ h1 {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+}
+.detail-link a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+#item-title:focus {
+  outline: none;
 }

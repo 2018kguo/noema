@@ -882,3 +882,30 @@ test("dashboard metadata and capture controls stay readable on desktop and phone
     rmSync(data, { recursive: true, force: true });
   }
 }, 40000);
+test("switching one topic's depth or following a stale block link never blanks the page", async () => {
+  // A saved state like a real learner's: overrides that make one switch change reading times.
+  await js(
+    `localStorage.setItem(META.progress_key || "noema:" + META.id, JSON.stringify({lessonLevels: {workshop: 1, deploy: 2, map: 3}, lastLesson: "map"}));true`,
+  );
+  const first = await js(
+    "NoemaProgress.blocks(NoemaProgress.path(LESSONS, JSON.parse(localStorage.getItem(META.progress_key || 'noema:' + META.id))), META.reading_block_size)[0].id",
+  );
+  await command("open", origin + "/#block/" + first + "/read/numbers");
+  await wait("document.querySelector('[data-topic-level=\"numbers:2\"]') !== null");
+  await click('[data-topic-level="numbers:2"]');
+  await wait(
+    "document.querySelector('#read-numbers [aria-pressed=true]')?.textContent.includes('Mechanism')",
+  );
+  expect(await js("location.hash")).toBe("#block/" + first + "/read/numbers");
+  // A block id that no longer exists follows its topic; an unknown lesson goes home.
+  await command("open", origin + "/#block/block-gone/read/tokens");
+  await wait("document.getElementById('read-tokens') !== null");
+  expect(
+    await js(
+      "NoemaProgress.blocks(NoemaProgress.path(LESSONS, JSON.parse(localStorage.getItem(META.progress_key || 'noema:' + META.id))), META.reading_block_size).some((b) => b.id === location.hash.split('/')[1])",
+    ),
+  ).toBe(true);
+  await command("open", origin + "/#lesson/not-a-topic");
+  await wait("document.querySelector('[data-course-outline]') !== null");
+  expect(await js("location.hash")).toBe("#home");
+});

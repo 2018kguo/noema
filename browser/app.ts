@@ -182,13 +182,20 @@ function resumeLesson() {
 function home() {
   return '<div id="course-home"></div>';
 }
+// A view with nothing to show sends the reader to the course home instead of a blank page
+// (home() alone renders only the mount point; the router fills it on the #home route).
+function toHome() {
+  history.replaceState(null, "", "#home");
+  setTimeout(render);
+  return "";
+}
 const phaseLabel = (phase: string) =>
   phase.includes(" · ") ? phase.split(" · ").slice(1).join(" · ") : phase;
 const sections = () => [...new Set(LESSONS.map((l) => l.phase))];
 // Placement: a few probes per section set the starting depth; the result stays editable.
 function placementPage() {
   const probes = META.placement || [];
-  if (!probes.length) return home();
+  if (!probes.length) return toHome();
   if (state.placed) {
     const inPath = NoemaProgress.path(LESSONS, state).length;
     return `<div class="lesson-topline"><a href="#home">← Course</a></div><h1>Where you’ll start</h1><p class="lead">Each section is shown at the depth below. Change any of them; you can also switch depth on a single topic while reading. ${inPath} of ${LESSONS.length} topics are in your path.</p><div class="placement-results">${sections()
@@ -324,8 +331,16 @@ function levelBar(l) {
     .join("")}</div>${note}`;
 }
 function blockPage(id, step = "read") {
-  const block = blockById(id);
-  if (!block) return home();
+  let block = blockById(id);
+  // Blocks regroup when the path changes (placement, reading a skipped topic). Follow the topic
+  // in the URL, or the last one read, to whichever block holds it now.
+  if (!block) {
+    const topic = location.hash.split("/")[3] || state.lastLesson;
+    block = readingBlocks().find((b) => b.lessons.some((l) => l.id === topic));
+    if (!block) return toHome();
+    history.replaceState(null, "", `#block/${block.id}/${step}${topic ? "/" + topic : ""}`);
+    id = block.id;
+  }
   if (!["read", "practice", "explain", "done"].includes(step)) step = "read";
   state.blocks[id] = { ...state.blocks[id], step };
   if (!block.lessons.some((l) => l.id === state.lastLesson)) state.lastLesson = block.lessons[0].id;
@@ -1020,7 +1035,7 @@ function doneStep(l) {
 }
 function lesson(id) {
   const l = lookup(id);
-  if (!l) return home();
+  if (!l) return toHome();
   state.lastLesson = id;
   save();
   const flow = flowFor(id);
