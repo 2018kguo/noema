@@ -730,11 +730,9 @@ test("dashboard shows per-course progress and resumes the saved block", async ()
       'Object.keys(JSON.parse(localStorage.getItem("inside-inference-v1")).read).length',
     );
     await command("open", url + "/#learning");
-    await wait(
-      'document.querySelector("[data-learning-card]")?.textContent.includes("topics read")',
-    );
+    await wait('document.querySelector("[data-learning-card]")?.textContent.includes("/18 read")');
     expect(await js('document.querySelector("[data-learning-card]").textContent')).toContain(
-      read + " of 18 topics read · 0 questions answered",
+      read + "/18 read",
     );
     expect(await js('document.querySelector(".sample-row").getAttribute("href")')).toContain(
       "/practice",
@@ -860,7 +858,7 @@ test("dashboard metadata and capture controls stay readable on desktop and phone
       await command("set", "viewport", String(width), "900");
       await command("open", url + "/#learning");
       await wait(
-        'document.querySelector("[data-learning-card]")?.textContent.includes("topics read")',
+        'document.querySelector("[data-learning-card]")?.textContent.includes("/18 read")',
       );
       const sizes = await js(
         '({title:parseFloat(getComputedStyle(document.querySelector("[data-learning-card] h3")).fontSize),metadata:parseFloat(getComputedStyle(document.querySelector("[data-learning-card] a > div")).fontSize),nav:parseFloat(getComputedStyle(document.querySelector(".nav-item")).fontSize),overflow:document.documentElement.scrollWidth>innerWidth})',

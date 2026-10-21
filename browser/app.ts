@@ -288,7 +288,7 @@ function blockQuizSummary(block) {
   if (!blockChecked(block)) return "";
   const questions = blockQuestions(block),
     missed = questions.filter((q) => !savedQuestion(q).correct);
-  return `<section class="quiz-summary" role="status"><h2>${questions.length - missed.length} of ${questions.length} answers correct</h2><p>${missed.length ? "Read the explanations below, then revisit the parts you missed. Your first attempts stay saved." : "Use the explanations to check your reasoning before moving on."}</p>${missed.length ? `<button class="secondary" data-retry-missed="${block.id}">Try the missed questions again</button>` : ""}</section>`;
+  return `<section class="quiz-summary" role="status"><h2>${questions.length - missed.length} of ${questions.length} answers correct</h2>${missed.length ? `<button class="secondary" data-retry-missed="${block.id}">Try the missed questions again</button>` : ""}</section>`;
 }
 function checkBlock(block) {
   const missing = blockQuestions(block).find((q) => !Number.isInteger(savedQuestion(q).choice));
@@ -428,7 +428,7 @@ function blockPage(id, step = "read") {
   if (!block.lessons.some((l) => l.id === state.lastLesson)) state.lastLesson = block.lessons[0].id;
   save();
   const topics = `Topics ${block.start + 1}–${block.start + block.lessons.length}`;
-  const header = `<div class="lesson-topline"><a href="#home">← Course</a><span>${passes(LESSONS).length > 1 ? LEVEL_NAMES[levelOf(state)] + " · " : ""}Block ${block.index + 1} of ${readingBlocks().length} · ${topics}</span></div>${
+  const header = `<div class="lesson-topline"><a href="#home">← Course</a><span>Block ${block.index + 1} of ${readingBlocks().length}</span></div>${
     step !== "done"
       ? stepper(
           block,
@@ -446,12 +446,12 @@ function blockPage(id, step = "read") {
   if (step === "read")
     return (
       header +
-      `<header class="reading-block-header"><h1>${topics}</h1><p class="lead">About ${block.minutes} minutes of reading. A topic counts as read when you reach its end; the questions come together after the last one.</p><nav aria-label="In this reading block" data-reading-contents></nav></header>${block.lessons.map((l, i) => `<section class="reading-topic" id="read-${l.id}"><div class="reading-topic-heading" data-read-topic="${l.id}"><span class="small">Topic ${block.start + i + 1}${state.read[l.id] ? ` · <span class="read-mark">${icon("check", 13)} Read</span>` : ""}</span><h2>${e(l.title)}</h2><p class="lesson-goal">${e(l.goal)}</p></div><article class="prose">${readingHTML(l)}</article>${exampleShown(l) ? `<section data-block-card class="block-worked-example"><h3>${e(l.example_title || "Example")}</h3><p>${e(l.example[0])}</p><ol class="block-example-steps">${l.example[1].map((text) => `<li>${e(text)}</li>`).join("")}</ol>${NoemaVisuals.render(l.visual, l.example[1].length - 1, l.id)}</section>` : ""}${l.activity ? `<p class="block-activity-link"><a href="#lesson/${l.id}">Open the hands-on work for this topic →</a><span class="small">You can also return to it after the block.</span></p>` : ""}${background(l)}<div class="topic-end" data-read-end="${l.id}" aria-hidden="true"></div></section>`).join("")}<div class="block-reading-actions"><div><h2>Ready to try the questions?</h2><p class="small">Your answers for all ${block.lessons.length} topics will be checked together.</p></div><button class="primary" data-finish-reading="${id}">Go to the questions →</button><a href="#home">Save and return to the course</a></div>`
+      `<header class="reading-block-header"><h1>${topics}</h1><p class="lead">About ${block.minutes} minutes</p><nav aria-label="In this reading block" data-reading-contents></nav></header>${block.lessons.map((l, i) => `<section class="reading-topic" id="read-${l.id}"><div class="reading-topic-heading" data-read-topic="${l.id}"><span class="small">Topic ${block.start + i + 1}${state.read[l.id] ? ` <span class="read-mark" title="Read">${icon("check", 13)}</span>` : ""}</span><h2>${e(l.title)}</h2><p class="lesson-goal">${e(l.goal)}</p></div><article class="prose">${readingHTML(l)}</article>${exampleShown(l) ? `<section data-block-card class="block-worked-example"><h3>${e(l.example_title || "Example")}</h3><p>${e(l.example[0])}</p><ol class="block-example-steps">${l.example[1].map((text) => `<li>${e(text)}</li>`).join("")}</ol>${NoemaVisuals.render(l.visual, l.example[1].length - 1, l.id)}</section>` : ""}${l.activity ? `<p class="block-activity-link"><a href="#lesson/${l.id}">Open the hands-on work for this topic →</a></p>` : ""}${background(l)}<div class="topic-end" data-read-end="${l.id}" aria-hidden="true"></div></section>`).join("")}<div class="block-reading-actions"><button class="primary" data-finish-reading="${id}">Go to the questions →</button></div>`
     );
   if (step === "practice")
     return (
       header +
-      `<h1>Questions</h1><p class="lead compact">One question per topic, checked together at the end. Each answer comes with an explanation.</p>${blockQuizSummary(block)}${block.lessons.map((l, i) => `<section class="block-question"><p class="small">${i + 1} · ${e(l.title)}</p>${question(levelQuestion(l), { guided: true, batch: true })}<a class="quiz-reading-link" href="#block/${id}/read/${l.id}">Revisit this explanation →</a></section>`).join("")}${flowFooter({ back: `<button class="text-button" data-block-step="read" data-block="${id}">← Back to reading</button>`, primary: blockChecked(block) ? "block-explain" : "check-block", value: id, primaryText: blockChecked(block) ? "Next: explain an idea" : "Check all answers" })}`
+      `<h1>Questions</h1>${blockQuizSummary(block)}${block.lessons.map((l, i) => `<section class="block-question"><p class="small">${i + 1} · ${e(l.title)}</p>${question(levelQuestion(l), { guided: true, batch: true })}</section>`).join("")}${flowFooter({ back: `<button class="text-button" data-block-step="read" data-block="${id}">← Back to reading</button>`, primary: blockChecked(block) ? "block-explain" : "check-block", value: id, primaryText: blockChecked(block) ? "Next: explain an idea" : "Check all answers" })}`
     );
   if (step === "explain") return header + explainStep(block.lessons[block.lessons.length - 1]);
   const next = readingBlocks()[block.index + 1];
@@ -574,7 +574,7 @@ function background(l) {
 }
 function question(q, { guided = false, batch = false } = {}) {
   const a = savedQuestion(q);
-  return `<form class="question" data-q="${q.id}" data-guided="${guided}"><fieldset><legend>${e(q.prompt)}</legend>${q.options.map((option, i) => `<label class="choice ${a.checked ? (i === q.correct ? "answer-correct" : a.choice === i ? "answer-missed" : "") : ""}"><input type="radio" name="choice" value="${i}" ${a.choice === i ? "checked" : ""} required><span>${e(option)}${a.checked && i === q.correct ? '<strong class="answer-marker">Correct answer</strong>' : a.checked && a.choice === i ? '<strong class="answer-marker">Your answer</strong>' : ""}</span></label>`).join("")}</fieldset>${a.hint ? `<p class="hint-text">${e(q.hint)}</p>` : ""}<div class="question-actions">${batch ? "" : !a.checked ? (guided ? "" : '<button class="primary" type="submit">Check my answer</button>') : '<button class="text-button" type="submit">Check again</button>'}<button class="text-button" data-hint="${q.id}" type="button">${a.hint ? "Hint is above" : "I’m stuck"}</button></div>${a.checked ? `<div class="answer-feedback ${a.correct ? "correct" : "revisit"}" role="status"><h3>${a.correct ? "Why this follows" : "What your answer missed"}</h3>${q.option_feedback?.[a.choice] ? `<p>${e(q.option_feedback[a.choice])}</p>` : ""}<p>${e(q.why)}</p>${a.hint ? '<span class="small">You used a hint on this question.</span>' : ""}</div>` : ""}</form>`;
+  return `<form class="question" data-q="${q.id}" data-guided="${guided}"><fieldset><legend>${e(q.prompt)}</legend>${q.options.map((option, i) => `<label class="choice ${a.checked ? (i === q.correct ? "answer-correct" : a.choice === i ? "answer-missed" : "") : ""}"><input type="radio" name="choice" value="${i}" ${a.choice === i ? "checked" : ""} required><span>${e(option)}${a.checked && i === q.correct ? '<strong class="answer-marker">Correct answer</strong>' : a.checked && a.choice === i ? '<strong class="answer-marker">Your answer</strong>' : ""}</span></label>`).join("")}</fieldset>${a.hint ? `<p class="hint-text">${e(q.hint)}</p>` : ""}<div class="question-actions">${batch ? "" : !a.checked ? (guided ? "" : '<button class="primary" type="submit">Check my answer</button>') : '<button class="text-button" type="submit">Check again</button>'}${a.hint || a.checked ? "" : `<button class="hint-button" data-hint="${q.id}" type="button">${icon("lightbulb", 14)} Hint</button>`}</div>${a.checked ? `<div class="answer-feedback ${a.correct ? "correct" : "revisit"}" role="status">${q.option_feedback?.[a.choice] ? `<p>${e(q.option_feedback[a.choice])}</p>` : ""}<p>${e(q.why)}</p></div>` : ""}</form>`;
 }
 function readStep(l) {
   const reading = readingHTML(l);
@@ -1129,7 +1129,7 @@ function explainStep(l) {
   const task = teachTask(l),
     answer = explanationText(l.id),
     record = state.grades[task.id];
-  return `<h1>Explain it back.</h1><p class="explain-prompt">${e(l.transfer[0])}</p><p class="small">A few clear sentences are enough. You can reopen the explanation if you need it.</p>${l.activity ? `<details class="background"><summary>Use your saved work from this lesson</summary>${activityNotes(l)}</details>` : ""}<label class="field-label" for="teach-answer">Your explanation</label><textarea id="teach-answer" data-note="teach-${l.id}" placeholder="Explain what happens and why. Use a small example if it helps.">${e(answer)}</textarea><div class="explain-options"><button class="text-button" ${activeBlock() ? `data-block-step="read" data-block="${activeBlock().id}"` : `data-step="learn" data-lesson="${l.id}"`}>Reopen the explanation</button><button class="text-button" data-self-check="${l.id}">Compare without AI feedback</button></div><div id="teach-grade-result">${assessmentMessage(task.id)}${record ? renderGrade(record, task, answer) : ""}${state.selfChecks[l.id] ? selfCheck(l) : ""}</div>${explanationFooter(l)}`;
+  return `<h1>Explain it back.</h1><p class="explain-prompt">${e(l.transfer[0])}</p>${l.activity ? `<details class="background"><summary>Use your saved work from this lesson</summary>${activityNotes(l)}</details>` : ""}<label class="field-label" for="teach-answer">Your explanation</label><textarea id="teach-answer" data-note="teach-${l.id}" placeholder="Explain what happens and why. Use a small example if it helps.">${e(answer)}</textarea><div class="explain-options"><button class="text-button" ${activeBlock() ? `data-block-step="read" data-block="${activeBlock().id}"` : `data-step="learn" data-lesson="${l.id}"`}>Reopen the explanation</button><button class="text-button" data-self-check="${l.id}">Compare without AI feedback</button></div><div id="teach-grade-result">${assessmentMessage(task.id)}${record ? renderGrade(record, task, answer) : ""}${state.selfChecks[l.id] ? selfCheck(l) : ""}</div>${explanationFooter(l)}`;
 }
 function doneStep(l) {
   const inPass = NoemaProgress.path(LESSONS, state),
@@ -1359,11 +1359,6 @@ function render() {
       (parts[0] === "block" && ["practice", "explain"].includes(parts[2])) ||
       (!!c && reviewState(c.id).step !== "done"),
   );
-  document.querySelectorAll<HTMLInputElement>("[data-nav]").forEach((a) => {
-    const active = ["home", "lesson", "block", "challenges"].includes(parts[0]);
-    if (active) a.setAttribute("aria-current", "page");
-    else a.removeAttribute("aria-current");
-  });
   const views = {
     home,
     block: () => blockPage(parts[1], parts[2]),

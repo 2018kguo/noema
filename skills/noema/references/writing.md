@@ -99,6 +99,21 @@ Find them on the second pass and rewrite the sentence as a person would say it.
 - **Name-drop lists.** Each cited paper or person gets what they found, in a sentence a
   newcomer can follow, or gets cut.
 
+## Questions people want to answer
+
+A question should feel like thinking through something real, not a quiz bank.
+
+- Start from a situation: a moment the reader could be in, or a real case from the
+  sources. "Your chatbot's answers get more varied after someone changes one setting,
+  but its facts don't change. Which setting was it?" beats "What does temperature change?"
+- Ask the reader to predict, diagnose, decide or explain: what happens if something
+  changes, why a result came out as it did, which check to run next, what a claim
+  does and doesn't show. Vary the shape across a course.
+- Every option is something a smart person who half-understood the reading might
+  pick. No joke options, no options wrong only because of an absolute word, no
+  correct answer given away by length. Keep options parallel and short.
+- Feedback teaches: say why each wrong option is tempting and where it goes wrong.
+
 ## Stand alone, or link
 
 Every name the reader meets must be explained where it appears or be one hover away.

@@ -1136,3 +1136,21 @@ dfn[data-term]:hover {
 .topic-end {
   height: 1px;
 }
+
+.hint-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+.hint-button:hover {
+  color: var(--ink);
+  border-color: #a9b3ad;
+}

@@ -89,7 +89,6 @@ export function CourseHome({
   const [open, setOpen] = useState([...new Set(["phase-0", "phase-" + currentPhase])]);
   const [mobileOpen, setMobileOpen] = useState(false),
     [selected, setSelected] = useState(-1);
-  const finished = lessons.filter((l) => completed[l.id]).length;
   function jump(index: number) {
     const id = "phase-" + index;
     setOpen((previous) => (previous.includes(id) ? previous : [...previous, id]));
@@ -144,13 +143,8 @@ export function CourseHome({
             ))}
           </nav>
           <div className="ui:mt-8 ui:border-t ui:border-border ui:px-3 ui:pt-6">
-            <p className="ui:mb-3 ui:text-sm ui:leading-6 ui:text-muted-foreground">
-              {pass && passes.length > 1 && (
-                <span className="ui:block ui:font-medium ui:text-foreground">{pass.name}</span>
-              )}
-              {progress.read} of {lessons.length} topics read
-              <br />
-              {finished} questions answered
+            <p className="ui:mb-3 ui:text-sm ui:tabular-nums ui:text-muted-foreground">
+              {progress.read}/{lessons.length} read
             </p>
             <Progress
               value={(100 * progress.read) / lessons.length}
@@ -194,20 +188,12 @@ export function CourseHome({
               <ExternalLink size={16} className="ui:ml-auto ui:shrink-0 ui:text-muted-foreground" />
             </a>
           )}
-          <p className="ui:mt-5 ui:text-base ui:leading-7 ui:text-muted-foreground">
-            {lessons.length} topics in {progress.blockCount} reading blocks, each ending with a few
-            questions.
-          </p>
         </header>
         {passes.length > 1 && (
           <section aria-labelledby="passes-title" className="ui:mb-8" data-course-passes>
-            <h2 id="passes-title" className="ui:mb-1 ui:text-xl ui:font-semibold ui:tracking-tight">
+            <h2 id="passes-title" className="ui:mb-4 ui:text-xl ui:font-semibold ui:tracking-tight">
               {passes.length === 3 ? "Three" : "Two"} passes over the same subject
             </h2>
-            <p className="ui:mb-4 ui:text-base ui:leading-7 ui:text-muted-foreground">
-              Each pass has its own reading and questions, and keeps its own progress. Switch any
-              time from the top of the page.
-            </p>
             <div className="ui:grid ui:gap-3 ui:sm:grid-cols-3">
               {passes.map((p) => {
                 const Icon = PASS_ICONS[p.level];
@@ -231,11 +217,6 @@ export function CourseHome({
                       {p.complete && (
                         <Check size={16} className="ui:ml-auto" aria-label="Finished" />
                       )}
-                      {p.current && !p.complete && (
-                        <span className="ui:ml-auto ui:text-xs ui:font-normal ui:text-muted-foreground">
-                          You’re here
-                        </span>
-                      )}
                     </span>
                     <span className="ui:text-sm ui:leading-6 ui:text-muted-foreground">
                       {p.blurb}
@@ -247,10 +228,10 @@ export function CourseHome({
                     />
                     <span className="ui:text-xs ui:tabular-nums ui:text-muted-foreground">
                       {p.complete
-                        ? `Finished · ${p.total} topics`
-                        : p.read || p.practiced
-                          ? `${p.read} of ${p.total} read · ${p.practiced} answered`
-                          : `${p.total} topics · not started`}
+                        ? "Finished"
+                        : p.read
+                          ? `${p.read}/${p.total} read`
+                          : `${p.total} topics`}
                     </span>
                   </button>
                 );
@@ -258,14 +239,14 @@ export function CourseHome({
             </div>
             {placement && !placement.placed && (
               <p className="ui:mt-3 ui:text-base ui:leading-7 ui:text-muted-foreground">
-                Know some of this already?{" "}
+                Already know some of this?{" "}
                 <button
                   type="button"
                   className="ui:underline ui:underline-offset-4"
                   onClick={() => navigate("placement")}
                   data-course-placement
                 >
-                  Answer a few questions to find where to start
+                  Find where to start
                 </button>
               </p>
             )}
@@ -303,11 +284,7 @@ export function CourseHome({
                 {current.goal}
               </CardDescription>
             </CardHeader>
-            <CardContent className="ui:flex ui:flex-wrap ui:items-center ui:justify-between ui:gap-4">
-              <p className="ui:text-sm ui:text-muted-foreground">
-                {pass && passes.length > 1 ? pass.name + " · " : ""}Topic{" "}
-                {lessons.findIndex((l) => l.id === current.id) + 1} of {lessons.length}
-              </p>
+            <CardContent>
               <Button
                 className="ui:text-base"
                 onClick={() => navigate(progress.resumeRoute)}
@@ -345,9 +322,6 @@ export function CourseHome({
                 >
                   <span className="ui:flex ui:min-w-0 ui:flex-1 ui:flex-wrap ui:items-center ui:gap-x-4 ui:gap-y-1">
                     <span className="ui:text-base ui:font-medium">{phaseName(phase)}</span>
-                    <span className="ui:ml-auto ui:shrink-0 ui:text-sm ui:font-normal ui:text-muted-foreground">
-                      {lessons.filter((l) => l.phase === phase).length} topics
-                    </span>
                   </span>
                 </AccordionTrigger>
                 <AccordionContent className="ui:pb-2">
@@ -358,20 +332,17 @@ export function CourseHome({
                         type="button"
                         data-course-lesson={l.id}
                         onClick={() => navigate(routes[l.id])}
-                        className="ui:grid ui:w-full ui:grid-cols-[minmax(0,1fr)_20px] ui:sm:grid-cols-[24px_minmax(0,1fr)_20px] ui:items-start ui:gap-3 ui:rounded-md ui:px-1 ui:py-4 ui:text-left ui:transition-colors ui:hover:bg-muted ui:sm:px-2"
+                        className="ui:grid ui:w-full ui:grid-cols-[minmax(0,1fr)_20px] ui:sm:grid-cols-[24px_minmax(0,1fr)_20px] ui:items-center ui:gap-3 ui:rounded-md ui:px-1 ui:py-3 ui:text-left ui:transition-colors ui:hover:bg-muted ui:sm:px-2"
                       >
-                        <span className="ui:hidden ui:pt-0.5 ui:text-sm ui:tabular-nums ui:sm:block ui:text-muted-foreground">
+                        <span className="ui:hidden ui:text-sm ui:tabular-nums ui:sm:block ui:text-muted-foreground">
                           {j + 1}
                         </span>
                         <span className="ui:min-w-0">
                           <span className="ui:block ui:text-base ui:font-medium ui:leading-7">
                             {l.title}
                           </span>
-                          <span className="ui:mt-1 ui:block ui:text-base ui:leading-7 ui:text-muted-foreground">
-                            {l.goal}
-                          </span>
                         </span>
-                        <span className="ui:pt-1 ui:text-muted-foreground">
+                        <span className="ui:text-muted-foreground">
                           {completed[l.id] ? (
                             <Check
                               size={18}

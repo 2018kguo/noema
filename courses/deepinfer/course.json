@@ -166,8 +166,8 @@
       "mins": 20,
       "goal": "A chatbot answer depends on the trained model, the inference engine that runs it and the service around them, and each of these controls different costs.",
       "needs": [],
-      "recall": "What do you think happens between sending a prompt and seeing the first word?",
-      "predict": "If two companies serve identical weights, must their speed and running cost be identical?",
+      "recall": "You ask a chatbot a question and wait two seconds before the first word appears. What do you think the computer is doing in those two seconds?",
+      "predict": "Two companies serve the same downloaded model files, and one is twice as fast at half the price. Where could that difference come from, if the model is identical?",
       "example": [
         "Your team fine-tunes a chatbot, starts processing several users’ requests together and adds a sign-in page. Each change touches a different part of the system.",
         [
@@ -180,50 +180,52 @@
         {
           "id": "map1",
           "level": 1,
-          "prompt": "Two teams use exactly the same learned model weights. Could their engines still take different amounts of time and memory to answer?",
+          "prompt": "Two providers host the same open-weight model, loaded from identical files. Asked the same question about a long document, both give the same answer, but provider A responds in 3 seconds and provider B in 9. Which explanation fits best?",
           "options": [
-            "No. Matching weights force identical execution costs.",
-            "Yes. The software can organize and execute the same calculations differently.",
-            "Only if one team retrains the model."
+            "B’s copy was probably fine-tuned, which made it slower",
+            "B’s model is still learning from earlier users, which adds work",
+            "B’s engine or service runs the same calculations less efficiently"
           ],
-          "correct": 1,
-          "why": "Fixing the learned numbers leaves open how requests are grouped, how memory is managed and how each calculation runs. One engine may avoid repeated work that another engine performs.",
-          "hint": "Separate learned numbers from how they are executed.",
+          "correct": 2,
+          "why": "With the weights fixed, two deployments can still differ in how they run the calculation and in the service wrapped around it. Same files and same answer point away from the model and toward the engine or the service.",
+          "hint": "If the model files and the answers are identical, which parts of the system are still free to differ?",
           "repair": "map",
           "option_feedback": [
-            "Weights fix what is computed. How requests are grouped, how memory is managed and which kernels run are separate choices.",
-            "Correct. The same calculations can be scheduled, batched and executed in different ways, at different cost.",
-            "Retraining changes the weights, but the question holds them fixed, and execution cost can still differ."
+            "Fine-tuning changes the weights, and a fine-tuned model would tend to answer differently. Both providers loaded identical files and gave the same answer, so the weights are not where the gap comes from.",
+            "This is a common picture of chatbots, but the weights stay fixed during inference. Nothing the model learned changes as it answers, so there is no extra learning work to slow B down.",
+            "Right. Identical weights fix what gets calculated. How requests are grouped, how memory is managed, how fast each step runs and how the service routes and streams the answer are all separate choices."
           ]
         },
         {
           "id": "map2",
           "level": 2,
-          "prompt": "DeepInfer’s public release runs offline inference. What follows?",
+          "prompt": "A team running DeepInfer offline raises max_num_seqs, the number of sequences a step may hold, from 64 to 256 so more requests can run together. Now the engine won’t start, failing with “No available memory for the cache blocks.” What most likely happened?",
           "options": [
-            "It is already a complete hosted chat service",
-            "It cannot allocate any KV memory",
-            "A service still needs surrounding components"
+            "Profiling a bigger batch raised peak memory, leaving none for cache",
+            "The scheduler preempted sequences until no blocks were left",
+            "Each sequence needs its own copy of the weights",
+            "The engine lowered gpu_memory_utilization to make room"
           ],
-          "correct": 2,
-          "why": "Offline execution keeps KV memory locally for each request. A hosted service would also need a cache shared across machines, live request routing and the other pieces that DeepInfer’s README lists as outside the release.",
-          "hint": "Each request’s own attention memory is different from a cache service shared by a fleet of machines.",
+          "correct": 0,
+          "why": "DeepInfer settles its memory budget before serving anything: total memory times gpu_memory_utilization, minus the weights, minus the peak measured by profiling the largest allowed batch. Raising max_num_seqs raises that peak, so fewer bytes, possibly none, are left for cache blocks.",
+          "hint": "Think about what the engine measures at startup, and what size of batch it uses to measure it.",
           "repair": "map",
           "option_feedback": [
-            "A hosted chat service also needs routing, sign-in and streaming, which the release leaves out.",
-            "Every request needs local KV memory to run attention at all. What the release leaves out is a KV-cache service shared across machines.",
-            "Correct. The release covers execution, so routing, a shared cache service and the rest of a service must come from elsewhere."
+            "Right. Before the first step, profile_run pushes a dummy batch of the largest configured size through the model. A bigger maximum means a bigger measured peak, and the cache gets only what is left after weights and that peak.",
+            "Preemption is how the scheduler copes when blocks run out during a run, by pausing a sequence and freeing its blocks. This error happens at startup, before any request has been scheduled.",
+            "The workers load the weights once and every sequence shares them. More sequences cost activation memory and cache, never extra weight copies.",
+            "gpu_memory_utilization is a setting you choose (0.9 by default), and the engine does not change it on its own. The budget shrank because of what was subtracted from it."
           ]
         }
       ],
       "transfer": [
-        "A friend asks: “If the model has already been trained, why do we still need an inference engine?” Explain the difference, then name one job the surrounding service does.",
+        "A friend says: “Providers X and Y run the same open model, so they must be equally fast. If Y claims to be faster, it’s lying.” Explain why that reasoning doesn’t hold, and name one place outside the model itself where Y could be saving time.",
         [
-          "Names weights and execution separately",
-          "Explains iterative next-token prediction",
-          "Names one surrounding service responsibility"
+          "Separates the weights, which fix what is computed, from the engine, which decides how it is run",
+          "Gives a concrete engine choice that changes cost, such as how requests are batched, how memory is managed or which kernels run",
+          "Names a service step, such as routing a request to a machine or streaming the text back, that adds its own delay"
         ],
-        "Training produced the weights, the learned numbers that determine the model’s calculations. Answering repeats one loop. The engine runs those calculations, chooses a next token, appends it to the text so far and goes again. Along the way it manages memory and coordinates the many requests sharing the hardware. The surrounding service has its own jobs, such as signing users in and sending each request to an available machine."
+        "The model files only fix the numbers the calculation uses. The inference engine still decides how to run that calculation: which requests it groups together, how it reserves memory for each conversation and how efficiently each step runs on the GPU. Two engines can produce the same answer with very different amounts of time and memory. The service around the engine matters too. If X sends requests to a busy machine or streams text back slowly, users wait longer even when the engine itself is quick. So Y could be faster without any change to the model."
       ],
       "sources": [
         "readme"
@@ -339,8 +341,8 @@
       "needs": [
         "map"
       ],
-      "recall": "What is a weight, and what changes during inference?",
-      "predict": "Does a vector with 4 entries multiplied by a 4×6 matrix produce 4 numbers or 6?",
+      "recall": "A model has a billion numbers, each stored in two bytes. How much memory do those numbers take, and what else might need memory while the model runs?",
+      "predict": "A GPU can hold 80 GB and moves data at about 3 TB per second. When it generates a token, which do you guess limits it more often, how much fits or how fast data moves?",
       "example": [
         "DeepSeek’s Q&A about running DeepInfer in production gives the size of the sliding-window attention state it saves for each sequence as 20 layers × 134 tokens × 528 bytes. Where does each factor come from, and what does the total tell you?",
         [
@@ -353,50 +355,52 @@
         {
           "id": "num1",
           "level": 1,
-          "prompt": "X has shape [8,4] and W has shape [4,6]. What shape is XW?",
+          "prompt": "Your engine’s output tensor should have shape [4, 10, 6]: 4 requests, 10 positions, 6 features. A test checks the shape and passes, yet the generated text is gibberish. What does the passing test actually tell you?",
           "options": [
-            "[8,6]",
-            "[4,4]",
-            "[6,8]"
+            "The arithmetic is right, so the bug must be in the tokenizer",
+            "The sizes are right; the values could still be wrong",
+            "All 4 requests were kept separate, so batching can be ruled out"
           ],
-          "correct": 0,
-          "why": "The shared inner dimension 4 is summed away and the outer dimensions remain, so XW has 8 rows and 6 columns.",
-          "hint": "Put tokens on the rows and output features on the columns.",
+          "correct": 1,
+          "why": "A shape describes the layout of a tensor, not its contents. A passing shape check rules out some mistakes, like a missing dimension, but the values could still be wrong, and gibberish output points at the values.",
+          "hint": "What information does a shape contain, and what does it leave out?",
           "repair": "numbers",
           "option_feedback": [
-            "Correct. The shared inner dimension 4 is summed away, leaving the 8 rows of X and the 6 columns of W.",
-            "This keeps the inner dimension, which is exactly the one the multiplication combines.",
-            "[6,8] is the shape of the transpose, (XW)ᵀ. XW keeps the rows of X first."
+            "A shape check never looks at the values, so it can’t certify the arithmetic. The tokenizer might be at fault, but the test gives no evidence either way.",
+            "Right. Shape records how many requests, positions and features there are. Two tensors with the same shape can hold completely different numbers.",
+            "The shape says there are 4 slots for requests, not that each slot holds the right request’s values. Requests could be mixed up and the shape would still be [4, 10, 6]."
           ]
         },
         {
           "id": "num2",
           "level": 2,
-          "prompt": "A model has a billion parameters stored at 2 bytes each, so its weights take 2 GB. A GPU has 2.5 GB free. Is that enough to serve the model?",
+          "prompt": "A teammate sizes a GPU for a model by multiplying its parameter count by 2 bytes for BF16, finds the weights fit with a little room to spare, and deploys. The first requests work, but the server runs out of memory as soon as several long conversations run at once. What did the estimate leave out?",
           "options": [
-            "Yes, with 0.5 GB to spare, because the weights are the whole footprint",
-            "Not necessarily, because the KV cache, activations and runtime overhead come on top and grow with requests and context",
-            "No, because each parameter needs 2 bytes for the weight and 2 more for its gradient"
+            "Gradients, which need 2 more bytes per parameter",
+            "An FP32 copy of the weights made before multiplying",
+            "Logits for every token generated so far",
+            "Each request’s KV cache, plus activations and buffers"
           ],
-          "correct": 1,
-          "why": "Parameter count times bytes per parameter measures the weights only. Serving also holds each request’s attention cache, the intermediate activations of a step and the runtime’s own buffers, and the cache grows with the number of requests and their length.",
-          "hint": "What else does a running engine keep in memory besides the weights?",
+          "correct": 3,
+          "why": "Weight bytes are only one part of a serving footprint. The KV cache grows with every token of every request, which is why the failure appears only when several long conversations overlap. Activations and runtime buffers add more.",
+          "hint": "What grows when more conversations run, or when they get longer?",
           "repair": "gpu",
           "option_feedback": [
-            "The 2 GB covers the weights alone. The cache for even a few long requests can take more than the remaining 0.5 GB.",
-            "Right. 2 GB is the weights only, and whether 0.5 GB is enough for everything else depends on how many requests run and how long they are.",
-            "Gradients exist only during training. Inference keeps the weights, but adds caches and working memory instead."
+            "Gradients are what training keeps to update the weights. Inference never updates the weights, so it doesn’t store gradients.",
+            "DeepInfer multiplies BF16 weights directly with BF16 GEMM kernels like bf16_gemm_nt. The weights don’t need a second, wider copy.",
+            "Logits are large per step (a float32 row for a 129,280-entry vocabulary is about half a megabyte), but each step’s logits are used for sampling and then discarded, so they don’t pile up with conversation length.",
+            "Right. Every token in every active conversation keeps attention state in the KV cache, so memory grows with the number of requests and their length. Activations and the runtime’s own buffers come on top."
           ]
         }
       ],
       "transfer": [
-        "Explain the difference between how much memory a device has and how quickly it can move data. Use a small example.",
+        "A colleague says: “Our GPU still has lots of free memory, so storing the weights in a one-byte format instead of two bytes can’t make anything faster.” Explain what they are mixing up, using a small example with bytes and bytes per second.",
         [
-          "Separates capacity from transfer rate",
-          "Names bytes/s as bandwidth",
-          "Explains why both constrain inference"
+          "Separates capacity, how many bytes fit, from bandwidth, how many bytes move per second",
+          "Uses numbers to show that halving the bytes halves the minimum time to move them",
+          "Notes that this shortens the step only if moving the data was what took the time"
         ],
-        "Capacity is how much data fits at once, and bandwidth is how many bytes can move per second. DeepSeek’s saved sliding-window state is about 1.4 MB per sequence, and a storage server can hold millions of those. Holding them says nothing about how quickly one reaches a GPU. Over each GPU’s 6.25 GB/s share of the network it takes about a quarter of a millisecond. Inference needs both: room for the weights and caches, and enough bandwidth to bring them to the arithmetic units every step."
+        "They are treating memory as only a question of space. Free space is capacity, but each step also has to move the weights to the arithmetic units, and that takes time set by bandwidth. Say the weights are 2 GB and the device moves 100 GB per second: reading them takes at least 20 ms every step. Store them in one byte per number and they are 1 GB, which takes at least 10 ms. That halves the step only if moving data was the slow part, which is worth checking first, but free capacity says nothing either way."
       ],
       "sources": [
         "transformer",
@@ -418,8 +422,8 @@
       "needs": [
         "numbers"
       ],
-      "recall": "How is a probability different from an arbitrary numerical score?",
-      "predict": "If you raise temperature, do you add knowledge or change how the same scores are sampled?",
+      "recall": "A model gives the word “blue” a score of 5.2 as the next word after “The sky is”. Is that a probability? What else would you need to know to turn it into one?",
+      "predict": "If you lower the temperature setting, does the model know more, or does it just become more predictable? Make a guess before reading.",
       "lab": "softmax",
       "example": [
         "The model gives three possible next tokens probabilities of 66.5%, 24.5% and 9%. What happens next?",
@@ -433,69 +437,73 @@
         {
           "id": "tok1",
           "level": 1,
-          "prompt": "What does temperature change?",
+          "prompt": "A support bot at temperature 0.2 gives nearly the same reply every time a customer asks about refunds. Someone raises the temperature to 1.2. Now replies vary in wording and occasionally use an odd word, though the bot still knows the same policies. What changed?",
           "options": [
-            "The learned weights",
-            "The next-token sampling distribution",
-            "The tokenizer vocabulary"
+            "The engine spreads its picks over more of the same scored candidates",
+            "The model now gives odd words higher scores than before",
+            "The model draws on parts of its training it used to ignore",
+            "The tokenizer splits words into smaller pieces at higher temperature"
           ],
-          "correct": 1,
-          "why": "Temperature rescales the logits at sampling time, after the model has computed them. The weights and the vocabulary stay as they were.",
-          "hint": "Which part happens after the model computes its scores?",
+          "correct": 0,
+          "why": "Temperature changes only the selection step. A higher temperature flattens the probabilities over the same candidates, so lower-scored tokens get chosen more often, while the weights and their scores stay the same. That is why the wording varies but the facts don’t.",
+          "hint": "Does the setting act before the model scores the candidates, or after?",
           "repair": "tokens",
           "option_feedback": [
-            "Temperature is applied after the model has produced its scores, and the weights that produced them stay fixed.",
-            "Correct. Dividing the logits by T reshapes the probabilities used to pick the next token.",
-            "The vocabulary is fixed by the tokenizer. Temperature only changes how likely each existing token is to be picked."
+            "Right. Temperature reshapes the probabilities computed from the model’s scores, so unlikely tokens get picked more often. The scores themselves, and the knowledge behind them, are unchanged.",
+            "This is a natural reading of “more odd words”, but the model computes the same logits as before. Temperature acts afterwards, when those scores become probabilities for the draw.",
+            "What the model learned lives in the weights, and temperature doesn’t touch them. The same knowledge is being sampled with a looser rule.",
+            "The tokenizer runs before the model and has no temperature setting. The same text always becomes the same token IDs."
           ]
         },
         {
           "id": "tok2",
           "level": 2,
-          "prompt": "Why can’t ordinary autoregressive generation choose 100 unknown future tokens independently in one step?",
+          "prompt": "A colleague proposes a speedup: run the model once over the prompt, take the highest-scoring token for each of the next 100 positions from that single pass, and return all 100 at once. Why won’t this reproduce what normal decoding would write?",
           "options": [
-            "Each choice conditions later predictions",
-            "All GPUs forbid matrices with 100 rows",
-            "Tokenization is random"
+            "Logits for 100 positions won’t fit in GPU memory",
+            "All 100 draws would reuse one random number",
+            "Later positions depend on tokens that haven’t been chosen yet",
+            "It would match, as long as decoding is greedy"
           ],
-          "correct": 0,
-          "why": "Each future conditional distribution depends on the tokens generated before it. Speculative decoding works around this by proposing several candidates and then verifying them.",
-          "hint": "The prompt is already known, and the answer is not.",
+          "correct": 2,
+          "why": "An autoregressive model factors a sequence as a product of P(xₜ | x<ₜ), so each position’s distribution exists only once the earlier tokens are fixed. Known prompt tokens can be scored together, but unknown tokens must be chosen in order, or proposed in bulk and then checked, as speculative decoding does.",
+          "hint": "What does the model need as input before it can score position 50?",
           "repair": "attention",
           "option_feedback": [
-            "Correct. The distribution for each token depends on which tokens were chosen before it, so later choices cannot be made first.",
-            "GPUs routinely multiply matrices with far more than 100 rows. The limit comes from the dependency between tokens.",
-            "Tokenization is deterministic for a given tokenizer. Randomness enters only at sampling."
+            "Logits are big, but an engine already writes logits for hundreds of positions in one step during prefill. Memory isn’t what stops this.",
+            "DeepInfer’s sampler hashes the seed with the position, so each position gets its own random number. And the proposal uses the top token, which involves no draw at all.",
+            "Right. The probability for position t is conditioned on every token before it. Until the earlier tokens are chosen, there is no distribution for the later ones to take a top token from.",
+            "Greedy decoding removes randomness, but each greedy choice still depends on the tokens chosen before it. Being deterministic doesn’t make the later positions knowable in advance."
           ]
         },
         {
           "id": "tok3",
           "level": 3,
-          "prompt": "Two engines produce different text from the 20th generated token onward. Which check comes next?",
+          "prompt": "You compare DeepInfer with another engine on the same prompt. The outputs match for 19 tokens, then differ at token 20 and look completely different afterward. A teammate plans to diff the two outputs from token 20 on to find the bug. What is a better next step?",
           "options": [
-            "Only compare the final paragraphs",
-            "Teacher-force the same prefixes and compare logits",
-            "Increase temperature until the text looks similar"
+            "Switch both to greedy decoding and see if the text matches",
+            "Teacher-force one continuation and compare log probabilities",
+            "Diff the tokens after position 20 to see where they disagree"
           ],
           "correct": 1,
-          "why": "Once two outputs diverge, every later token is conditioned on a different history. Teacher forcing keeps the history identical, so any remaining difference in logits comes from the computation itself.",
-          "hint": "Keep the input to the comparison identical.",
+          "why": "Once two outputs diverge, comparing later text mixes up genuine disagreements with the consequences of one different choice. Holding the continuation fixed and comparing log probabilities at identical prefixes isolates the first place the computation itself differs.",
+          "hint": "After token 20, are the two engines still being asked the same question?",
           "repair": "correctness",
           "option_feedback": [
-            "The final paragraphs mix every earlier difference together and cannot show where the first disagreement began.",
-            "Correct. Feeding both engines the same prefixes lets you compare their scores before different histories confound the comparison.",
-            "Raising temperature buries the disagreement under more randomness and makes the outputs harder to compare."
+            "Removing randomness helps, but greedy outputs can still diverge at a near-tie from rounding, and matching text can hide score differences that matter elsewhere. It answers a weaker question than the scores would.",
+            "Right. Teacher forcing, which DeepInfer supports through golden_token_ids, keeps both engines on the same history, so any gap in log probabilities beyond rounding noise points at a real difference in computation.",
+            "After the first different token, each engine is continuing a different text. The later differences mostly reflect that split, not separate bugs."
           ]
         }
       ],
       "transfer": [
-        "Explain how a model goes from a prompt to a longer answer. Include where choosing the next token happens.",
+        "Two runs of the same model on the same prompt give different answers. One teammate blames the weights; another says “it’s just randomness.” Walk through what happens from prompt to answer and say where the two runs could have split, and why the answers differ so much after that point.",
         [
-          "Describes turning text into token IDs",
-          "Explains scoring, choosing, and appending a next token",
-          "Explains why the chosen token affects the next prediction"
+          "Describes tokenizing the prompt, scoring every candidate token, choosing one and appending it",
+          "Places the split at a choice step, such as a random draw at nonzero temperature or a different seed, with the weights unchanged",
+          "Explains that once one token differs, every later prediction is made from a different text"
         ],
-        "The tokenizer turns the prompt into token IDs. The model computes a score for every possible next token, and the engine’s selection rule picks one. That token is appended before the next prediction, so each choice shapes the input to the next step. The tokenizer and stop markers have to match what the model was trained with. Changing temperature changes which tokens get picked, while the learned weights stay the same."
+        "The tokenizer turns the prompt into token IDs, the model scores every possible next token, softmax turns the scores into probabilities and the engine picks one. That token is appended and the model scores again. The weights are the same in both runs, so the scores for the same text are the same. The split happens at a choice: with temperature above zero the engine draws at random, and without a fixed seed two runs can draw different tokens. After that the model is continuing two different texts, so everything afterwards can differ, even though only one draw went differently."
       ],
       "sources": [
         "template",
@@ -534,8 +542,8 @@
       "needs": [
         "tokens"
       ],
-      "recall": "What makes a generated token depend on earlier ones?",
-      "predict": "If you retain old keys and values, do you still need to compare a new query with them?",
+      "recall": "In “The trophy would not fit in the suitcase because it was too large,” how do you know what “it” refers to? Which words did you have to look at?",
+      "predict": "Once the engine has saved the keys and values for earlier tokens, does producing a new token still require reading all of them? Guess before reading.",
       "example": [
         "The prompt contains tokens A, B and C, and the engine is now processing token D. What can it reuse?",
         [
@@ -548,69 +556,73 @@
         {
           "id": "att1",
           "level": 1,
-          "prompt": "What does a KV cache mainly save?",
+          "prompt": "To save memory, a developer turns off the KV cache in an engine. Predict what happens to the answers and to the time each new token takes.",
           "options": [
-            "Recomputing earlier positions’ keys and values",
-            "All future attention calculations",
-            "The need for model weights"
+            "Answers get worse, since earlier tokens are no longer visible",
+            "Same answers and speed, since each query reads all positions anyway",
+            "Steps get faster, since nothing is written to the cache",
+            "Same answers, but steps slow down as the text grows"
           ],
-          "correct": 0,
-          "why": "Each new query still attends to the cached context. What the cache saves is rebuilding the earlier positions’ keys and values at every step.",
-          "hint": "Skipping a recomputation is different from skipping the reads.",
+          "correct": 3,
+          "why": "Because no position can see later tokens, earlier keys and values never change when a token is appended, and the cache exists to avoid recomputing them. Turning it off keeps the answers the same but redoes a growing amount of work each step.",
+          "hint": "Do the keys and values for “The sky is” change when the next token is added?",
           "repair": "attention",
           "option_feedback": [
-            "Correct. Keys and values for earlier positions are computed once and read again, instead of being recomputed.",
-            "Each new query still has to attend over the cached keys and values. The cache saves recomputation, and the reads remain.",
-            "The cache holds per-request intermediate results. The weights are still needed to compute every new position."
+            "The cache is a saved copy of work, not the model’s only access to the context. Without it the engine recomputes the earlier keys and values, and the model still sees the whole text.",
+            "The new query does still read all earlier keys and values. But with the cache off, those keys and values first have to be recomputed for every earlier position, which is extra work.",
+            "Writing the cache costs a little, but skipping it means redoing much more work: the keys and values for the entire history, on every step.",
+            "Right. The causal mask means earlier positions never change, so recomputing them gives the same numbers. The cost is repeating that work every step, and the history gets longer with each token."
           ]
         },
         {
           "id": "att2",
           "level": 2,
-          "prompt": "Can a text token reuse the same KV vector in any sentence?",
+          "prompt": "Request A is “Summarize this contract: [10-page contract]. Focus on termination.” Request B is the same contract with “Focus on payment.” Request C has the same contract, but preceded by “You are a careful lawyer.” Which can reuse A’s cached entries for the contract?",
           "options": [
-            "Yes, keys depend only on spelling",
-            "No, hidden states depend on context and position",
-            "Only if temperature is zero"
+            "B can; C can’t, since its contract follows different text",
+            "Both B and C, since the contract’s token IDs match",
+            "Neither, since entries depend on the final instruction"
           ],
-          "correct": 1,
-          "why": "Later-layer representations reflect the preceding tokens and the token’s position, so a key or value is tied to one history.",
-          "hint": "The token embedding is only the start of the computation.",
+          "correct": 0,
+          "why": "A cache entry depends on the layer, the position and every token before it, never on what follows. Requests that share an exact prefix can share those entries, which is the basis of prefix caching, while the same text placed after different text cannot.",
+          "hint": "For a given contract token, what came before it in each request, and what position is it at?",
           "repair": "attention",
           "option_feedback": [
-            "Spelling fixes only the token’s embedding. Keys and values at later layers depend on the preceding text and the position.",
-            "Correct. Hidden states reflect the preceding tokens and the position, so the same token gets different keys and values in different contexts.",
-            "Temperature affects only how the next token is chosen and has no effect on the keys and values the layers compute."
+            "Right. A and B are identical up to the end of the contract, so those entries match. In C, every contract token follows different text and has a different position, so its entries come out different.",
+            "Token IDs alone don’t determine a cache entry. Keys are rotated by position and deeper layers fold in all earlier text, so the same IDs after a different opening give different entries.",
+            "The causal mask means a position never sees anything after it. The contract’s entries were computed before the final instruction and don’t depend on it, so a shared prefix really is shared."
           ]
         },
         {
           "id": "att3",
           "level": 3,
-          "prompt": "Which check most directly tests a KV cache?",
+          "prompt": "DeepInfer’s test_kl.py runs the same input two ways, step by step through decode and as one prefill over the prompt plus a known continuation, and requires zero KL divergence at every position. Which problem could this test miss?",
           "options": [
-            "Generated output looks fluent",
-            "Full-forward and incremental logits agree on the same prefixes",
-            "The cache has the expected Python type"
+            "A key written to the wrong cache slot during decode",
+            "Rotary embeddings applied one position late in decode",
+            "An approximation both paths compute the same way",
+            "A stale window entry left over in the cache from earlier decoding"
           ],
-          "correct": 1,
-          "why": "Numerical agreement across positions tests the actual computation the cache is meant to reproduce.",
-          "hint": "Which option compares the cached computation with one that does not use the cache?",
+          "correct": 2,
+          "why": "test_kl.py checks consistency between incremental decoding and a full prefill. It catches anything that makes the cached path differ from recomputation, such as wrong slots, misaligned positions or stale windows. It can’t see an error both paths share, so whether that error hurts quality has to be measured on tasks.",
+          "hint": "The test compares two paths with each other. What kind of mistake would leave them agreeing?",
           "repair": "correctness",
           "option_feedback": [
-            "Fluent text can hide a subtly wrong cache, because the model may still produce plausible words from slightly wrong scores.",
-            "Correct. If incremental and full-forward logits match at every prefix, the cache reproduces the computation it replaces.",
-            "A correct Python type says nothing about whether the stored values are the right ones."
+            "The prefill path computes that key fresh, so a decode run that reads the wrong slot will produce different log probabilities somewhere. The test is designed to catch exactly this.",
+            "A position misaligned in one path and not the other changes the attention scores, and the log probabilities stop matching. The test catches it even when the text stays fluent.",
+            "Right. The test compares two paths against each other, so an error both share gives matching results. That is why DeepInfer keeps the bounded replay approximation out of this comparison and out of the prefix cache.",
+            "A stale entry is used by the step-by-step path but not by the fresh prefill, so their log probabilities diverge and the test fails."
           ]
         }
       ],
       "transfer": [
-        "Walk through what the engine does when one new token arrives. What does it calculate, and what can it reuse?",
+        "Two users send prompts that start with the same 3,000-token instruction and then differ. A third user’s prompt contains the same instruction too, but after a short greeting. Explain which of these requests can share cached keys and values, and why.",
         [
-          "Computes a new query/key/value",
-          "Uses past keys and values",
-          "Appends request-specific state"
+          "Explains that a cached key or value depends on its token, its position and every token before it",
+          "Concludes that the first two can share entries for their common instruction prefix",
+          "Concludes that the third cannot reuse them, because the instruction sits after different text and at different positions"
         ],
-        "The new position needs its own query, key and value. Its query is compared with the visible keys to decide how to mix the matching values. Keys and values for earlier positions come from this request’s cache and are not recalculated. The engine then appends the new key and value to that cache. It still reads the earlier state on every step, and that state has to come from the correct history."
+        "A cached key or value is computed from the token, its position and everything before it, because deeper layers fold in the earlier context. The first two prompts are identical up to the end of the instruction, so their entries for those 3,000 tokens are identical too, and prefix caching can share them. Whatever differs afterwards doesn’t affect earlier positions, because the causal mask stops them from seeing later tokens. The third prompt has the same words, but they follow a greeting and start at a later position, so every entry would come out different. It needs its own."
       ],
       "sources": [
         "transformer",
@@ -649,8 +661,8 @@
       "needs": [
         "attention"
       ],
-      "recall": "Why are known prompt tokens different from unknown generated tokens?",
-      "predict": "A huge prompt gives a long initial pause but fast streaming. Which phase should you investigate first?",
+      "recall": "Think of the last time a chatbot felt slow. Was it the wait before anything appeared, or the pace once the answer started?",
+      "predict": "Pasting a 40-page document gives a long pause and then fast streaming. Which part of the work would you suspect first, reading the document or writing the answer?",
       "example": [
         "DeepInfer can run prefill and decode on one engine, but DeepSeek’s production service runs them on separate machines. What goes wrong when they share, and what does the split change?",
         [
@@ -663,69 +675,73 @@
         {
           "id": "phase1",
           "level": 1,
-          "prompt": "An answer begins after a long pause and then streams quickly. Which metric should you look at first?",
+          "prompt": "Users of your document Q&A tool complain that after uploading a 50-page PDF and asking a question, nothing appears for 12 seconds, then the answer streams smoothly. Your dashboard shows the server producing 2,000 tokens per second, well above target. Where should you look first?",
           "options": [
-            "TTFT",
-            "Only final token count",
-            "Training loss"
+            "Inter-token latency, since smooth streams can hide gaps",
+            "Time to first token and the stages before it",
+            "Nowhere, since 2,000 tokens per second shows it is fast",
+            "Decode speed, since that throughput is shared among users"
           ],
-          "correct": 0,
-          "why": "The symptom concerns the time until the first token, so TTFT is the measurement that matches it. The quick streaming suggests decode is not the problem.",
-          "hint": "Which metric covers the wait before anything appears?",
+          "correct": 1,
+          "why": "The symptom is a long wait and then smooth streaming, which points at what happens before the first token: queueing, preparing the input and processing a very long prompt. System throughput can’t tell you that, because it measures total output across users.",
+          "hint": "Which of the users’ two experiences is the problem, the wait or the stream?",
           "repair": "phases",
           "option_feedback": [
-            "Correct. The symptom is the wait before the first token, which is exactly what TTFT measures.",
-            "The token count says how long the answer is, and nothing about when its first token arrived.",
-            "Training loss describes how well the model learned. It says nothing about serving delay."
+            "Gaps between tokens matter for the streaming part, but users say streaming is smooth. Their complaint is about the wait before anything appears.",
+            "Right. A long silence followed by fast streaming points at the work before the first token, and a 50-page prompt makes prefill and the steps before it the first suspects.",
+            "Throughput counts work across all users. A server can produce lots of tokens per second while each user still waits a long time for their first one.",
+            "Per-user decode speed would show up as slow streaming. Here streaming is fine once it starts."
           ]
         },
         {
           "id": "phase2",
           "level": 2,
-          "prompt": "DeepSeek scales its prefill machines by the number of prompt tokens that missed the cache, and its decode machines by the number of running requests. Why use different signals?",
+          "prompt": "On a single colocated DeepInfer engine, new users sometimes wait almost 2 seconds before their answer starts, though processing their prompt takes only 200 ms. Users already mid-answer occasionally see one long pause. What explains both?",
           "options": [
-            "Prefill work grows with the prompt tokens it must compute, while decode work per step is set by how many sequences are generating",
-            "Prefill is cheaper than decode, so it needs a coarser signal",
-            "The two signals are interchangeable, and each team chose its own"
+            "Prefill waits for a periodic vote and pauses running answers",
+            "Chunked prefill spreads each prompt over many steps",
+            "Asynchronous scheduling keeps the GPU a step behind",
+            "Speculative decoding delivers tokens in uneven bursts"
           ],
           "correct": 0,
-          "why": "Prefill processes every uncached prompt token, so its load tracks those tokens. Decode advances each running sequence by one step at a time, so its load tracks how many sequences are active and how much cache they read.",
-          "hint": "What does each phase have to process per unit of time?",
+          "why": "In a NORMAL engine each step is all prefill or all decode, and decode is the default. Prefill happens only at periodic votes, so a new prompt can wait many decode steps before it starts, which adds to time to first token without showing up in the forward pass. When prefill does run, everyone mid-answer pauses for it.",
+          "hint": "In this engine, how does a waiting prompt get its turn, and what happens to the other requests when it does?",
           "repair": "phases",
           "option_feedback": [
-            "Right. Each phase is scaled by the quantity that drives its own work.",
-            "Neither phase is uniformly cheaper. The signals differ because the work in each phase grows with different things.",
-            "A burst of long prompts raises uncached tokens without adding running requests at first, so the two signals can move independently."
+            "Right. The ranks vote on prefill only every 70 decode steps (every 100 if just one rank has work), so a prompt can queue for over a second. When a prefill step runs, every in-flight answer waits for it.",
+            "Chunked prefill could spread a prompt over several steps, but it is off by default in EngineArgs. And the prompt here needs only 200 ms of processing.",
+            "Asynchronous scheduling does the opposite: the CPU prepares the next step while the GPU runs the current one, so the GPU doesn’t sit idle.",
+            "Bursts from speculative decoding can make gaps uneven, but they don’t explain a new prompt waiting nearly 2 seconds before any work starts on it."
           ]
         },
         {
           "id": "phase3",
           "level": 3,
-          "prompt": "DeepSeek reports that dynamic-length verification lowers estimated throughput by 1.5% at 16 concurrent sequences and raises it by 11% at 96, compared with always verifying five draft tokens. What best explains the difference?",
+          "prompt": "DeepSeek estimates that dynamic-length speculative verification, compared with always verifying five draft tokens, changes throughput per rank by −1.5% at 16 concurrent sequences, +5.4% at 60 and +11.0% at 96. Your coding assistant typically runs 10 to 20 sequences per rank. What do these numbers suggest?",
           "options": [
-            "The verification work it saves only matters once the GPU is saturated",
-            "The draft model guesses better when more sequences are running",
-            "At 96 sequences the engine runs prefill steps less often"
+            "Turn it on, since +11% outweighs −1.5%",
+            "Turn it on, since fewer verified drafts means less work",
+            "Measure first, since gains appear only near saturation"
           ],
-          "correct": 0,
-          "why": "At light load the GPU has spare capacity, so trimming verification work frees nothing useful and the shorter checks cost a little output. At heavy load every verified token competes for saturated compute, so checking fewer unlikely tokens leaves room for other sequences.",
-          "hint": "When does saving work on a GPU turn into more output?",
+          "correct": 2,
+          "why": "The effect depends on load. Skipping verification work helps only when the GPU is saturated, which is why the estimate turns from a small loss to a gain as concurrency rises. A service running at light load should expect the light-load number, and should measure it, since these figures are DeepSeek’s own estimates.",
+          "hint": "Which row of DeepSeek’s numbers looks most like your service?",
           "repair": "phases",
           "option_feedback": [
-            "Correct. Saved work only raises throughput when the GPU was the limit, which happens at high concurrency.",
-            "The figures compare the same draft model at different loads. What changes is whether the GPU has spare capacity.",
-            "The comparison is between two verification policies on decode steps, and prefill scheduling is not what differs."
+            "That would make sense if your service ran near 96 sequences. At your load, the relevant figure is the one near 16, where it loses slightly.",
+            "Less verification work only speeds things up when that work was what limited the step. At light load the GPU has spare capacity, so the savings don’t show.",
+            "Right. The benefit grows with load because the saved verification work only matters when the GPU is busy. At 10 to 20 sequences you are near the point where it slightly hurts, and these are the authors’ estimates from their own benchmark."
           ]
         }
       ],
       "transfer": [
-        "Someone says their chatbot is slow. What would you ask and measure before choosing a fix?",
+        "A customer says your hosted model is “slow”, but your dashboard shows high tokens per second. What would you ask and measure before choosing a fix?",
         [
-          "Separates initial delay and streaming gaps",
-          "Includes queueing/preprocessing",
-          "Requests workload and percentile measurements"
+          "Asks whether the delay is before the first token or between later tokens",
+          "Breaks the first-token wait into queueing, preparation and prompt processing, and treats per-user speed separately from system throughput",
+          "Measures under the customer’s real prompt lengths and load, and looks at slow requests and long gaps, not just averages"
         ],
-        "I would first ask whether the delay comes before the first token or between later tokens. The initial wait can include queueing, input preparation and prompt processing. Later gaps point at continued generation, though delivery can matter there too. I would time those stages under the person’s real input lengths and request load, and look at the slow requests as well as the average. That tells me where to start."
+        "High tokens per second describes the whole system, so it can look fine while each user waits. I’d first ask whether the slowness is the wait before anything appears or the pace afterwards. For the first, I’d break time to first token into queueing, preparation and prompt processing, since a prompt can sit in a queue before the engine ever touches it. For the second, I’d look at the distribution of gaps between tokens, since a few long stalls feel worse than a slightly slower average. I’d measure with the customer’s actual prompt lengths and traffic, because both phases behave differently as those change."
       ],
       "sources": [
         "inference"
@@ -773,8 +789,8 @@
         "numbers",
         "phases"
       ],
-      "recall": "How do capacity and bandwidth differ?",
-      "predict": "If weights take 8 ms to read but arithmetic takes 1 ms, will twice the arithmetic speed halve the step?",
+      "recall": "An external hard drive can hold a lot but copies files slowly. In your own words, what is the difference between how much it holds and how fast it moves data?",
+      "predict": "An operation spends 8 ms fetching its data and 1 ms doing arithmetic. If the arithmetic became twice as fast, roughly how long would the operation take?",
       "lab": "roofline",
       "example": [
         "In DeepSeek’s production decode, each step adds roughly one token per running sequence, and every MoE layer has to read the weights of each expert that received tokens. What limits that step, and what did DeepSeek change?",
@@ -788,69 +804,71 @@
         {
           "id": "gpu1",
           "level": 1,
-          "prompt": "When do faster math units help least?",
+          "prompt": "Your team moves its chatbot to a GPU with twice the arithmetic throughput but the same memory bandwidth. Generating text for a single user barely speeds up. What is the most likely reason?",
           "options": [
-            "Memory movement dominates",
-            "Arithmetic dominates",
-            "The model has a name"
+            "The faster units only help once weights are quantized",
+            "Each step mostly waits on reading weights from memory",
+            "The network streaming tokens back is the real limit"
           ],
-          "correct": 0,
-          "why": "Speeding up a resource that is not the limit leaves the limiting cost in place. An operation that spends eight milliseconds fetching data and one millisecond computing would save at most that one millisecond even with infinitely fast arithmetic.",
-          "hint": "Compare the two time estimates.",
+          "correct": 1,
+          "why": "Speeding up a resource that isn’t the limit leaves the limiting cost in place. A single user’s decode step reads every weight from memory and uses each byte for very little arithmetic, so memory bandwidth sets its pace.",
+          "hint": "In a single-user step, how much arithmetic is done with each byte that gets fetched?",
           "repair": "gpu",
           "option_feedback": [
-            "Correct. When moving data takes longer than the arithmetic, faster arithmetic shortens a cost that was not setting the pace.",
-            "When arithmetic dominates, faster math units attack exactly the limiting cost, so this is where they help most.",
-            "A model’s name has no effect on execution. The answer depends on which resource is the limit."
+            "Narrower formats can help, but faster arithmetic units speed up arithmetic in the current format as well. The issue is that arithmetic wasn’t taking the time.",
+            "Right. With one user, each step fetches all the weights to do only a little arithmetic with them. Doubling arithmetic speed leaves that transfer time where it was.",
+            "The network adds delay, but it would cap both GPUs equally regardless of the hardware swap. The lesson’s point is about what happens inside the GPU during each step."
           ]
         },
         {
           "id": "gpu2",
           "level": 2,
-          "prompt": "A small-batch decode step is limited by reading expert weights from HBM. DeepSeek stores those weights in MXFP4 instead of BF16. When does that shorten the step?",
+          "prompt": "To speed up small-batch decode, a team stores expert weights in MXFP4 instead of BF16, cutting their size about fourfold. The step gets no faster. Profiling shows a kernel that expands the weights back to BF16 in memory before each multiply. Why didn’t the change help?",
           "options": [
-            "Whenever the format is used, by the full ratio of bytes saved",
-            "When the kernels read the narrow format directly, so fewer bytes actually cross from HBM",
-            "Never, because a number format only changes how much memory the weights occupy"
+            "FP4 is too imprecise, so the GPU recomputes in BF16",
+            "Small-batch decode is compute-bound, so bytes don’t matter",
+            "Expert weights are too small a share of traffic to matter",
+            "The multiply still reads full-size BF16 weights"
           ],
-          "correct": 1,
-          "why": "A memory-bound step takes about as long as its bytes take to arrive. A narrower format cuts those bytes only if the kernel consumes it as stored. A separate pass that expands the weights back to BF16 would add traffic and give some or all of the saving back.",
-          "hint": "Which resource sets the step’s pace, and does the format reduce it?",
+          "correct": 3,
+          "why": "A narrower format shortens a step only where bytes were the limit, and only if a kernel reads it directly. An extra pass that expands it back to BF16 in memory restores the full-size traffic, plus the cost of the pass.",
+          "hint": "Count which bytes cross from HBM before the multiply actually runs.",
           "repair": "numbers",
           "option_feedback": [
-            "Other costs in the step, such as attention, communication and launches, do not shrink with the weight format, and an expansion pass would add traffic.",
-            "Right. Fewer bytes read is what a memory-bound step needs, and the kernel has to read them in the narrow format for that to happen.",
-            "Bytes stored are also bytes moved. When reading weights is the limit, moving fewer of them shortens the step."
+            "Precision can affect quality, but GPUs don’t automatically redo calculations because a format is narrow. The profile points at a different cost.",
+            "It is the other way round. With few tokens per expert, each weight byte supports very little arithmetic, so small-batch decode is limited by memory traffic, which is why the narrower format looked promising.",
+            "In a mixture-of-experts model, reading expert weights is a large part of a decode step, and each expert sees only the tokens routed to it. The weights matter. The way they were read is the problem.",
+            "Right. The narrow format saves bytes only if the matrix kernel consumes it directly. Expanding to BF16 first reads the FP4 data, writes a full-size copy and then reads that copy, so more bytes move than before."
           ]
         },
         {
           "id": "gpu3",
           "level": 3,
-          "prompt": "DeepSeek’s internal FlashMLA decode kernel is 5–10% faster than the public one, yet end-to-end performance differs by at most 5%. Why?",
+          "prompt": "A blog post announces a new attention kernel that runs 30% faster than FlashMLA. Your manager asks whether switching would make your decode service 30% faster. What do you need to know before answering?",
           "options": [
-            "Attention is only one kernel among many in each decode step",
-            "The public kernel is used only during prefill",
-            "End-to-end measurements round away differences that small"
+            "Attention’s share of a decode step at your batch and context",
+            "The new kernel’s MFU, to confirm it nears the hardware peak",
+            "Its prefill speedup, since decode uses the same kernel"
           ],
           "correct": 0,
-          "why": "A kernel speedup shortens the step only by that kernel’s share of the step’s time. Matrix products, communication and other kernels make up the rest of each decode step and are unchanged.",
-          "hint": "What share of a step does the faster kernel occupy?",
+          "why": "End-to-end gain is limited by the kernel’s share of the step. Attention is one kernel among many in a decode step, so a kernel speedup says little until you know how much of the step it takes at your batch size and context length.",
+          "hint": "If attention took a tenth of every step, what is the most a faster attention kernel could save?",
           "repair": "gpu",
           "option_feedback": [
-            "Correct. A 10% faster kernel that takes, say, half the step saves about 5% of the step.",
-            "The kernel in question is the decoding kernel, so it runs on every decode step.",
-            "The gap is real and follows from the kernel’s share of step time, not from measurement rounding."
+            "Right. A kernel speeds up the whole step only by its share of the step’s time. DeepSeek’s internal kernel is 5–10% faster than the public FlashMLA, yet end-to-end performance differs by at most 5%.",
+            "MFU tells you how close a kernel gets to the hardware limit, but it doesn’t tell you how much of your step the kernel occupies. A perfect kernel that takes 10% of the step can save at most 10%.",
+            "Prefill and decode call different attention kernels in DeepInfer, and the question is about decode. Even the right kernel’s speedup needs its share of step time to mean anything end to end."
           ]
         }
       ],
       "transfer": [
-        "A teammate suggests using a smaller numerical format to speed up your endpoint. What would you want to know before adopting it?",
+        "A teammate proposes storing your decode service’s weights in FP8 instead of BF16 because “smaller numbers are faster.” What would you want to know before agreeing, and what result would convince you?",
         [
-          "Identifies limiting operation and resource",
-          "Checks hardware/kernel support",
-          "Tests numerical/task quality and end-to-end latency"
+          "Asks whether the step is limited by memory traffic or by something else, such as arithmetic, launches or scheduling",
+          "Checks that the kernels read the narrow format directly instead of expanding it back to BF16 first",
+          "Requires a quality check on real tasks and an end-to-end latency measurement on the actual workload"
         ],
-        "I would first find which operation and which resource are taking the time. Storing fewer bytes helps when data movement is the limit, and it does nothing for a scheduling delay or a slow conversion step. I would check that the hardware and kernels support the format, compare outputs with a reference and evaluate task quality. Then I would rerun the same workload to see whether the latency users see actually improves."
+        "Halving the bytes only helps where moving bytes is what takes the time, so I’d first profile a decode step to see which operations dominate and whether they are memory-bound at our batch sizes. Then I’d check that the matrix kernels consume FP8 directly. If a separate pass expands the weights back to BF16, the full-size weights still cross memory and nothing gets faster. Finally, lower precision can hurt quality in ways generic perplexity misses, so I’d run task evaluations. I’d agree if latency on our real traffic drops and the task scores hold."
       ],
       "sources": [
         "roof",
@@ -948,8 +966,8 @@
       "needs": [
         "gpu"
       ],
-      "recall": "Why can reusing the same weights across requests improve arithmetic intensity?",
-      "predict": "If one request finishes early in a fixed batch, must its slot stay empty?",
+      "recall": "Ten people send prompts to the same model in the same second. Which part of the work could the engine do once for all ten instead of ten separate times?",
+      "predict": "In a batch fixed at the start, one user's one-line answer is done after 12 tokens while another user's report runs to 2,000. What happens to the first user's place in the batch for the next 1,988 steps?",
       "lab": "overlap",
       "example": [
         "A batch holds a short answer and a long answer, and the short one finishes first. What should the engine do with its place in the batch?",
@@ -963,69 +981,73 @@
         {
           "id": "bat1",
           "level": 1,
-          "prompt": "What does continuous batching let the engine do?",
+          "prompt": "A server switches from fixed batches to continuous batching. Total tokens per second goes up, yet a few users say the first word of their answer now takes longer to appear. What explains both?",
           "options": [
-            "Share one request’s private history with everyone",
-            "Replace completed requests between steps",
-            "Skip attention for every request"
+            "Requests in a shared batch now read each other's history, which slows attention",
+            "The CPU now does more scheduling work, so the GPU idles longer each step",
+            "Fuller steps do more total work but each takes longer, and newcomers wait for a free place"
           ],
-          "correct": 1,
-          "why": "The engine re-forms the active group between steps, so a waiting request can take the place of one that finished.",
-          "hint": "Which unit finishes on its own schedule?",
+          "correct": 2,
+          "why": "Batching is judged on two numbers that can move in opposite directions: work completed per second and the wait each request sees. A fuller batch makes each step longer and can make a new request queue for a place, so throughput and one user's first-token wait can both rise.",
+          "hint": "Throughput counts all users together. What does a single new arrival experience?",
           "repair": "batch",
           "option_feedback": [
-            "Batched requests share weights and execution steps, but each keeps its own private history.",
-            "Right. The group changes between steps, so a waiting request can fill a finished request’s place.",
-            "Every request still needs attention over its own context. Batching only groups the work."
+            "Tempting if batching sounds like mixing conversations, but each request keeps its own state. The engine shares weights and steps, never histories.",
+            "CPU idle time is a real cost, but it is a separate problem with its own fix (asynchronous execution), and it would lower total throughput, which went up here.",
+            "Yes. Keeping every place filled raises the work done per second, while a bigger step and a queue for places can lengthen one person's wait for the first token."
           ]
         },
         {
           "id": "bat2",
           "level": 2,
-          "prompt": "Before asynchronous scheduling, DeepInfer’s GPU sat idle while the CPU post-processed step N and scheduled step N+1. With that CPU work overlapped with the GPU’s forward pass, what sets the time per decode step?",
+          "prompt": "With DeepInfer's zero-overhead scheduling on, a team halves the time of the GPU's decode forward pass, but decode steps barely get faster. What is the likeliest explanation?",
           "options": [
-            "The CPU work plus the GPU work, because overlap leaves every phase in place",
-            "The GPU’s forward and sampling work, as long as the CPU work for the next step is shorter",
-            "The CPU work alone, because the GPU now runs in the background"
+            "The CPU's per-step work now takes longer than the GPU's, so the CPU sets the pace",
+            "Overlap adds the CPU and GPU times together, so halving one part barely shows",
+            "Decode steps are post-processed straight away, so they can't overlap",
+            "_correct_seqlens_qk makes the GPU wait for the CPU to send true lengths"
           ],
-          "correct": 1,
-          "why": "In steady state the CPU prepares step N+1 and finishes step N−1 while the GPU runs step N, so the two lanes run side by side and the longer one sets the pace. In decode that is usually the GPU.",
-          "hint": "Once both lanes run at the same time, which one finishes last?",
+          "correct": 0,
+          "why": "Under overlap the CPU schedules step N+1 and post-processes step N−1 while the GPU runs step N, so a step lasts as long as the slower lane. Speeding up the faster lane past that point buys nothing, and the CPU becomes the bottleneck.",
+          "hint": "If two lanes run side by side, what decides when the step ends?",
           "repair": "phases",
           "option_feedback": [
-            "Adding the two is the serial case. Overlap removes the gap where the GPU waited for the CPU.",
-            "Right. The CPU work hides inside the GPU work, so the step takes about as long as the GPU’s part.",
-            "The GPU still has to run every forward pass, and overlap cannot make that work disappear."
+            "Yes. Overlap makes a step last as long as the slower lane. Once the GPU lane shrinks below the CPU's scheduling and post-processing, the CPU becomes the limit, which is why llm_engine.py has a TODO to strip per-request Python work from decode.",
+            "Adding the two describes running the stages in order. Overlap runs them side by side, so only the longer one counts.",
+            "It is prefill steps that are post-processed straight away. Decode steps are the ones saved in prev_step_state so their post-processing overlaps the next forward pass.",
+            "That function exists so the CPU never has to stop and wait. It repairs sequence lengths on the GPU from the previous step's accepted counts."
           ]
         },
         {
           "id": "bat3",
           "level": 3,
-          "prompt": "An async rewrite returns each step's output objects to their pool immediately, deleting the deferred release. What is the main risk?",
+          "prompt": "A pull request deletes DeepInfer's DeferredRelease and returns each step's output objects to their pool right after the step, calling the delay wasteful. Its tests decode one request at a time. Which extra test would you ask for before approving?",
           "options": [
-            "Slightly more code to review",
-            "A later step reuses memory that a consumer of the earlier step is still reading",
-            "Lower GPU utilization during prefill"
+            "A benchmark showing fewer allocations and lower memory use per step",
+            "Overlapped decode with early stops and preemption, checked against a run without overlap",
+            "The same single-request test rerun with asynchronous scheduling turned off",
+            "A check that every output tensor keeps the same shape and dtype as before"
           ],
           "correct": 1,
-          "why": "Under overlap, step N's outputs are still being read while step N+1 runs. Recycling them early lets new data overwrite bytes that still have a reader.",
-          "hint": "Who still holds a reference to those objects when the next step starts?",
+          "why": "Under overlap, step N's outputs are still being read while step N+1 runs, and DeferredRelease holds them until the next sampling sync point. A test only catches an early release if it runs overlapped steps where requests stop, get preempted or change rows, and compares the tokens against a run where nothing overlaps.",
+          "hint": "When is anyone still reading step N's outputs, and what has to be happening for the pool to hand them out again?",
           "repair": "correctness",
           "option_feedback": [
-            "The risk is a real lifetime bug, which a style review would not catch.",
-            "Right. The deferred release keeps every object out of the pool until all of its readers have finished.",
-            "GPU utilization is unaffected. The problem is that a shared buffer can end up holding the wrong data."
+            "That would confirm the saving the PR is after, but it cannot reveal whether a reader still held the memory when it was reused.",
+            "Yes. The risk is that step N+1 overwrites an object a consumer of step N is still reading, and that only happens with overlap on and rows changing hands between steps.",
+            "With overlap off, no step runs while the previous one is still being read, so this test cannot reach the bug the delay prevents.",
+            "A recycled buffer keeps its shape and dtype. The failure is wrong contents, which a shape check would pass."
           ]
         }
       ],
       "transfer": [
-        "Describe one useful way for CPU work and GPU work to overlap, and one moment when the engine must still wait.",
+        "DeepInfer's step function warns that its outputs are released on the next call unless the caller clones them. You add a logger that records each step's sampled tokens on a background thread. Explain what could go wrong and how you would write the logger and test it.",
         [
-          "Shows two execution resources",
-          "Names the data dependency causing a wait",
-          "Includes startup or draining cost"
+          "Explains that under overlap the next step can reuse the buffer the logger is still reading",
+          "Gives a fix: clone the outputs, or finish reading before the next step releases them",
+          "Proposes a test that compares logged tokens with returned tokens under concurrent load"
         ],
-        "The CPU can prepare independent metadata for a future step while the GPU calculates the current step, so the GPU does not sit idle afterward. The CPU must still wait before it reads results that have not finished, and it cannot release or overwrite buffers that an unfinished operation still uses. Overlap also has a startup cost before the pipeline fills and a draining cost at the end."
+        "Because the engine schedules and post-processes in parallel with the GPU, my background thread might still be reading step N's tokens when step N+1 runs, and by then the buffer may have gone back to the pool and been overwritten. The log would then show tokens from a later step or another request. I'd clone the token tensor inside the step call before handing it to the thread. To test it I'd run many concurrent requests with early stops and compare every logged token with what each request actually returned."
       ],
       "sources": [
         "engine",
@@ -1066,8 +1088,8 @@
         "attention",
         "gpu"
       ],
-      "recall": "What computation does a KV cache avoid, and what work remains?",
-      "predict": "If two prompts share the same first 1,000 tokens, can that prefix be reused when their model weights differ?",
+      "recall": "A chat request is on its 500th generated token. Thinking back to the attention lesson, what does the KV cache spare the engine from redoing at this step, and what does it still have to compute?",
+      "predict": "Two customers send the same 1,000-token system prompt, but one of them is served through a fine-tuned adapter. Should the second request reuse the first one's cached prefix?",
       "lab": "kv",
       "example": [
         "Two requests have the same prompt token IDs. The second uses a different adapter that changes attention. Can it reuse the first request’s keys and values?",
@@ -1081,69 +1103,73 @@
         {
           "id": "cache1",
           "level": 1,
-          "prompt": "How do paging and prefix caching relate?",
+          "prompt": "A support bot sends the same 3,000-token set of instructions ahead of every user's question. After the team turns on paging, more requests fit in memory, but time to first token hardly changes. What would cut that time most directly?",
           "options": [
-            "They are the same mechanism",
-            "Paging manages where state is stored, and prefix caching reuses prefixes already computed",
-            "Both compress text"
+            "Smaller pages, so less memory sits unused in each request's last block",
+            "Reserving each request's maximum length up front, so none waits for blocks",
+            "Prefix caching, so each request reuses the stored state for the shared instructions"
           ],
-          "correct": 1,
-          "why": "They can be combined, but they remove different waste. Paging removes fragmented memory, and prefix caching removes repeated prefill.",
-          "hint": "One asks where state fits, and the other asks whether it already exists.",
+          "correct": 2,
+          "why": "Paging and prefix caching remove different waste. Paging stops memory being reserved or stranded, which lets more requests fit, while prefix caching lets a request skip prefill for a beginning the engine has already processed, which is what shortens the first-token wait here.",
+          "hint": "Where does the time before the first word go when every prompt starts with the same 3,000 tokens?",
           "repair": "cache",
           "option_feedback": [
-            "They often work together, but one decides where state lives and the other decides whether it already exists.",
-            "Right. Paging manages where blocks go, and prefix caching skips recomputing a beginning that was already processed.",
-            "Neither one compresses text. Both handle numerical attention state."
+            "Smaller pages would pack memory a little tighter, which helps capacity again. The first-token wait comes from computing the 3,000 shared tokens, which paging never skips.",
+            "This is the contiguous scheme paging replaced. It wastes memory and still recomputes the shared instructions for every request.",
+            "Yes. Paging decides where state lives, and prefix caching avoids recomputing state that already exists. Here the cost is recomputing the same 3,000 tokens for every user."
           ]
         },
         {
           "id": "cache2",
           "level": 2,
-          "prompt": "A conventional cache stores one key and one value per KV head, per layer, per token. A model shares 8 KV heads among its 32 query heads (grouped-query attention) instead of giving each query head its own. What does that change?",
+          "prompt": "In DeepSeek's production system, a cached prefix of a few thousand tokens clearly beats recomputing it, but for a prefix of about 200 tokens the hit saves little or nothing. Why?",
           "options": [
-            "The weights shrink by a factor of four, and the cache stays the same",
-            "Each token’s cache entry is a quarter of the size, so about four times as many tokens fit, and decode reads a quarter as many cache bytes",
-            "Nothing, because each query head still attends over every position"
+            "Recompute grows with prefix length, while lookup and fetch cost roughly a fixed amount",
+            "The GPU copy engine handles many small block copies poorly",
+            "Short prefixes only sit in the sliding-window slot, not the block cache",
+            "Short prefixes rarely produce a hit, so the engine recomputes them anyway"
           ],
-          "correct": 1,
-          "why": "The per-token cache size is proportional to the number of KV heads. Sharing 8 among 32 query heads cuts it to a quarter, which raises how many live tokens fit and lowers the cache traffic each decode step reads.",
-          "hint": "Which count appears in the cache formula: query heads or KV heads?",
+          "correct": 0,
+          "why": "A prefix hit travels a path of fixed-ish costs: a lookup that must finish before routing, a fetch into host memory, then a copy to the GPU. Recomputing a prefix scales with its length, so for a few hundred tokens it takes milliseconds, about what the round trip takes.",
+          "hint": "Which of the two costs depends on how many tokens the prefix has?",
           "repair": "cache",
           "option_feedback": [
-            "Only the key and value projections get smaller, which is a small share of the weights. The large effect is on the cache.",
-            "Right. Fewer KV heads means fewer stored vectors per token, which saves both memory and per-step reads.",
-            "The queries still attend over every position, but they read shared keys and values, so there is less to store and read."
+            "Yes. Recomputing costs work for every token, so it is tiny for a short prefix, while the hash lookup before routing and the trip from the storage cluster cost about the same either way.",
+            "That was a real problem, but DeepSeek moved the copy to GPUDirect RDMA because of it. It also doesn't explain why long prefixes are fine.",
+            "The sliding-window slot holds state for every request regardless of prefix length, and a 200-token prefix still has a full block in the block cache.",
+            "The situation is about hits that are found. A found hit can still save nothing if fetching it takes as long as recomputing."
           ]
         },
         {
           "id": "cache3",
           "level": 3,
-          "prompt": "A team wants to key the prefix cache on token IDs alone. They argue that two LoRA adapters of the same rank produce tensors of the same shape. Should the change be accepted?",
+          "prompt": "A team starts keying the prefix cache on token IDs alone, and the hit rate climbs from 40% to 55%. A week later, users of one fine-tuned adapter report odd answers on long shared prompts, yet the cache's lookup test still passes. What is that test most likely missing?",
           "options": [
-            "Accept, because equal shapes mean the cached values are interchangeable",
-            "Reject, because the adapter is an input to the cached keys and values, so it belongs in the key",
-            "Accept if hit rate rises after the change"
+            "It never evicts blocks while a request is still active",
+            "It only uses prompts shorter than one block, so no hits occur",
+            "It doesn't time whether a hit beats recomputing",
+            "It checks that a hit was found, never that the reused values match an uncached run"
           ],
-          "correct": 1,
-          "why": "Keys and values are numerical results of the weights that computed them. Equal shapes only hide the mismatch.",
-          "hint": "List every input that determined the cached numbers.",
+          "correct": 3,
+          "why": "This is a content bug, where the right blocks are found but hold the wrong values. A lookup test passes in exactly that case because a wrong hit is still a hit, and the jump in hit rate is the bug showing up as reuse across adapters.",
+          "hint": "List everything that shaped the cached numbers. Which of those does the lookup test compare?",
           "repair": "artifacts",
           "option_feedback": [
-            "Shape says nothing about values, and two adapters can compute different keys for the same IDs.",
-            "Right. The key needs model and adapter identity, and a test should alternate adapters against uncached references.",
-            "A higher hit rate would be the symptom of the bug, because wrong state would be found more often."
+            "Eviction during a live request is a real allocation bug to test, but here the right blocks are found. The problem is what they contain.",
+            "If the test never produced a hit it would not keep passing on hit checks. And a prompt length at a block boundary tests allocation, not content.",
+            "Speed is a separate concern. A slow hit gives the right answer slowly, whereas these users are getting wrong answers.",
+            "Yes. Keys and values depend on the adapter as well as the token IDs, so the adapter belongs in the key. A test that alternates adapters over the same IDs and compares against an uncached reference would have failed."
           ]
         }
       ],
       "transfer": [
-        "A cache finds more matching prefixes, but requests take longer. Give a possible explanation and a measurement that would test it.",
+        "After a routing change, a prefix cache's hit rate rises from 30% to 60%, but median time to first token gets worse. Give a plausible explanation and the measurements that would confirm or rule it out.",
         [
-          "Includes transfer or lookup cost",
-          "Compares saved computation with added cost",
-          "Measures latency, not hit rate alone"
+          "Considers lookup, transfer or attach cost against the computation the hit saves",
+          "Proposes timing hits and misses separately, by prefix length",
+          "Judges the change by latency on representative traffic, not by hit rate"
         ],
-        "Looking up or fetching the saved state may take longer than processing the prefix again. A hit shows that stored work was found, but not that fetching it saved time. I would time lookup, transfer and the remaining prompt computation separately for hits and misses, then compare time to first token on a representative workload. I would also check whether the transfers slow down other requests."
+        "The new routing may be finding hits that live on other machines or in remote storage, and for short prefixes, fetching that state can take longer than recomputing it. Hit rate only counts that stored work was found. I'd time lookup, transfer and the remaining prefill separately for hits and misses, grouped by prefix length, and compare time to first token before and after on the same traffic. I'd also check whether the extra transfers slow down other requests that share the links."
       ],
       "sources": [
         "paged",
@@ -1203,8 +1229,8 @@
       "needs": [
         "cache"
       ],
-      "recall": "Why is the conventional KV formula not universal?",
-      "predict": "If each layer sees the last 128 tokens, is the entire multi-layer model’s dependence limited to 128 original tokens?",
+      "recall": "The last lesson said a token costs 2 × layers × KV heads × head size × bytes in a conventional cache. What does DeepSeek V4.1 store per position instead, and why does that break the formula?",
+      "predict": "A model has 20 layers, and each layer lets a position look back only 128 tokens. Can a token 1,000 positions back still influence the next word it writes?",
       "example": [
         "An engineer argues that because each layer attends over 128 tokens, replaying the last 128 raw tokens restores a 20-layer model’s state exactly. What is missing from the argument?",
         [
@@ -1217,69 +1243,73 @@
         {
           "id": "sp1",
           "level": 1,
-          "prompt": "What do MLA, paging and SWA each concern?",
+          "prompt": "A model uses a 128-token sliding window in every layer. A colleague says it therefore cannot use anything written more than 128 tokens ago. What is the best reply?",
           "options": [
-            "All three describe the same memory-allocation technique.",
-            "What is stored, how memory is organized, and which positions can be read.",
-            "All three change how text is split into tokens."
+            "Agreed, since no layer can read further back than its window",
+            "Not quite, because recent positions already carry what lower layers read further back",
+            "Not quite, because paging keeps every older position available to those layers",
+            "Not quite, because the MLA latent vector summarizes the whole history"
           ],
           "correct": 1,
-          "why": "MLA changes what is stored, paging changes how memory is organized and SWA changes which positions a query can read. A smaller cache can come from any of them, and each makes a different promise.",
-          "hint": "Each term answers a different question.",
+          "why": "A window limits what each layer reads directly, but layers stack. Position i in a higher layer reads positions whose representations already include information that lower layers gathered from older tokens, so the model's reach is longer than one window.",
+          "hint": "What do the positions inside the window already contain by the time a higher layer reads them?",
           "repair": "special",
           "option_feedback": [
-            "Only paging is about allocation. MLA changes the representation, and SWA changes visibility.",
-            "Right. MLA changes the stored representation, paging organizes memory and SWA limits which positions a query reads.",
-            "Tokenization happens before any of these, and all three concern attention state."
+            "True of each layer's direct reads, but the positions a layer reads were themselves built by lower layers that looked further back.",
+            "Yes. Information can move up to a window's length per layer, so across many layers a recent position can depend on tokens far older than one window.",
+            "Paging decides where stored state sits in memory. It does not change which positions a windowed layer is allowed to attend to.",
+            "MLA changes what is stored per position. It doesn't give a windowed layer access to positions outside its window."
           ]
         },
         {
           "id": "sp2",
           "level": 2,
-          "prompt": "DeepInfer finds a block-cache hit for a long prompt, but the saved sliding-window state for the last hit block is missing. What does its policy do?",
+          "prompt": "A run with DEEPINFER_YOCO_PREFILL_TRUNCATION_MODE=compact gives slightly different log probabilities from the same run with the mode set to off. A teammate files it as a bug in compact. What is the likeliest explanation?",
           "options": [
-            "Treats the whole prefix as a miss and prefills from the start",
-            "Backs the hit off by one 128-token block and replays that block to rebuild the window state, reusing the block cache unchanged",
-            "Uses the block hit as is and leaves the sliding-window layers empty"
+            "Compact drops query rows, so it should switch to mask, which matches off",
+            "The 140 kept tokens fall short of the 134 positions the window state needs",
+            "Replay reads only the kept suffix, which cuts the long path through earlier layers"
           ],
-          "correct": 1,
-          "why": "The hit length is set by the block cache, and the window state decides only whether the last block needs recomputing. Replaying one block costs a fixed amount of work, independent of context length, and rebuilds an approximate window state.",
-          "hint": "Which cache sets the hit length, and which decides whether the last block is recomputed?",
+          "correct": 2,
+          "why": "Mask and compact are two implementations of the same bounded replay, so they should agree with each other. Both differ from off by design, because a replayed window never rebuilds the older state that, through stacked layers, fed into it in the full run.",
+          "hint": "Which of the three modes are meant to compute the same function?",
           "repair": "special",
           "option_feedback": [
-            "That would throw away a block cache that is still valid, and recompute far more than the missing state needs.",
-            "Right. Only the last block is replayed, and the replay rebuilds the window state while the block KV is reused as it was.",
-            "The sliding-window layers need their recent keys and values to attend at all, so they cannot simply run without them."
+            "Mask keeps every row but narrows the window the same way, so it computes the same function as compact and also differs from off.",
+            "140 covers the 128-token window plus 6 backtracking positions with room to spare. The default is chosen to be large enough.",
+            "Yes. With 20 layers of 128-token windows, exact window state depends on the last 2,560 tokens. Replay attends from max(s, i−127) only, so a small difference from off is expected."
           ]
         },
         {
           "id": "sp3",
           "level": 3,
-          "prompt": "DeepInfer’s level-2 YoCo check compares log probabilities from two truncation modes and finds that mask and compact modes match. What does this establish?",
+          "prompt": "DeepInfer's level-2 YoCo check passes: mask and compact agree on log probabilities and top-K entries along a fixed trajectory. A product lead asks whether bounded replay is now safe to ship for long-document question answering. What evidence is still missing?",
           "options": [
-            "Bounded replay matches the full computation with truncation off",
-            "The two truncation implementations agree on the tested trajectories and configuration",
-            "Truncation is safe for any fine-tuned model"
+            "A rerun on more than 8 devices to cover larger deployments",
+            "The level-1 metadata check of visible keys and store slots",
+            "Confirmation that the checkpoint satisfies n_prefill_layer < n_layer",
+            "A comparison with truncation off, plus scores on long-context tasks"
           ],
-          "correct": 1,
-          "why": "Both compared modes truncate, so the check shows they agree with each other. It never compares truncation with the untruncated reference.",
-          "hint": "Identify the two things actually compared.",
+          "correct": 3,
+          "why": "Both levels of the check compare two implementations of truncation and never run off. Agreement shows the implementations are consistent, not that the approximation preserves quality, and DeepSeek publishes no task-quality numbers for replay.",
+          "hint": "What did each side of the comparison have in common?",
           "repair": "correctness",
           "option_feedback": [
-            "Neither run had truncation off, so the gap from the full computation was never measured.",
-            "Right. Agreement holds for those two implementations, under the conditions tested.",
-            "Compatibility depends on the model’s layer layout, which this check takes as given."
+            "More devices would test the same two implementations against each other again. The comparison would still leave out the full computation.",
+            "Level 1 is the cheaper, narrower check, and it also only compares mask with compact.",
+            "The equivalence script already refuses a checkpoint that fails this, and passing it only shows the model has the layout replay assumes.",
+            "Yes. Both checked modes share the same approximation, so their agreement says nothing about its cost. Measuring that needs off as the reference and tasks whose answers depend on text before the replay boundary."
           ]
         }
       ],
       "transfer": [
-        "Why would you avoid turning on a model-specific cache shortcut for an arbitrary model you fine-tuned?",
+        "You fine-tuned a different open model whose configuration also has a sliding window and a field that looks like n_prefill_layer. A teammate wants to turn on DeepInfer's YoCo truncation for it to speed up prefill. What would you check first, and what results would convince you to turn it on?",
         [
-          "Names architecture/config dependency",
-          "Distinguishes exactness from approximation",
-          "Requires reference and task-quality comparison"
+          "Checks whether the model really has the producer/consumer layer layout and windowed layers the path assumes",
+          "Separates exact layer sharing from the approximate replay on top of it",
+          "Asks for a comparison against truncation off and task scores that depend on early context"
         ],
-        "A shortcut can depend on how one architecture produces and consumes state, and a model I fine-tuned may not share those layer-sharing or attention dependencies. I would first establish compatibility, then find out whether the shortcut promises an exact calculation or accepts an approximation. I would compare it against the appropriate reference, test boundary and long-context cases, and evaluate task quality wherever numerical differences are allowed."
+        "A similar-looking config doesn't mean the model was trained with YOCO-style sharing, and DeepInfer's path assumes particular consumer layers, windowed layers and shared KV. I'd first confirm the architecture matches, not just the field names. Even then, replay is an approximation, so I'd run truncation off and compact on the same teacher-forced inputs, look at the log-probability gap by distance from the replay boundary, and score long-document tasks whose answers sit well before it. I'd turn it on only if those losses were within a limit we agreed on beforehand."
       ],
       "sources": [
         "mla",
@@ -1306,8 +1336,8 @@
         "gpu",
         "batch"
       ],
-      "recall": "What is the difference between total parameters and parameters used by one token?",
-      "predict": "If half the tokens choose experts on one GPU, do equal expert counts guarantee balanced work?",
+      "recall": "A mixture-of-experts model has hundreds of billions of parameters, yet each token runs through only a few experts. What has to be stored somewhere, and how much of it does any one token use?",
+      "predict": "Four GPUs each hold a quarter of a model's experts. If the router sends half of all tokens to experts on one of those GPUs, how long will the layer take compared with an even split?",
       "example": [
         "DeepSeek decodes across 64 GPUs with expert parallelism. Each MoE layer ends with a combine step that every GPU has to join. What happens when some experts are far more popular than others, and what does DeepSeek do about it?",
         [
@@ -1320,69 +1350,75 @@
         {
           "id": "par1",
           "level": 1,
-          "prompt": "Which scheme puts different experts on different GPUs?",
+          "prompt": "A team serves an MoE model on 8 GPUs with expert parallelism, each GPU holding the same number of experts. Every step, the profiler shows 7 GPUs finishing the MoE layer early and waiting. Which change targets this most directly?",
           "options": [
-            "Expert parallelism",
-            "Tensor parallelism",
-            "Changing the sampling temperature"
+            "Give each GPU an equal number of experts",
+            "Add more distinct experts so the router has more to choose from",
+            "Store copies of the busiest experts on the idle GPUs",
+            "Add GPUs so each one holds fewer experts"
           ],
-          "correct": 0,
-          "why": "Expert parallelism assigns ownership of experts to devices and routes each token to the owners of its chosen experts.",
-          "hint": "Name the object being split.",
+          "correct": 2,
+          "why": "The layer can't finish until every GPU returns its results, so it runs at the pace of the busiest one. Redundant copies of popular experts split their tokens across devices without changing which learned functions the router picks.",
+          "hint": "The router's choices are fixed by the model. What can you change about where those choices land?",
           "repair": "parallel",
           "option_feedback": [
-            "Right. EP gives each device its own set of experts and sends tokens to them.",
-            "Tensor parallelism splits the matrices of one operation across devices, so every device takes part in every token’s operation.",
-            "Temperature changes how tokens are sampled and has nothing to do with where weights live."
+            "They already have that. Equal counts don't mean equal work, because the router decides how many tokens each expert gets.",
+            "That changes the model itself, and new experts could end up just as unevenly used. The router's existing preferences stay.",
+            "Yes. A copy gives a popular expert's tokens somewhere else to go, so the busy GPU sheds work. The router's choices among logical experts don't change.",
+            "If the popular experts still sit together, one GPU still gets most of the tokens and the others still wait, now in larger numbers."
           ]
         },
         {
           "id": "par2",
           "level": 2,
-          "prompt": "One logical expert receives 30% of a layer's tokens. EPLB places a second physical copy of it on another rank. What changes?",
+          "prompt": "DeepSeek runs prefill on 2 to 8 expert-parallel ranks but decode on 64 to 128. A newcomer asks why decode doesn't use the small group too. What is the main reason?",
           "options": [
-            "The model gains a new learned function for the router to choose",
-            "That expert's tokens can be split between two copies, while the number of logical experts stays the same",
-            "The router now picks from physical experts, so routing decisions change"
+            "Decode prompts are longer, so they need more GPUs for activation memory",
+            "A small group gives each expert only a handful of decode tokens, so steps are spent reading weights",
+            "Wide groups let decode skip the dispatch and combine steps",
+            "Decode relies on tensor parallelism, which needs large groups"
           ],
           "correct": 1,
-          "why": "A redundant copy adds capacity for an existing logical expert. The gate still selects among logical experts, and the copy only changes where the work runs.",
-          "hint": "Separate the function the router chooses from where its weights live.",
+          "why": "Each decode step carries about one new token per request, so experts are short of rows. With 8 ranks, a 256-expert model choosing 8 per token gets about 15 tokens per expert, and a 15-row matrix multiply spends its time reading weights. Going to 64 ranks raises that to about 120 and shrinks each rank's share of weights.",
+          "hint": "How many rows does one expert's matrix multiply get per decode step?",
           "repair": "parallel",
           "option_feedback": [
-            "A copy has identical weights, so it adds no new function.",
-            "Right. The logical experts are unchanged, and the physical copies share their demand.",
-            "The gate selects logical experts, and the logical-to-physical map decides which copy serves a token."
+            "Decode adds one position per request per step, so its activations are small. Long prompts are prefill's problem.",
+            "Yes. Spreading many more tokens across the group gives each expert more rows per step, and each rank reads fewer expert weights, cutting memory traffic.",
+            "Every expert-parallel group still dispatches tokens and combines results. A wider group actually adds ranks to that exchange.",
+            "DeepSeek's Q&A says tensor parallelism isn't used for now. Decode splits by experts with data-parallel attention."
           ]
         },
         {
           "id": "par3",
           "level": 3,
-          "prompt": "An engine promises batch-invariant outputs, and it also moves expert copies between GPUs every few thousand steps. Why can the second feature threaten the first?",
+          "prompt": "A cloud team reproduces Wide-EP decode with its GPUs spread across several machines and sees far smaller gains than DeepSeek's EP8-versus-EP64 chart. What should they check first?",
           "options": [
-            "Moving a copy changes which learned function the router selects",
-            "Moving a copy can change the order in which partial results are summed, and floating-point sums in a different order can differ slightly",
-            "Moving a copy drops the tokens that were in flight on the old GPU"
+            "Whether dispatch and combine now cross slower links between machines",
+            "Whether the router's learned correction bias was loaded",
+            "Whether the load balancer reshuffles experts often enough",
+            "Whether they used the same number of GPUs as DeepSeek"
           ],
-          "correct": 1,
-          "why": "A redundant copy has identical weights, but serving tokens from a different place can change the reduction order, and floating-point addition is not associative. That is why DeepInfer disables one DeepEP reduction mode when batch invariance and expert rearrangement are both on.",
-          "hint": "The weights are identical. What else about the computation can a move change?",
+          "correct": 0,
+          "why": "Scaling charts depend on topology more than device count. DeepSeek's evidence comes from one model on one hardware generation inside one fast domain, so the first question for a different setup is how many bytes cross which links per step.",
+          "hint": "What changed in the reproduction besides the GPUs themselves?",
           "repair": "parallel",
           "option_feedback": [
-            "The router still chooses among the same logical experts, and the copy holds the same weights.",
-            "Right. Identical weights summed in a different order can give results that differ in the last bits.",
-            "Inference does not drop routed tokens, and weight moves happen between steps."
+            "Yes. DeepSeek's published benchmarks ran inside one scale-up domain. Across machines, token traffic travels over slower RDMA links and grows with tokens × chosen experts × hidden size.",
+            "A missing bias would skew routing, which is worth checking, but it would hurt small and wide groups alike rather than erase the gain from going wide.",
+            "Placement matters, yet DeepSeek reshuffles decode only every 10,000 steps. Balance figures near 1.09 leave too little room to explain a large gap.",
+            "Matching the count is not enough. Where those GPUs sit, and which links the traffic crosses, matters more."
           ]
         }
       ],
       "transfer": [
-        "An expert model gets little faster when you double its GPU count. Suggest two possible causes and how you would investigate them.",
+        "You grow an MoE decode deployment from 8 GPUs in one machine to 16 GPUs across two, and throughput rises only 10%. Give two possible causes and a measurement that would tell them apart.",
         [
-          "Includes routing skew or small expert batches",
-          "Includes communication/topology",
-          "Names a measurement per hypothesis"
+          "Considers routing skew, where one rank gets more tokens and the rest wait",
+          "Considers communication across the slower link between machines",
+          "Pairs each cause with a measurement, such as per-rank load and timing or per-link bytes and time"
         ],
-        "The router might send a disproportionate share of tokens to a few experts, so some devices finish early and wait. I would measure token demand and execution time per expert and per device. Communication might also grow more expensive as the group grows, especially across slower links between machines, so I would measure those transfers and inspect where the experts are placed."
+        "One cause could be imbalance: if popular experts sit on a few ranks, every MoE layer waits for the busiest one, so I'd log tokens per expert and per-rank MoE time and compute the slowest-to-mean ratio. The other is the new link: dispatch and combine now cross between machines over a slower connection, so I'd time those collectives and count the bytes crossing it per step. If per-rank load is even but the collectives take much longer than before, the link is the problem; if one rank is consistently slow, it's placement."
       ],
       "sources": [
         "moe",
@@ -1425,8 +1461,8 @@
         "gpu",
         "batch"
       ],
-      "recall": "What prevents ordinary autoregressive generation from predicting many unknown steps independently?",
-      "predict": "If draft length doubles, must accepted tokens per second double?",
+      "recall": "When a model writes \"The capital of France is\", why can't it compute the word after \"Paris\" at the same moment as \"Paris\" itself?",
+      "predict": "You double the draft length from 3 tokens to 6. Should you expect each round to accept twice as many tokens?",
       "lab": "spec",
       "example": [
         "In DeepSeek’s production service the draft model proposes 5 tokens per request at every decode step. Should the target model verify all 5?",
@@ -1440,69 +1476,73 @@
         {
           "id": "spec1",
           "level": 1,
-          "prompt": "Why verify a draft with the target model?",
+          "prompt": "Two speculative decoding implementations both use exact speculative sampling with the same target model and seed, yet they print different strings for one prompt. A reviewer says one of them must be buggy. What is the best response?",
           "options": [
-            "To preserve the target’s intended generation behavior",
-            "To avoid loading target weights forever",
-            "To train the tokenizer"
+            "Agreed, since the target checks every token and should force the same text",
+            "Not necessarily, since exact sampling promises the target's distribution, not identical strings",
+            "Not necessarily, since different drafters give different output distributions"
           ],
-          "correct": 0,
-          "why": "Drafts are proposals, and the target remains the reference for what the output should be.",
-          "hint": "Who decides what output is acceptable?",
+          "correct": 1,
+          "why": "Leviathan and colleagues' guarantee is about distributions. Each output is a sample from what the target alone would produce, so a single differing string isn't evidence of a bug, while a frequency mismatch over many samples would be.",
+          "hint": "Is the guarantee about each string or about how often each string appears?",
           "repair": "speculate",
           "option_feedback": [
-            "Right. Verification keeps the output faithful to the target model.",
-            "The target’s weights are used in every verification pass, so speculation never retires them.",
-            "Speculation happens at inference time and leaves the tokenizer unchanged."
+            "The target checks tokens through a random acceptance rule, and different drafters lead to different random draws and corrections.",
+            "Yes. Two correct implementations can sample different texts. Comparing them takes many samples and a check that the output frequencies match.",
+            "Under exact speculative sampling the drafter affects speed only. Whatever it proposes, the output follows the target's distribution."
           ]
         },
         {
           "id": "spec2",
           "level": 2,
-          "prompt": "Under exact speculative sampling, the drafter proposes token a more often than the target model would choose it. What does verification do with a drafted a?",
+          "prompt": "A team notices its drafter proposes the word \"the\" far more often than the target model would. They worry the final text will be full of extra \"the\"s. Under exact speculative sampling, should they?",
           "options": [
-            "Always accepts it, because the target model checked the position",
-            "Accepts it only part of the time, so that a appears in the output exactly as often as the target alone would produce it",
-            "Always rejects it and samples a different token"
+            "Yes, because the target only checks that \"the\" is plausible, not how often",
+            "No, because every drafted token is rejected and resampled from the target",
+            "Yes, unless they switch to greedy verification",
+            "No, because over-proposed tokens are kept only often enough to match the target"
           ],
-          "correct": 1,
-          "why": "The acceptance rule keeps a drafted token with probability min(1, p/q), where p is the target’s probability and q the drafter’s. When the drafter overproposes a token, some proposals are rejected and replaced from a residual distribution, so the output follows the target exactly.",
-          "hint": "What would happen to a’s frequency in the output if every proposal were kept?",
+          "correct": 3,
+          "why": "Verification keeps a drafted token x with probability min(1, p(x)/q(x)). When the drafter over-proposes, some of those proposals are rejected and replaced from the target's leftover distribution, which brings the token's rate back to what the target alone would produce.",
+          "hint": "Compare p and q for \"the\". What does the acceptance rule do when q is larger?",
           "repair": "numbers",
           "option_feedback": [
-            "Keeping every proposal would make a appear as often as the drafter likes it, which is more often than the target does.",
-            "Right. Partial acceptance trims the drafter’s excess, and resampling on rejection fills in the tokens the drafter underproposes.",
-            "Rejecting a every time would make it appear less often than the target intends. The rule only trims the excess."
+            "The acceptance rule compares the two probabilities directly, so how often the drafter proposes a token is exactly what it corrects for.",
+            "If every token were rejected, speculation would save nothing. Tokens the drafter under-proposes are always kept.",
+            "Greedy verification is the same rule applied to a target that puts all its weight on one token. Both versions keep the target's rates.",
+            "Yes. A drafted token is kept with probability min(1, p/q), so an over-proposed \"the\" is sometimes rejected, and its final frequency equals the target's."
           ]
         },
         {
           "id": "spec3",
           "level": 3,
-          "prompt": "DeepSeek’s Q&A estimates that varying the verification length per request changes throughput by −1.5% at 16 sequences per rank and by +11.0% at 96. What best explains the pattern?",
+          "prompt": "You serve an internal tool with about 16 sequences per GPU rank. Going by DeepSeek's estimates for confidence-based verification lengths, should you turn the feature on?",
           "options": [
-            "The confidence head is less accurate when few requests are active",
-            "At low concurrency a decode step is memory-bound, so extra verified positions are nearly free. At high concurrency each one costs compute that other requests could use.",
-            "Dynamic verification changes the output distribution more at high concurrency"
+            "Probably not, since at low load extra verified positions are nearly free",
+            "Yes, since it raises the average accepted length at every load",
+            "Yes, since verifying fewer positions always lowers latency for one user",
+            "Probably not, since the confidence head is poorly calibrated at low load"
           ],
-          "correct": 1,
-          "why": "Trimming verification saves time only when the verification work has a cost. At low load, verification rides on the weight reads that the step pays for anyway.",
-          "hint": "When does verifying one more position actually cost time?",
+          "correct": 0,
+          "why": "DeepSeek estimates −1.5% throughput at 16 sequences per rank, +5.4% at 60 and +11.0% at 96. With few requests the step is memory-bound and extra positions ride along almost free, while with many requests each verified position takes compute another request could use. These figures come from a throughput model, not a live A/B test.",
+          "hint": "At 16 sequences per rank, what is the step waiting on, and does checking one more position add to it?",
           "repair": "correctness",
           "option_feedback": [
-            "The table shows accepted length barely changing at any concurrency, so calibration does not explain it.",
-            "Right. The value of trimming depends on whether the step is memory-bound or compute-bound.",
-            "Exact verification preserves the target distribution at any length. What changes is throughput."
+            "Yes. At 16 sequences per rank a decode step is limited by reading weights, so trimming verification saves little and throws away tokens that would have been accepted. DeepSeek estimates −1.5% there.",
+            "DeepSeek found accepted length barely moves (3.29 against 3.20). The gain comes from spending less verification work, which only pays when work is scarce.",
+            "Fewer verified positions can mean fewer accepted tokens per round, which makes a lone user wait through more rounds.",
+            "Calibration is an open concern, but nothing in the estimates ties it to load. The pattern follows from what limits the step."
           ]
         }
       ],
       "transfer": [
-        "Explain how longer drafts could help one user receive tokens faster but reduce the amount of useful work the server does for everyone.",
+        "Your speculative setup accepts 85% of draft tokens in a single-user demo. The product team wants to ship it with a draft length of 6 on a busy shared service. Say what the demo does and doesn't show, and what you would measure before shipping.",
         [
-          "Names saved serial rounds",
-          "Names added low-value verification work",
-          "Includes concurrency or capacity constraint"
+          "Explains that later positions survive only if all earlier ones did, so per-token acceptance overstates gains from long drafts",
+          "Recognizes that at high concurrency verification work competes with other requests",
+          "Names measurements such as accepted tokens per round, draft and verify time, latency percentiles and throughput at the planned concurrency"
         ],
-        "A single user may advance through several accepted tokens in one target-model round, which cuts the number of serial waits. Later draft positions have to survive every earlier position, though, so some of the extra checking has little chance of helping. With many requests active, that verification consumes capacity that could serve other users. I would measure accepted progress, drafting and checking time, and latency at the intended concurrency before settling on a draft length."
+        "85% per token means the sixth position survives only about 38% of the time, since it needs all five before it to be accepted too, so a lot of verification work goes to tokens that will be thrown away. In a one-user demo that work is nearly free because the step is limited by reading weights, but on a busy server it takes compute other requests could use. Before shipping I'd measure accepted tokens per round, drafting and verification time, inter-token latency percentiles and total throughput at the concurrency we expect, broken down by kind of task, and try shorter or variable draft lengths."
       ],
       "sources": [
         "spec",
@@ -1528,8 +1568,8 @@
         "speculate",
         "special"
       ],
-      "recall": "How does equal output distribution differ from identical outputs?",
-      "predict": "If JSON parses successfully, have you proved the answer’s facts are true?",
+      "recall": "Two runs of exact speculative sampling with the same seed print different sentences. What could still be true of both runs that would make them both correct?",
+      "predict": "An engine with a JSON grammar returns valid JSON giving a company's founding year as 1897, when it was founded in 1902. Which part of the engine, if any, should have caught that?",
       "example": [
         "A cache change produces valid JSON, but its next-token scores disagree with the reference at a page boundary. Should an exactness claim be accepted?",
         [
@@ -1542,50 +1582,54 @@
         {
           "id": "cor1",
           "level": 1,
-          "prompt": "What does a JSON grammar guarantee?",
+          "prompt": "You rewrite the code that reads the cache and claim the new path is exact. Afterwards the model still answers fluently and its JSON still parses. Which test would actually support your claim?",
           "options": [
-            "That every field is true",
-            "That the output conforms to the structural constraints it supports",
-            "That no sampling occurs"
+            "Generate long answers from both paths and check they read equally well",
+            "Run both outputs through the grammar and confirm every one parses",
+            "Feed both paths one fixed token sequence and compare scores at each position",
+            "Confirm the new path returns tensors of the same shape as before"
           ],
-          "correct": 1,
-          "why": "Structure and truth are different properties. A grammar constrains form and cannot check facts.",
-          "hint": "A perfectly formatted wrong answer is still possible.",
+          "correct": 2,
+          "why": "An exactness claim needs a trusted reference and a rule for agreement. Teacher forcing holds the inputs fixed so the two paths can be compared position by position within a stated tolerance, without diverging histories muddying later positions.",
+          "hint": "What property are you claiming, and which comparison checks that property directly?",
           "repair": "correctness",
           "option_feedback": [
-            "A grammar constrains form, so a perfectly formatted field can still be false.",
-            "Right. The grammar guarantees that the output fits the structure it encodes.",
-            "Constrained decoding still samples. The grammar only masks out illegal tokens."
+            "Fluency is what you already have. A path that is slightly wrong can still write well, so this can't tell exact from close.",
+            "Parsing shows the format held. It knows nothing about whether the numbers behind each token were right.",
+            "Yes. With teacher forcing both paths see the same history, so any difference beyond rounding tolerance points to the first position where the rewrite went wrong.",
+            "An array can have the right dimensions and the wrong numbers, which is exactly the failure an exactness claim has to rule out."
           ]
         },
         {
           "id": "cor2",
           "level": 2,
-          "prompt": "Does a fixed random seed by itself guarantee batch invariance?",
+          "prompt": "A user reports that one DeepInfer request, sent with the same seq_seed every time, gives different output at busy times than at quiet ones. Which cause and fix fit best?",
           "options": [
-            "Yes",
-            "No, because numerical execution and the assignment of random draws also matter",
-            "Only for long prompts"
+            "The seed is shared across requests; give each request its own fresh seed",
+            "Busier batches change the order of sums; enable batch invariance as well",
+            "Prefix-cache hits skip sampling at busy times; turn off prefix caching",
+            "Grammar masks differ under load; remove the structured-output constraint"
           ],
           "correct": 1,
-          "why": "Different batching can change the order of reductions or which random draw goes to which request, unless both are controlled.",
-          "hint": "What happens to the numbers before the random selection?",
+          "why": "The seed fixes the random draws, and batch invariance fixes the numbers those draws act on. Without it, a different batch can reorder floating-point sums enough to swap two nearly tied tokens, and from then on the whole continuation differs.",
+          "hint": "What changes about the request's surroundings between busy and quiet times?",
           "repair": "tokens",
           "option_feedback": [
-            "A seed fixes the random draws, but batching can change the numbers those draws act on.",
-            "Right. Batch composition can change reduction order and the assignment of random draws.",
-            "Prompt length plays no special role, and batch effects can appear at any length."
+            "A fresh random seed would make outputs vary even more. The seed is already fixed, and that is necessary but not enough.",
+            "Yes. A different batch can split sums into different tiles, changing the last bits and eventually a near-tied token. DEEPINFER_BATCH_INVARIANT=1 fixes the numbers, and the confidence scheduler also has to be off.",
+            "A prefix hit skips recomputing the prompt, not sampling. Generation still samples every new token.",
+            "The masks depend on the text generated so far, not on how busy the server is."
           ]
         }
       ],
       "transfer": [
-        "Pick an engine change and describe what you would compare to decide whether it is correct. Say what the comparison would and would not establish.",
+        "A teammate changes how the sampler builds structured-output masks for draft positions and reports that all 500 test outputs parsed. Say what that result shows, what it doesn't, and what you would add.",
         [
-          "Names a reference",
-          "States equality/tolerance/quality criterion",
-          "States tested configurations and boundaries"
+          "Recognizes that parsing shows the format held, not that the mask allowed and blocked the right tokens",
+          "Names a targeted check, such as searching for wrongly blocked tokens or grammar state after rollback",
+          "Names boundary cases like tokens that straddle a grammar boundary or a rejected draft"
         ],
-        "For a cache-read change, I would feed identical token prefixes to the full reference calculation and to the cached path, then compare the next-token scores within a stated tolerance. I would include cache boundaries and interleaved requests. That tests the numerical property directly under those conditions. It does not cover every possible configuration, and it says nothing about whether the model’s answers are factually correct, so those claims need their own checks."
+        "Every output parsing shows the mask never let through a token that breaks the format on those 500 runs. It doesn't show the mask didn't block tokens it should have allowed, which would quietly steer answers, or that matcher.rollback returns the grammar to the committed text after a draft is rejected. I'd add a test that compares the mask at each position against an independent parser's set of legal next tokens, with cases where a draft is rejected mid-structure and where a single token's text spans a grammar boundary, and still check every output with an independent parser."
       ],
       "sources": [
         "sampler",
@@ -1644,8 +1688,8 @@
         "cache",
         "phases"
       ],
-      "recall": "Which parts of an online service live outside the engine loop?",
-      "predict": "Can putting prefill and decode on separate workers make a small workload slower?",
+      "recall": "A user closes the browser tab halfway through a long answer. Which parts of the service around the engine have to notice, and what keeps running if none of them does?",
+      "predict": "You split prefill and decode onto separate machines for a chatbot that gets two or three requests a second. Before reading on, guess whether its time to first token gets better or worse, and why.",
       "example": [
         "DeepSeek keeps prompt caches for days on a dedicated storage cluster, so a returning conversation can skip most of its prefill. What does a hit cost on the way to the GPU, and which parts of that cost does the request actually wait for?",
         [
@@ -1659,20 +1703,22 @@
         {
           "id": "svc1",
           "level": 1,
-          "prompt": "Putting prefill and decode on different workers creates a need to…",
+          "prompt": "You move prompt processing to one machine and answer generation to another. Both machines are idle, yet the first test request now takes noticeably longer to start streaming than it did on a single machine. What new step is the likeliest cause?",
           "options": [
-            "Move compatible attention state from the prefill worker to the decode worker",
-            "Tokenize the prompt again on the decode worker so it can rebuild the context",
-            "Run a separately trained model on each worker"
+            "Re-tokenizing the prompt on the decode machine before it can continue",
+            "Loading a fresh copy of the model weights for the incoming request",
+            "Sending the prompt’s attention state from the prefill machine to the decode machine",
+            "Holding the request in a queue until a decode slot becomes free"
           ],
-          "correct": 0,
-          "why": "Decode continues from the attention state that prefill computed, so that state has to reach the decode worker intact and in a format it can use.",
-          "hint": "What did prefill produce that decode consumes?",
+          "correct": 2,
+          "why": "Decode continues from the numerical state that prefill produced, so once the stages live on different machines that state has to cross the network before the first answer token can be generated. That transfer is the cost every split adds, and on a small, idle workload nothing offsets it.",
+          "hint": "What does the decode machine need from prefill before it can produce anything?",
           "repair": "service",
           "option_feedback": [
-            "Right. The decode worker needs the keys and values prefill computed, and they have to arrive complete and in a format it can use.",
-            "Token IDs alone would force the decode worker to redo the prefill that the split was meant to move elsewhere.",
-            "Both stages run the same model with the same weights. Disaggregation only changes which machine does each stage."
+            "The decode machine needs the computed attention state, and token IDs alone would force it to redo the prefill the split was meant to move elsewhere. A well-built split sends the state instead.",
+            "Weights are loaded once when a worker starts and then reused for every request, so they don’t explain a per-request delay.",
+            "Right. The attention state has to travel between machines, and that handoff adds to time to first token unless it overlaps with other work.",
+            "Queues add waiting when requests outnumber slots, but both machines are idle here, so nothing is ahead of this request."
           ]
         },
         {
@@ -1680,19 +1726,21 @@
           "level": 2,
           "repair": "service",
           "revision": "levels-2026-10-20",
-          "prompt": "DeepInfer’s scheduler refuses to start a decode-only (COMPLETION) engine unless preempted requests are stopped. Why?",
+          "prompt": "You put a small web server in front of DeepInfer’s LLMEngine. In a load test the client disconnects after the first few tokens of every answer, yet GPU memory and utilization stay high long after the test ends. What is the likeliest cause?",
           "options": [
-            "Decode-only engines run one request at a time, so preemption would leave them idle",
-            "Stopping preempted requests keeps the sampling seed from changing between attempts",
-            "A decode-only engine has no prefill path, so it cannot rebuild an evicted request’s cache by recomputing it"
+            "The server never calls abort_request when a connection closes, so those requests keep generating",
+            "The scheduler marks disconnected requests as aborted but never frees their cache blocks",
+            "Preemption keeps sending the disconnected requests back to the front of the waiting queue",
+            "max_num_seqs is set too high, so too many requests were admitted at once"
           ],
-          "correct": 2,
-          "why": "Recomputing a preempted request means prefilling its prompt and generated tokens again. A decode-only worker has no prefill channel, so the only local options are to stop the request or to send it back through a prefill worker.",
-          "hint": "What does the recompute branch of _preempt put the request through again?",
+          "correct": 0,
+          "why": "DeepInfer has no online-serving wrapper, so nothing inside the engine knows a client went away. Cancellation happens only when something calls LLMEngine.abort_request, after which the scheduler frees the request’s blocks and slot on its next pass.",
+          "hint": "Who in this setup is in a position to notice that a connection closed?",
           "option_feedback": [
-            "Decode engines batch many requests, up to max_num_seqs, and preemption exists precisely because several compete for cache blocks.",
-            "Seeds play no part in this check. It concerns whether the engine can rebuild cache state at all.",
-            "Right. Recomputing is a prefill, and a COMPLETION engine has no prefill channel to run it."
+            "Right. The engine only learns a request is unwanted through abort_request, and the server you wrote is the only part that sees the closed connection.",
+            "abort_sequence does mark matches FINISHED_ABORTED, and the scheduler’s next pass then frees their blocks and slots. The gap is that nobody called it.",
+            "Preemption puts an evicted request back in line, which costs work, but it happens to live requests short of cache space, not because a client left.",
+            "A high limit lets more requests run together, but they would still finish and free their memory. Here the work outlives the test because it was never cancelled."
           ]
         },
         {
@@ -1700,30 +1748,32 @@
           "level": 3,
           "repair": "service",
           "revision": "levels-2026-10-20",
-          "prompt": "Your team serves a few requests per second on eight GPUs and is considering splitting prefill and decode. Which evidence would best settle the decision?",
+          "prompt": "Your team serves a few requests per second on eight GPUs. A colleague wants to split prefill and decode, citing DistServe and DeepSeek’s 155 trillion tokens a day. Which test result would best justify the split?",
           "options": [
-            "Goodput under your latency targets on your traffic, comparing the split against a colocated engine with chunked prefill",
-            "DeepSeek’s reported tokens per day and revenue per GPU-hour, scaled down to eight GPUs",
-            "Peak throughput of the split system at its largest batch size, against a colocated engine serving one request at a time"
+            "Higher peak throughput than the same engine without chunked prefill, at the largest batch",
+            "Throughput per GPU close to DeepSeek’s once their cluster figures are scaled to eight GPUs",
+            "Lower time to first token on long prompts, with per-token latency left unmeasured",
+            "Higher goodput at your latency targets than a single-machine engine with chunked prefill, on your traffic"
           ],
-          "correct": 0,
-          "why": "Disaggregation trades handoff cost for less interference between prefill and decode. Goodput on your own traffic, measured against the strongest colocated alternative, shows how that trade works out where you will operate.",
-          "hint": "Which comparison holds the workload and the strength of the alternative fixed?",
+          "correct": 3,
+          "why": "The split pays a handoff cost to remove interference between prefill and decode, and chunked prefill already reduces that interference on one machine. Goodput counts only requests that meet both latency targets, so comparing it on your own traffic against the strongest single-machine option shows whether the trade pays off for you.",
+          "hint": "Which comparison keeps the workload fixed and pits the split against its best rival?",
           "option_feedback": [
-            "Right. Goodput counts only requests that meet both latency targets, and chunked prefill is the colocated design that already reduces the same interference.",
-            "Those figures are author-reported at a scale whose smallest efficient unit is 128 GPUs, and they do not scale down linearly.",
-            "Comparing a tuned peak against a deliberately weak baseline inflates the gain and ignores the latency targets entirely."
+            "Peak throughput ignores latency targets, and an engine without chunked prefill is the weak baseline the split is easiest to beat.",
+            "DeepSeek’s figures come from a design whose smallest efficient unit is 128 GPUs and from a model that compresses its cache heavily, so they don’t scale down to eight GPUs.",
+            "Time to first token is half of what goodput checks. A split could improve it while hurting per-token latency, and this test would never show that.",
+            "Right. It measures what users feel, on the traffic you actually have, against the colocated design that already attacks the same problem."
           ]
         }
       ],
       "transfer": [
-        "Describe a simple service for your fine-tuned model. Where does unfinished work live, and what should happen when a user cancels?",
+        "A colleague drafts a first service for your fine-tuned model: one engine behind a web server, an unbounded request queue, no timeouts, and a prefix cache keyed only on token IDs. Users sometimes close the tab mid-answer, and next month you plan to serve a second adapter on the same base. What would you change before launch, and why?",
         [
-          "Identifies request queue and KV ownership",
-          "Includes model/tokenizer/adapter identity",
-          "Names cancellation/timeout handling"
+          "Bounds the queue or the waiting time and says what happens to a request when the limit is reached",
+          "Has the server detect closed connections or expired deadlines and cancel the request so its cache and slot are released",
+          "Adds model and adapter identity to the cache key, explaining that otherwise one adapter’s request could reuse attention state computed by another"
         ],
-        "Requests first wait in a bounded queue and then run in a compatible engine. Each active request owns its working state, including its attention cache. The service records which base model, adapter and input format are in use. When a request completes or is cancelled, the service releases its slot and state once no consumer still needs them. I would get this simple path working before adding remote transfers or separately scaled stages."
+        "I would cap the queue and give each request a deadline, returning an error or a busy response when either is hit, because an unbounded queue just makes the requests at the back wait longer without adding capacity. The engine doesn’t notice a closed tab, so the server should watch for disconnects and timeouts and call the engine’s abort, which frees that request’s cache blocks and slot for live users. Finally, once two adapters share a base, the same tokens produce different attention state under each adapter, so the cache key has to include the model and adapter, or a request could be served state computed by the wrong one."
       ],
       "sources": [
         "readme",
@@ -1766,8 +1816,8 @@
         "correctness",
         "service"
       ],
-      "recall": "What evidence separates an engine feature from a production service feature?",
-      "predict": "Will reading every kernel before the request loop give you the clearest first map?",
+      "recall": "You have a working example script and an engine repository with hundreds of files. Where would you start reading, and what question would you carry with you as you go?",
+      "predict": "A profiler shows DeepInfer copying every output object on every engine step. Before reading on, guess whether deleting that copy would be a safe speed-up.",
       "example": [
         "You find an output clone inside the generation loop. How do you decide whether it is needed?",
         [
@@ -1780,20 +1830,22 @@
         {
           "id": "code1",
           "level": 1,
-          "prompt": "What is the best first route through the repository?",
+          "prompt": "A new teammate wants to understand how DeepInfer turns a prompt into text, and plans to spend the first week reading the GPU kernels, since those set the speed. What would you suggest instead?",
           "options": [
-            "Start with an example and follow one request through to its results.",
-            "Read every file in directory order, so nothing is missed, before tracing a request.",
-            "Start from the most optimized kernels, since they dominate the benchmark results."
+            "Read the configuration flags first, since they decide which kernels run",
+            "Run the offline example and follow one request through generate and the engine step",
+            "Start with sampler.py, since every generated token passes through it",
+            "Read the package in directory order so that every file is seen once"
           ],
-          "correct": 0,
-          "why": "Following one request ties every file you open to behavior you can observe, so the map you build stays connected.",
-          "hint": "Which route connects each file you open to something you can watch happen?",
+          "correct": 1,
+          "why": "Following one request ties each file to something you can watch happen, so the pieces connect as you go. Once you know where the engine step schedules, executes and handles results, the kernels have a place to sit when you open them later.",
+          "hint": "Which route gives each file you open a question it answers?",
           "repair": "code",
           "option_feedback": [
-            "Right. One traced request shows how the pieces cooperate, and each file answers part of a question you already have.",
-            "Reading in directory order covers files without showing how they connect, so the details rarely add up to a map.",
-            "Kernels decide speed, but without the request loop you cannot tell when they run or what they receive."
+            "Flags matter, but without the request path you can’t tell what most of them affect or when.",
+            "Right. A traced request shows how the entry point, scheduler and model execution cooperate, and every function you meet answers part of a question you already have.",
+            "Sampling is a good detail to study, after you know how a request reaches it. On its own it doesn’t show where its inputs come from.",
+            "Directory order covers files without showing how they connect, so the details rarely add up to a picture of what the engine does."
           ]
         },
         {
@@ -1801,49 +1853,53 @@
           "level": 2,
           "repair": "code",
           "revision": "levels-2026-10-20",
-          "prompt": "DeepInfer’s confidence scheduler (schedule_mtp_varlen.py) ranks each draft position by the running product of the confidences up to it, not by that position’s own confidence. Why?",
+          "prompt": "You add logging inside LLMEngine.step that prints the outputs handled in each call next to the sequences the scheduler just scheduled. They never line up within the same call. Why?",
           "options": [
-            "Products are cheaper to compute on a GPU than individual confidences",
-            "A position is useful only if every earlier draft in the sequence is also accepted, and the running product estimates that joint chance",
-            "The running product makes later positions rank higher, so longer drafts get verified"
+            "The outputs are sorted by request ID, and the scheduler orders sequences differently",
+            "The all-reduce mixes in outputs that belong to other data-parallel ranks",
+            "Blocks cloned for shared prefixes produce extra outputs for the parent request",
+            "With overlap scheduling on, the outputs handled in a step belong to the previous step"
           ],
-          "correct": 1,
-          "why": "Verification stops at the first rejected draft, so a position contributes only when all the positions before it survive. The product estimates that chance, and because it can never increase along a draft, the positions a sequence wins always form a prefix.",
-          "hint": "What happens to the later drafts when an earlier one is rejected?",
+          "correct": 3,
+          "why": "With zero-overhead scheduling, the default for normal engines, the CPU schedules step N+1 while the GPU is still running step N, so the results processed during a call are the previous step’s. That is also why the loop calls flush_inflight_reqs once at the end to collect the last step still in flight.",
+          "hint": "While the GPU runs one step, what is the CPU doing?",
           "option_feedback": [
-            "The scheduler computes the confidences either way. The product is used because of what it means.",
-            "Right. The product is the estimated chance that the whole prefix up to that position survives.",
-            "A product of numbers no greater than 1 can only fall along the draft, so later positions rank lower."
+            "Sorting by request ID happens once at the end of _run_engine, when results are returned to the caller, not inside each step.",
+            "The all-reduce in has_unfinished_requests only combines a yes-or-no answer about remaining work. It doesn’t move outputs between ranks.",
+            "Cloned blocks keep a forked request from overwriting shared cache entries. They don’t create outputs of their own.",
+            "Right. Scheduling runs one step ahead of execution, so each call handles the results of the step before it."
           ]
         },
         {
           "id": "code3",
           "level": 3,
-          "prompt": "An output is cloned just before the engine may reuse its buffers. What should you check before calling the clone waste?",
+          "prompt": "A pull request removes the RequestOutput.clone call in _run_engine, citing a profiler trace that shows the copy on every step. The included test compares output shapes and passes. Which test would tell you whether the change is safe?",
           "options": [
-            "Whether a saved result would change after the buffer is reused",
-            "Whether the optimizer state is updated during inference",
-            "Whether the clone makes the output tensor larger"
+            "Save one output, run another step, then check that the saved output is unchanged",
+            "Run test_batch_invariant.py and confirm that batched and single runs still agree",
+            "Benchmark the loop and confirm the step time fell by about the copy’s cost",
+            "Compare the dtypes and lengths of the outputs before and after the change"
           ],
           "correct": 0,
-          "why": "If the consumer reads after the producer has overwritten the buffer, removing the copy lets it read changed data.",
-          "hint": "When can the engine reuse the buffer, and when is the saved result read?",
+          "why": "step returns objects from a pool that DeferredRelease frees one step later, and the clone is what lets the list in _run_engine outlive that. Only a test that keeps an output across a later step can see whether its contents get overwritten.",
+          "hint": "When is the pooled object reused, and when does the caller read the saved copy?",
           "repair": "batch",
           "option_feedback": [
-            "Right. The clone may be what keeps the saved result’s lifetime separate from the reused buffer’s.",
-            "Inference does not run an optimizer, so optimizer state cannot explain a copy in the generation loop.",
-            "A clone has the same shape and size as its source. What matters is whether its values stay fixed."
+            "Right. That reproduces the exact lifetime the clone protects, so it separates a safe redesign from one that reads reused memory.",
+            "That test checks that batching doesn’t change results. Both of its runs could read the same corrupted pooled objects and still agree.",
+            "A faster loop is what the change promises, and it would be just as fast if it returned wrong data.",
+            "The reused object keeps its shape and type when its contents are overwritten, so this is the check that already passed."
           ]
         }
       ],
       "transfer": [
-        "Trace one request through DeepInfer in a few sentences. Name one property you would test at a specific boundary.",
+        "A contributor opens a pull request that rewrites DeepInfer’s confidence scheduler kernel (schedule_mtp_varlen.py) to be faster. Neither of you has SM100 GPUs. Explain what the kernel has to guarantee and how you would ask them to show that it still does.",
         [
-          "Traces entrypoint to scheduling to execution to sampling",
-          "Names request-owned state",
-          "Names an observable invariant"
+          "States that each sequence’s selected positions must form a prefix of its draft, because verification stops at the first rejected draft",
+          "States that the selections must add up to total_q, with one mandatory slot per sequence",
+          "Proposes comparing the kernel with a plain Python reference over random confidences, ties, fresh sequences and budgets at both extremes"
         ],
-        "The example creates the model and calls generation. The entry point admits the requests, then repeatedly asks the engine to schedule and execute work. Model execution produces the values that sampling uses, and result handling updates each request and collects its outputs. Each request keeps its own state. At the output-collection boundary, I would test that an output saved earlier stays unchanged after a later step reuses the producer’s buffer."
+        "The kernel decides how many draft tokens of each sequence the target model checks. Verification stops at the first rejected draft, so whatever a sequence is given has to be a prefix of its draft, and every sequence gets at least one slot for the target model’s own token, with the total equal to total_q. I’d ask for a short Python reference that computes running products, ranks every position globally with ties going to the lower flat index, and hands out the slots, then a test comparing it with the kernel over random confidences, ties, sequences with no previous step, and budgets from one slot per sequence up to every position. If those two properties hold in every case, I’d trust the speed-up more than a single benchmark run."
       ],
       "sources": [
         "example",
@@ -1907,8 +1963,8 @@
         "cache",
         "correctness"
       ],
-      "recall": "Why can the wrong tokenizer make correct weights behave incorrectly?",
-      "predict": "If two checkpoints share an architecture name, can you apply the same LoRA adapter to either base revision?",
+      "recall": "A colleague sends you only an adapter_model.safetensors file and says “here’s the fine-tuned model.” What else would you ask for before trying to run it?",
+      "predict": "Suppose a LoRA adapter loads onto a newer revision of the same base model without a single error. Before reading on, guess whether it now computes what was trained.",
       "example": [
         "An adapter trained on base revision R1 loads on R2 without a shape error. Have you established that it is the model you trained?",
         [
@@ -1921,20 +1977,22 @@
         {
           "id": "art1",
           "level": 1,
-          "prompt": "A LoRA adapter is usually…",
+          "prompt": "Your LoRA-tuned chat model loads in a new engine with no errors, and the base revision and adapter are confirmed correct. But its answers run past the end of its turn and sometimes start a fake “User:” line. What is the likeliest cause?",
           "options": [
-            "A replacement tokenizer trained for the new task",
-            "A learned update that needs a compatible base model",
-            "A complete copy of the fine-tuned weights"
+            "The adapter file was saved without the base weights it modifies",
+            "The engine doesn’t support the base model’s architecture",
+            "The adapter was merged into the base instead of served beside it",
+            "The prompts lack the chat template and stop tokens used in training"
           ],
-          "correct": 1,
-          "why": "The adapter modifies selected base operations and usually omits the base weights, so it can only run on top of a compatible base.",
-          "hint": "Where are the original large matrices?",
+          "correct": 3,
+          "why": "The weights are right, so the problem sits in what the model is shown and when it is told to stop. A chat model learned to end its turn on particular tokens inside a particular layout, and without that template and those stop rules it keeps writing the conversation forward.",
+          "hint": "Everything loaded cleanly. What else did the model learn besides its weights?",
           "repair": "artifacts",
           "option_feedback": [
-            "LoRA trains changes to weight matrices. The tokenizer comes from the base model and stays the same.",
-            "Right. The adapter stores a small update, and the large base matrices have to come from the matching base model.",
-            "A merged checkpoint is a full copy, but a saved LoRA adapter usually holds only the low-rank update."
+            "Adapters normally leave out the base weights, and the engine supplies them from the base you load, which you’ve confirmed is the right one.",
+            "An unsupported architecture fails when the engine tries to load the model, and this one loaded and runs.",
+            "Merging folds the same update into the weights. Its results differ from the unmerged route only in rounding, not in where a turn ends.",
+            "Right. The format and stop tokens are part of what the model learned, and changing them shifts behavior while every weight loads cleanly."
           ]
         },
         {
@@ -1942,30 +2000,30 @@
           "level": 2,
           "repair": "artifacts",
           "revision": "levels-2026-10-20",
-          "prompt": "An adapter was trained with rank-stabilized LoRA (use_rslora on), which divides lora_alpha by √r instead of r. A loader ignores the flag. What happens?",
+          "prompt": "Your adapter was trained with r = 16, lora_alpha = 32 and use_rslora on. A new serving tool loads it without warnings, but on held-out prompts its answers sit between the base model’s and the trained adapter’s. What would you check first?",
           "options": [
-            "Loading fails with a shape error, because rsLoRA adapters store larger matrices",
-            "The update is applied at the wrong strength with no error, because the matrices are identical and only the configuration records the scale",
-            "Nothing changes, because the scale is stored in the weights and not in the configuration"
+            "Whether the base revision differs, since renamed modules silently drop part of the update",
+            "Whether the tool reads use_rslora, since without it the update runs at a quarter of its trained scale",
+            "Whether BF16 rounding in the unmerged route is shrinking the update on every token"
           ],
           "correct": 1,
-          "why": "Ordinary LoRA scales the update by lora_alpha / r and rsLoRA by lora_alpha / √r. The saved matrices are the same either way, so a loader that drops the flag applies a smaller scale for any r above 1 and raises no error.",
-          "hint": "Where does the scaling factor live: in the saved matrices or in the configuration?",
+          "why": "The rsLoRA flag lives only in adapter_config.json and sets the scale: lora_alpha / √r gives 8 here, while ordinary LoRA’s lora_alpha / r gives 2. The saved matrices are identical either way, so a loader that ignores the flag applies a weaker update and raises no error, which matches a model halfway between base and adapted.",
+          "hint": "Where is the scaling factor recorded: in the saved matrices or in the configuration?",
           "option_feedback": [
-            "rsLoRA changes only the scaling factor. A and B have the same shapes as in ordinary LoRA, so nothing fails to load.",
-            "Right. The loader computes the wrong scale, so the adapter’s effect is weaker than trained while every shape still matches.",
-            "The saved A and B matrices carry no scale. The loader computes it from lora_alpha, r and the variant flag in the configuration."
+            "Renamed modules fail loudly, because tensor names in the safetensors file encode module paths. A same-named base at another revision loads cleanly but gives different values, not a uniformly weaker effect.",
+            "Right. The scale is computed from the configuration, so dropping the flag shrinks the update while every shape still matches.",
+            "Rounding differences show up in the last digits and don’t move task results systematically. A consistently weaker adapter points at the scale."
           ]
         }
       ],
       "transfer": [
-        "What would you save alongside a LoRA adapter so another person could run the model you actually fine-tuned?",
+        "A teammate plans to hand your fine-tuned model to another team as “base: the latest release, plus the adapter folder.” The other team will serve it in a different engine. What would you add to the handoff, and what could go wrong without each piece?",
         [
-          "Pins base and adapter identity",
-          "Includes tokenizer/prompt/stop/config",
-          "Includes precision, versions and evaluation fixture"
+          "Pins the exact base revision and explains that a moving name can load cleanly with different weights",
+          "Includes the adapter configuration, the tokenizer, the chat template or input format and the stop rules",
+          "Includes precision, library versions and fixed inputs with expected outputs so the new engine can be checked against them"
         ],
-        "I would record the exact base revision and save the adapter’s configuration and learned values. I would include the model configuration, the correct tokenizer, the input format used in training and the stop-token rules. Numerical precision, quantization settings and library versions also affect whether someone can reproduce the model. Finally, I would keep fixed tokenized inputs and a held-out evaluation record, so a new loader or engine has something concrete to be compared against."
+        "I’d replace “latest” with the exact base revision, because a newer base can have the same shapes and still hold different numbers, so the adapter would load without complaint and compute something else. The adapter folder needs its adapter_config.json, since the rank, alpha, target modules and flags like rsLoRA decide how strongly the update is applied. I’d also send the tokenizer, the chat template or training format and the stop tokens, because the model learned those too. Last, I’d record the precision and library versions and include a few fixed token-ID inputs with the reference model’s scores, so the other team can tell whether their engine reproduces our model before they start tuning it."
       ],
       "sources": [
         "lora",
@@ -2030,8 +2088,8 @@
         "batch",
         "artifacts"
       ],
-      "recall": "Which numerical comparison shows that a cache is correct?",
-      "predict": "If a cache accidentally drops its first key/value, will matching tensor shapes detect it?",
+      "recall": "You changed how a cache is read and the output still has the right shape. What comparison would convince you the model is still computing the same thing?",
+      "predict": "A cache read starts one entry too late. Before running anything, guess whether the generated tokens go wrong right away, a few steps later, or possibly not at all on a short prompt.",
       "example": [
         "We process input IDs [1, 4]. These numbers name tokens, and the keys and values saved in the cache are computed from them.",
         [
@@ -2045,69 +2103,73 @@
           "id": "work1",
           "level": 1,
           "revision": "cache-slice-v1",
-          "prompt": "The cache contains entries at positions 0 and 1. What does cache.values[1:] pass to attention?",
+          "prompt": "A teammate’s cache read uses cache.keys[1:] and cache.values[1:] once the cache holds more than one entry. The code runs and the slices always have equal lengths. Compared with a full recomputation, at which input do the next-token scores first differ?",
           "options": [
-            "Both positions 0 and 1.",
-            "Only position 1.",
-            "Only position 0."
+            "The first input, since the read skips an entry from the start",
+            "The second input, when the cache first holds two entries",
+            "The third input, once enough history is missing to change the scores",
+            "None, since the keys and values are still read as matching pairs"
           ],
           "correct": 1,
-          "why": "The slice begins at index 1 and continues to the end. It leaves position 0 out of the values passed to attention, even though that entry still exists in the cache.",
-          "hint": "Python starts counting at zero. The number before the colon is the first included position.",
+          "why": "With one entry the condition is false and attention sees everything. When the second input arrives, the read starts at position 1 and position 0’s value drops out of the mixture, so the scores change at once.",
+          "hint": "With [1:], which position goes missing, and when does that position first exist alongside another?",
           "repair": "workshop",
           "option_feedback": [
-            "That would be [0:]. The number before the colon is the first position included.",
-            "Right. [1:] starts at index 1 and runs to the end, so position 0 stays in the cache but never reaches attention.",
-            "Position 0 is exactly the entry the slice skips. Selecting only it would need [0:1]."
+            "With a single saved entry the read takes the whole cache, so the first input is computed exactly as the reference does.",
+            "Right. That is the first moment there is an entry to skip, and leaving out position 0 changes the attention mixture immediately.",
+            "One missing entry already changes the weighted mix of values, so there’s no threshold to wait for.",
+            "Paired slices only show that each key still has its value. They don’t show that the history attention needs is all there."
           ]
         },
         {
           "id": "work2",
           "level": 2,
-          "prompt": "A wrong cache offset can leave every shape unchanged. Which check is needed?",
+          "prompt": "With broken_offset on, a test generates greedy tokens for the prompt 1, 4, 2, 8 and they match the reference’s choices. A colleague concludes the cache is fine. What does the test actually show?",
           "options": [
-            "Only assert list length",
-            "Compare actual logits against the full-prefix reference",
-            "Only print tokens/s"
+            "That the bug is harmless here, since a missing entry would change the chosen tokens",
+            "That the bug has faded, since the score difference shrinks by the fourth token",
+            "Little, since the top token can survive a shifted score; comparing all 16 scores catches it"
           ],
-          "correct": 1,
-          "why": "The wrong read has the right dimensions, so only the values, compared against a reference that recomputes the full prefix, expose it.",
-          "hint": "What does a shape or length check never look at?",
+          "correct": 2,
+          "why": "Picking the highest-scoring token throws away most of what the model computed. The broken read shifts scores by about 0.165 at the second position, which may leave the winner unchanged, while a comparison of all 16 scores at every position catches the error the first time it occurs.",
+          "hint": "How much of the model’s output does a greedy token check look at?",
           "repair": "correctness",
           "option_feedback": [
-            "Both slices still hold one key and one value each, so a length check passes on the broken read.",
-            "Right. The full-prefix reference shows which scores the cached path should have produced, entry by entry.",
-            "Speed says nothing about which history attention read, and a wrong cache can be just as fast."
+            "A changed score only changes the chosen token if it reorders the top of the list, so matching tokens can hide a real error.",
+            "The difference shrinks because each new entry dilutes the missing one’s share of attention, but position 0 is still missing from every later step.",
+            "Right. Matching tokens are weak evidence, and comparing every score at every position finds the error at the first prefix where it exists."
           ]
         },
         {
           "id": "work3",
           "level": 3,
-          "prompt": "After you vectorize the engine, what should happen to the simple scalar reference?",
+          "prompt": "You plant a bug in the tiny engine that divides attention scores by 12 instead of √12 inside the shared attention function. All 218 reference checks still pass. Why, and what would catch it?",
           "options": [
-            "Be retained as a small numerical oracle",
-            "Become the production hot path",
-            "Be replaced by “looks fluent”"
+            "The 10⁻¹⁰ tolerance is too loose; a tighter one would catch it",
+            "Random weights hide scaling errors; a trained checkpoint would catch it",
+            "The interleaved-request check skips attention; extending it would catch it",
+            "Both paths call the same attention code; a hand-computed two-position case would catch it"
           ],
-          "correct": 0,
-          "why": "A simple, independent implementation keeps catching mistakes that the optimized path introduces.",
-          "hint": "What makes later changes safe to inspect?",
+          "correct": 3,
+          "why": "full_logits and cached_step share input_vector, attention and finish_block, so a mistake inside shared code shows up identically in both and every comparison agrees. Catching it takes a check that doesn’t route through that code, such as arithmetic worked out by hand on a tiny case or an invariant the output must satisfy.",
+          "hint": "If the reference and the cached path are wrong in the same way, what does comparing them show?",
           "repair": "correctness",
           "option_feedback": [
-            "Right. A small, slow, obviously correct version is the oracle each optimization is compared against.",
-            "The scalar loop is too slow to serve. It is useful as a check, while the vectorized code does the real work.",
-            "Fluent-looking text can hide changed scores, and a tiny random-weight model never produces fluent text anyway."
+            "The two paths would agree exactly, so no tolerance, however tight, would see a difference.",
+            "Both paths would still run the same wrong scaling on a trained model, so their scores would still match each other.",
+            "That check compares each request with its own reference, and both still go through the same shared attention code.",
+            "Right. Differential testing can’t see a bug that both implementations share, so an independent check is needed."
           ]
         }
       ],
       "transfer": [
-        "Your teammate says: “The keys and values still have equal lengths, so starting the cache read at 1 is safe.” Explain what the code actually omits, how that changes the calculation, and what comparison supports your repair.",
+        "Your teammate says: “The keys and values still have equal lengths, so starting the cache read at 1 is safe.” Explain what the code actually leaves out, how that changes the calculation, and what comparison would support your repair.",
         [
-          "Names the omitted cache position and its contribution",
-          "Connects the changed visible values to changed model scores",
-          "Repairs the read boundary and compares with the same full-prefix reference"
+          "Names the omitted cache position and what it contributes to attention",
+          "Connects the changed set of visible values to changed next-token scores",
+          "Repairs the read boundary and compares with the full-prefix reference, including the second position where the bug first appears"
         ],
-        "With two saved positions, starting at 1 leaves position 0 out of both slices. Equal slice lengths only show that the keys and values are still paired, and they say nothing about whether the intended history is present. Attention then mixes only the remaining value, so the later calculations can produce different next-token scores. Starting at 0 restores both positions. I would compare cached and full-prefix scores on the same inputs, including the second position, where this bug first appears. Matching scores support the repair, though they say nothing about speed."
+        "With two saved positions, starting at 1 leaves position 0 out of both slices. Equal lengths only show that the keys and values are still paired, and they say nothing about whether the history attention needs is present. Attention then mixes only the remaining value, so the rest of the block works from a different input and produces different next-token scores, even when the top token happens to stay the same. Starting at 0 restores both positions. I’d check the repair by comparing all of the cached path’s scores with the full recomputation at every prefix length, including the second input, where this bug first shows up."
       ],
       "sources": [
         "transformer",
@@ -2138,8 +2200,8 @@
         "artifacts",
         "workshop"
       ],
-      "recall": "What must match between training-time prompt formatting and inference?",
-      "predict": "If the server returns HTTP 200, do you know it is using your adapter?",
+      "recall": "Your fine-tuned model answers well in a notebook. What would you record now so that, after moving it into an engine, you could tell whether the engine changed anything?",
+      "predict": "You start a server with your adapter, send a request that names it, and get HTTP 200 with the adapter’s name echoed back. Before reading on, guess whether that shows the adapter’s update was applied.",
       "example": [
         "The endpoint returns HTTP 200 and reports your adapter’s name. What further evidence would show that it runs your adapted model?",
         [
@@ -2152,50 +2214,54 @@
         {
           "id": "dep1",
           "level": 1,
-          "prompt": "A successful HTTP response proves…",
+          "prompt": "You move your fine-tuned model into a new engine and, in the same change, switch to 4-bit quantization and rewrite the prompt formatting for the engine’s API. Task scores drop by 6 points. What can you conclude?",
           "options": [
-            "That the endpoint answered. Model identity and behavior still need their own checks.",
-            "That the intended weights and adapter were loaded, since a loading error would have failed the request.",
-            "That outputs will not change when other requests share the batch."
+            "Quantization caused it, since that change is the one most likely to cost quality",
+            "The engine caused it, since the weights and adapter themselves did not change",
+            "Not much yet, until each change is rerun on its own against the reference",
+            "The new formatting caused it, since the model never saw that layout in training"
           ],
-          "correct": 0,
-          "why": "A successful response shows that transport worked. Whether the intended model ran correctly is a separate question with its own evidence.",
-          "hint": "Match the observation to what it can establish.",
+          "correct": 2,
+          "why": "Three things changed at once, and any one of them, or a combination, could explain the drop. Making one change at a time against the saved reference turns a single unexplained number into a result you can trace to a cause.",
+          "hint": "How many explanations does this one result leave open?",
           "repair": "deploy",
           "option_feedback": [
-            "Right. A 200 status reports that a response was delivered, and nothing about which weights produced it.",
-            "Many servers fall back to the base model or ignore an unknown adapter and still return 200.",
-            "Batch composition affects the engine’s numerics and scheduling, and the status code reports none of it."
+            "Quantization is a likely suspect, but the formatting rewrite could cost as much on its own, and this run can’t separate them.",
+            "Unchanged weights don’t mean unchanged inputs or numbers. The formatting and precision both changed in the same run.",
+            "Right. With three changes in one step, the drop can’t be pinned on any of them, so the comparison has to be redone one change at a time.",
+            "A format mismatch can hurt a model badly, which makes it a reasonable guess, but quantization and the engine changed in the same run."
           ]
         },
         {
           "id": "dep2",
           "level": 2,
-          "prompt": "Before comparing the reference with an engine, what should you hold fixed?",
+          "prompt": "You serve your adapter in vLLM with --enable-lora. Requests name the adapter in the model field, and responses echo the name back. Which result shows the adapter’s update is actually being applied?",
           "options": [
-            "Prompt token IDs, model artifacts and generation settings",
-            "The visible question text, letting each system format it its own way",
-            "The maximum output length, since it causes most of the differences"
+            "On prompts where the base and adapted references differ, the engine matches the adapted one",
+            "The server log lists the adapter path among the LoRA modules it loaded at startup",
+            "The response’s model field returns the adapter’s name in place of the base model’s",
+            "On generic prompts, teacher-forced log-probabilities closely match the adapted reference"
           ],
           "correct": 0,
-          "why": "If the tokenizer or template differs, the two systems run different token sequences and the comparison mixes formatting with execution.",
-          "hint": "What do the two systems actually receive?",
+          "why": "A name in the log or the response shows that the server accepted the adapter, not that its numbers changed the computation. Only prompts on which the two references clearly disagree can tell an applied adapter from a silent fall-back to the base.",
+          "hint": "Which test would come out differently if the engine were quietly running the base model?",
           "repair": "artifacts",
           "option_feedback": [
-            "Right. With identical token IDs, artifacts and settings, a remaining difference points at the engine.",
-            "The same visible text can become different token sequences under different templates, which confounds the comparison.",
-            "Output length matters, but formatting, artifacts and sampling settings can change results even at equal length."
+            "Right. If the engine matched the base row on those prompts instead, you’d know the update never took effect.",
+            "Loading an adapter at startup doesn’t show that requests are routed through it, or that it was applied at the right scale.",
+            "The echoed name shows only that the server accepted the name, not that the adapter’s values went into the computation.",
+            "On generic prompts the base and adapted models may agree almost exactly, so a close match there can’t tell the two apart."
           ]
         }
       ],
       "transfer": [
-        "Describe your first experiment moving a fine-tuned model into an inference engine. How will you tell what caused a difference?",
+        "Your fine-tuned model’s greedy output in a new engine first differs from the reference at token 41, and everything after that diverges. A colleague says the engine is broken. What would you check, and what result would change your mind?",
         [
-          "Names architecture/artifacts and compatible engine",
-          "Defines reference and quality criteria",
-          "Defines workload and latency/throughput measurements"
+          "Confirms both runs used the same prompt token IDs, model artifacts and generation settings",
+          "Uses teacher-forced log-probabilities on a fixed continuation instead of comparing free-running text",
+          "Distinguishes a divergence at a near-tie between two tokens (weak evidence) from one at a confident position (strong evidence)"
         ],
-        "I would start with the exact base, adapter, configuration, tokenizer and training-time input format in a direct reference implementation. I would save fixed token IDs, generation settings and held-out task results. Then I would pick an engine whose documentation supports that architecture and adapter path, and compare it on the same inputs. I would test quantization separately, so that any observed difference can be traced to one change."
+        "First I’d make sure the two runs actually received the same token IDs, artifacts and settings, since a template difference alone would explain a divergence. Then I’d stop comparing generated text, because after token 41 the two runs are continuing different sequences and every later difference is inherited. Instead I’d feed both systems the reference’s full continuation and compare the log-probabilities they assign at each position. If position 41 was a near-tie and the differences everywhere are small, that’s rounding, not a broken engine. If the engine disagrees at positions where the reference was confident, or the gaps are large throughout, my colleague is probably right."
       ],
       "sources": [
         "vmodels",
@@ -2265,8 +2331,8 @@
         "code",
         "deploy"
       ],
-      "recall": "Which correctness promise did your last optimization actually make?",
-      "predict": "A chart says 2× faster. What would you need to know to decide whether that helps your workload?",
+      "recall": "A chart shows another engine at twice your tokens per second. What would you want to know about how that number was produced before believing it applies to you?",
+      "predict": "DeepSeek estimates that verifying fewer draft tokens raises throughput at its production load. Before reading on, guess whether the same change could make a lightly loaded deployment slower.",
       "example": [
         "DeepInfer’s README reports decode throughput from its benchmark script. Before comparing that figure with your own deployment, what does it actually count?",
         [
@@ -2279,39 +2345,41 @@
         {
           "id": "ben1",
           "level": 1,
-          "prompt": "The authors’ benchmark shows a 2× speedup. Can you expect the same speedup for your deployment?",
+          "prompt": "A blog post shows an engine at twice your tokens per second. Their test sent many short prompts that share one long system prompt. Your users send long documents that share nothing. What is the most reasonable reading?",
           "options": [
-            "Yes, because the engine code is the same",
-            "No, because the workload and configuration limit what the result shows",
-            "Yes, as long as your cluster is at least as large as theirs"
+            "Expect about 2×, since the model and hardware are the same",
+            "Expect a loss, since engines tuned for short prompts are slower on long ones",
+            "Treat it as untested for you, since cache hits and lengths may explain the gain",
+            "Expect more than 2×, since long prompts give the engine more work to batch"
           ],
-          "correct": 1,
-          "why": "A benchmark is evidence about the conditions it measured. Your request lengths, arrivals, precision and cache state may differ.",
-          "hint": "What variables were held fixed?",
+          "correct": 2,
+          "why": "Their workload hit a shared prefix on almost every request and used short prompts, and both can raise throughput on their own. Your traffic changes both conditions, so the chart says little about your case until you run the comparison on a workload like yours.",
+          "hint": "Which conditions differ between their test and your traffic?",
           "repair": "bench",
           "option_feedback": [
-            "The same code can behave very differently under other request lengths, batch sizes or cache states.",
-            "Right. The speedup belongs to the measured workload and configuration until you reproduce it under yours.",
-            "Hardware is only one condition, and a different workload on equal hardware can still lose the gain."
+            "The same model and hardware can behave very differently when request lengths and cache state change.",
+            "The chart shows nothing about long prompts either way, so predicting a loss goes as far beyond the evidence as predicting the gain.",
+            "Right. The gain belongs to the measured workload until you reproduce it under yours.",
+            "Longer prompts change where the time goes, but nothing in the result says the gain grows. It was measured under different conditions."
           ]
         },
         {
           "id": "ben2",
           "level": 2,
-          "prompt": "A: 2,000 tok/s, p99 ITL 180 ms. B: 1,600 tok/s, p99 60 ms. Limit 80 ms. Choose…",
+          "prompt": "Two engineers report p99 inter-token latency for the same benchmark run, 140 ms and 65 ms. Both did the arithmetic correctly. What most likely explains the gap?",
           "options": [
-            "A, because its throughput is higher",
-            "B, among these measured configurations",
-            "Either, since p99 describes only the slowest 1% of gaps"
+            "One took the p99 of all token gaps pooled; the other, of each request’s mean gap",
+            "One measured latency per GPU and the other per server",
+            "One counted input tokens and the other counted output tokens"
           ],
-          "correct": 1,
-          "why": "A’s 180 ms p99 gap breaks the 80 ms limit and B’s 60 ms meets it, so B is the only configuration that qualifies.",
-          "hint": "Which configurations meet the 80 ms limit at all?",
+          "correct": 0,
+          "why": "The p99 of pooled gaps is set by the worst 1% of individual gaps, which may all come from a few long requests, while the p99 of per-request means describes the slowest 1% of users. Both are legitimate numbers, so a latency target has to say which one it means.",
+          "hint": "A p99 of what? Ask what each population is made of.",
           "repair": "phases",
           "option_feedback": [
-            "Higher throughput counts only among configurations that already meet the latency requirement, and A misses it.",
-            "Right. After filtering by the 80 ms requirement, B is the only one left.",
-            "The requirement is stated as a p99 limit, so the slowest 1% of gaps is exactly what it constrains."
+            "Right. Same run, different populations: one describes the worst moments, the other the worst-served users.",
+            "Per-GPU and per-server scope changes throughput figures. A gap between two tokens of one request is the same however many devices you divide by.",
+            "Input and output tokens change a throughput count. Inter-token latency is measured between output tokens, so this choice doesn’t apply."
           ]
         },
         {
@@ -2319,30 +2387,33 @@
           "level": 3,
           "repair": "bench",
           "revision": "levels-2026-10-20",
-          "prompt": "A write-up says confidence-scheduled verification raised throughput 5% and cites DeepSeek’s production Q&A. What is the most important thing to check before relying on it?",
+          "prompt": "You enable confidence-scheduled verification after reading DeepSeek’s estimate of a 4 to 7% throughput gain. Your deployment decodes about 16 sequences per GPU, and throughput drops slightly. What best explains it?",
           "options": [
-            "The concurrency it applies at, since the Q&A’s estimates run from −1.5% at 16 sequences per rank to +11% at 96",
-            "Whether the 5% was measured with the profiler on, since profiling only adds noise and the mean is unaffected",
-            "Nothing further, since the gain came from the engine’s authors on production hardware"
+            "Your drafter is less accurate, so the scheduler ends up verifying too many drafts",
+            "At low load, verifying a draft costs almost nothing, so skipping drafts mainly loses accepted tokens",
+            "The profiler was left on, and it inflates step times by nearly 50% at small batch sizes",
+            "Confidence scheduling needs 64-way expert parallelism and degrades on smaller setups"
           ],
-          "correct": 0,
-          "why": "The Q&A’s figures are estimates whose sign and size depend on how many sequences each GPU is decoding. A 5% gain belongs to one load, and yours may sit elsewhere on the curve.",
-          "hint": "Did the Q&A report one number or a curve?",
+          "correct": 1,
+          "why": "DeepSeek’s own estimates run from −1.5% at 16 sequences per GPU to +11% at 96, with the 4 to 7% figure belonging to its production load of about 60. With few sequences the GPU has spare compute, so cutting verification saves little and occasionally gives up a token that would have been accepted.",
+          "hint": "Did DeepSeek report one number, or a number that depends on load?",
           "option_feedback": [
-            "Right. The gain turns into a loss at low concurrency, so the load decides whether the claim applies to you.",
-            "Profiling does distort results, but it inflates step times in one direction, so it is not zero-mean noise, and the Q&A figures came from benchmark data in any case.",
-            "Author-reported figures are evidence about the authors’ workload, and the Q&A’s own table shows the result depends on load."
+            "A weaker drafter would lower its confidences and lead the scheduler to verify fewer drafts, not more, and the drop here matches what DeepSeek itself estimates at this load.",
+            "Right. The saving only turns into throughput when verification competes with other requests for compute, which happens at higher loads.",
+            "A profiler left on would distort timing, but the result you saw is what DeepSeek’s own figures predict at 16 sequences per GPU.",
+            "The 64-way setup is where DeepSeek’s estimates were made. What changes the sign of the result is the number of sequences per GPU."
           ]
         }
       ],
       "transfer": [
-        "Choose one DeepInfer idea and explain whether you would adopt it for your own model. What evidence would you need?",
+        "Your team wants to raise the draft length from 3 to 5 because a single-user demo got faster. In production each GPU serves about 40 concurrent requests. What would you measure before deciding, and what result would make you say no?",
         [
-          "Names saved resource and new cost",
-          "States architectural and hardware assumptions",
-          "Defines a correctness oracle and matched benchmark"
+          "Tests at the production concurrency and explains that a gain at one load can flip at another",
+          "Holds the workload and configuration fixed and reports tail latency together with useful throughput",
+          "Defines the acceptance rate it uses and measures it on the target workload instead of assuming one",
+          "Treats a trade-off, faster for one user but slower at load, as a finding worth reporting"
         ],
-        "For confidence-based draft scheduling, I would first check that my model and engine support the drafting and verification path it needs. I would measure the acceptance rate and the cost of verification under my target request load. I would keep the intended sampling behavior, confirmed by reference checks, and compare useful throughput at matched latency and quality targets. I would adopt the mechanism only if those measurements show a worthwhile gain for that workload."
+        "A single-user demo runs where the GPU has spare compute, so extra drafts are nearly free, and at 40 requests per GPU verification competes with other requests. I’d rerun both draft lengths on a workload that matches our prompt and output lengths and arrival pattern, same code revision, model and hardware, and compare p50 and p99 time to first token and inter-token latency along with throughput from requests that met our targets. I’d also measure acceptance as the share of drafted tokens accepted per step on our traffic, since quoted rates use different definitions. If length 5 lowers useful throughput or pushes tail latency over target at 40, I’d say no and write down the load at which the trade flips."
       ],
       "sources": [
         "qa",

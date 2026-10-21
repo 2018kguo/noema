@@ -625,14 +625,15 @@ code {
     border-color 120ms;
 }
 .choice:hover {
-  border-color: #93ac88;
+  border-color: #a9b3ad;
 }
-.choice:has(input:checked) {
-  background: #edf4e5;
-  border-color: #7b9e70;
+/* A choice before checking is neutral; colour comes only with the verdict. */
+.choice:where(:has(input:checked)) {
+  background: #f4f5f2;
+  border-color: var(--ink);
 }
 .choice input {
-  accent-color: var(--green);
+  accent-color: var(--ink);
   width: 17px;
   height: 17px;
   flex-shrink: 0;
