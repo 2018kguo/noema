@@ -93,6 +93,13 @@ const TELLS: Tell[] = [
     fix: "use a plainer word",
   },
   {
+    kind: "first-person narrator",
+    strong: true,
+    // Case-sensitive, so a variable named i ("position i read…") is not a narrator.
+    re: /\b(?:[Mm]y (?:reading|estimate|guess|view|inference|interpretation|understanding)|I (?:think|estimate|infer|assume|read|believe))\b/,
+    fix: "drop the narrator; say what the sources don't state and give the likely reason plainly",
+  },
+  {
     kind: "everyday analogy",
     strong: true,
     re: /\b(?:does|do) the same job\b|\bmuch like a\b|\bthe same way a \w+\b|\b(?:a|the) speed limit\b|\bthink of (?:a|the) (?:kitchen|highway|road|library)\b/i,

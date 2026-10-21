@@ -542,19 +542,23 @@ test("research fetches links the sources contain, named reference pages and sear
     { id: "a", url: "https://example.org/post", note: "" } as never,
     reading,
     dir,
-    async (_prompt, _schema, search) => {
-      expect(search).toBe(true);
-      return {
-        links: ["https://example.org/paper", "https://evil.example/made-up"],
-        background: ["Attention (machine learning)"],
-        // Only https search results are fetched; plain http and already-read pages are skipped.
-        found: [
-          "https://lab.example/write-up",
-          "http://lab.example/insecure",
-          "https://example.org/post",
-        ],
-      };
-    },
+    async (_prompt, _schema, search) =>
+      search
+        ? // Only https search results are fetched; plain http and already-read pages are skipped.
+          {
+            found: [
+              { url: "https://lab.example/write-up", why: "the subject's own write-up" },
+              { url: "http://lab.example/insecure", why: "x" },
+              { url: "https://example.org/post", why: "already read" },
+            ],
+          }
+        : {
+            links: [
+              { url: "https://example.org/paper", why: "the paper" },
+              { url: "https://evil.example/made-up", why: "invented" },
+            ],
+            background: [{ title: "Attention (machine learning)", why: "prerequisite" }],
+          },
     async (url) => {
       fetched.push(url);
       return [page(url), url];
@@ -654,6 +658,7 @@ test("tell detector names the sentences an editor must rewrite", () => {
     ["Despite these challenges, the engine shipped.", "challenges brush-off"],
     ["We were fast — too fast.", "em dash"],
     ["A speed limit sign does the same job on a road.", "everyday analogy"],
+    ["That pattern is my inference, not a claim either source makes.", "first-person narrator"],
     ["The schema change itself was not hard. The week it cost us was.", "contrast reversal"],
   ])
     expect(tells(text).map((f) => f.kind)).toContain(kind);

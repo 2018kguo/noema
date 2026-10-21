@@ -107,6 +107,8 @@ Find them on the second pass and rewrite the sentence as a person would say it.
   thing", "the truth is", and closers like "ultimately" or "at its core". Say the point.
 - **Significance tails.** ", highlighting its importance", ", paving the way for…". Cut the clause.
 - **Teacher voice.** "Let's break this down", "think of it as". Talk to the reader as a peer.
+- **A narrator.** "My reading is…", "my estimate", "I infer". The course has no "I".
+  Mark an inference plainly: "The paper doesn't say why; the likely reason is…".
 - **Em dashes.** Use a period, comma or parentheses.
 - **Titles with a flourish.** "The math you need, without the fog", "What X actually does",
   "Read the code without getting lost", "more than a weights file". Name the topic plainly,
