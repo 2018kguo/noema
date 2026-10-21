@@ -105,6 +105,17 @@ const editSchema = z
     example_steps: arr(3, 3),
   })
   .strict();
+// Only level HTML carries markup; every other field renders as escaped text, so tags a model
+// adds there (hover marks included) would show raw and point nowhere.
+function plainText<T>(value: T): T {
+  if (typeof value === "string") return value.replace(/<[^>]+>/g, "") as T;
+  if (Array.isArray(value)) return value.map(plainText) as T;
+  if (value && typeof value === "object")
+    return Object.fromEntries(
+      Object.entries(value).map(([k, v]) => [k, k === "visual" ? v : plainText(v)]),
+    ) as T;
+  return value;
+}
 async function pool<T, R>(items: T[], limit: number, work: (item: T, i: number) => Promise<R>) {
   const results: R[] = [];
   let next = 0;
@@ -377,14 +388,17 @@ export async function generate(
         [d.title, d.url, "Collected source; teaching examples are original."],
       ]),
     ),
-    LESSONS: lessons,
+    LESSONS: lessons.map(({ levels, ...rest }) => ({ ...plainText(rest), levels })),
     GLOSSARY: Object.fromEntries(plan.glossary.map((g) => [g.term, g.definition])),
   };
   if (cancelled()) throw new Cancelled("Preparation stopped before publication.");
   const output = join(directory, "course-" + randomUUID().replaceAll("-", "").slice(0, 12));
   await mkdir(output);
   await writeFile(join(output, "course.json"), JSON.stringify(course, null, 2) + "\n");
-  await writeFile(join(output, "challenges.json"), JSON.stringify(reviews, null, 2) + "\n");
+  await writeFile(
+    join(output, "challenges.json"),
+    JSON.stringify(plainText(reviews), null, 2) + "\n",
+  );
   loadBundle(output);
   return { output, title: plan.title };
 }
