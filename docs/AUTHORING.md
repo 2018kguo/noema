@@ -2,7 +2,7 @@
 
 A course directory has `course.json` and `challenges.json`. The server serves those
 through the shared UI. Use the DeepInfer sample as a complete worked schema.
-The JSON is trusted authored content: `layers` and `META.about_html` contain HTML.
+The JSON is trusted authored content: `levels` and `META.about_html` contain HTML.
 Never insert raw crawled HTML, scripts, or untrusted user text into them.
 
 Create a draft with `bun run course init local-courses/topic --id topic --title
@@ -12,8 +12,8 @@ deliberately incomplete; validation fails until lessons and metadata are written
 ## Course fields
 
 `META` supplies `id`, `title`, `eyebrow`, `heading`, `introduction`, `start_label`,
-`footnote`, two `depth_labels`, and `about_html` (source scope, dates, evidence
-limits). `id` is a stable lowercase slug and separates saved progress. Use a new id
+`footnote`, `about_html` (source scope, dates, evidence limits) and optional
+`placement` (see Depth levels). `id` is a stable lowercase slug and separates saved progress. Use a new id
 for a different course. `progress_key` is optional; the sample preserves its
 original browser storage key.
 
@@ -44,11 +44,11 @@ Each `LESSONS` entry uses:
   "needs": [],
   "recall": "What outcome do we eventually care about?",
   "predict": "Would doubling the number of measurements settle this question?",
-  "layers": [
-    "<p>Full beginner explanation...</p>",
-    "<p>Mechanism and calculation...</p>",
-    "<p>Evidence and design judgment...</p>"
-  ],
+  "levels": {
+    "1": "<p>Intuition: the situation, the idea, why it matters...</p>",
+    "2": "<p>Mechanism: moving parts, numbers, code paths, trade-offs...</p>",
+    "3": "<p>Frontier: evidence, where it breaks, open problems...</p>"
+  },
   "example": [
     "A concrete setup with all needed facts.",
     ["First worked step.", "Second worked step.", "Third worked step."]
@@ -165,9 +165,32 @@ case beside the changed one:
   chart marks the critical path; the slider shows when slack runs out. Hand-
   authored only for now; generation does not emit it.
 
-Every explorable has a `predict` prompt shown before the slider. Each lesson's
-`quiz_question` (0–2) picks the question used in the grouped block quiz, and a
-question may add `option_feedback`, one sentence per option.
+Every explorable has a `predict` prompt shown before the slider. Each illustration
+names the `level` whose text it sits in. A question may add `option_feedback`, one
+sentence per option.
+
+## Depth levels
+
+Each topic is written at one or more of three levels, every one a complete
+explanation for its own reader, never the previous level made longer:
+
+- **1 · Intuition**: a smart outsider. The situation, the core idea, why it matters.
+- **2 · Mechanism**: someone who will build or run it. Quantities, code paths,
+  failure modes, trade-offs.
+- **3 · Frontier**: a researcher. Evidence and how it was measured, where it breaks,
+  competing approaches, open problems.
+
+Write only the levels that add something: a prerequisite may be level 1 only, a
+specialist topic level 3 only. Each written level needs exactly the questions
+tagged with that `level`; the reader quizzes the level being read.
+
+`META.placement` holds probes, one level-2 and one level-3 multiple-choice question
+per section (`phase`). Getting every level-2 probe right in a section starts it at
+Mechanism; every level-3 probe as well starts it at Frontier. The reader adds an "I'm
+not sure" option. Learners can change a section's level later or switch depth on
+one topic. A topic whose levels are all below the learner's leaves their path (the
+course outline marks it skipped); a topic whose levels are all above stays as a
+stretch. Reading time and blocks follow the level actually shown.
 
 Cards, disclosures and progress indicators use the MIT-licensed shadcn/ui and Radix
 components. Their pinned assets ship locally and inside exported ZIPs. Add new
@@ -211,7 +234,7 @@ the material are separate from the fact that the app can package it.
 
 ## Reading blocks and progress
 
-The default reader combines topics and worked examples until their estimated time reaches about 30 minutes. The estimate includes reading at 170 words per minute and at least three minutes per example; each topic gets at least five minutes. `reading_minutes` can override a topic estimate after editorial review. Optional deeper layers are not counted. A final lone topic joins the previous block. Questions are collected at the end, with one check action for the whole block, followed by an explanation. No timer gates access.
+The default reader combines topics and worked examples until their estimated time reaches about 30 minutes. The estimate includes reading at 170 words per minute and at least three minutes per example; each topic gets at least five minutes. `reading_minutes` can override a topic estimate after editorial review. Only the level shown to the learner is counted. A final lone topic joins the previous block. Questions are collected at the end, with one check action for the whole block, followed by an explanation. No timer gates access.
 
 The dashboard reads the same browser progress key as the course. Marking a block read increases reading progress; completing its quiz and comparing the current explanation records practice. Existing completed lessons remain counted.
 

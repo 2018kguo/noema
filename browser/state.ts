@@ -100,6 +100,11 @@ export type SavedState = {
     }
   >;
   lastLesson: string | null;
+  // Level per course section, per-topic overrides, and placement answers.
+  levels?: Record<string, number>;
+  lessonLevels?: Record<string, number>;
+  placed?: boolean;
+  placement?: Record<string, number>;
 };
 export type Execution =
   | { kind: "idle" }

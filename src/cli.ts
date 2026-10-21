@@ -101,7 +101,6 @@ async function main() {
               introduction: "",
               start_label: "START HERE",
               footnote: "",
-              depth_labels: ["Show me the mechanism", "Help me judge the evidence"],
               about_html: "",
             },
             CONTENT_REVISION: "draft-1",

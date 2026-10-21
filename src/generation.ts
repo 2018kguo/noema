@@ -2,7 +2,14 @@ import { z } from "zod";
 import { mkdir, readFile, writeFile, rename } from "node:fs/promises";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
-import { ROOT, loadBundle, visualSchema, illustrationSchema, type Lesson } from "./course";
+import {
+  ROOT,
+  loadBundle,
+  visualSchema,
+  illustrationSchema,
+  levelSchema,
+  type Lesson,
+} from "./course";
 import { type Item, type Settings } from "./inbox-store";
 import { type Reading } from "./source-reader";
 import { runStructured, Cancelled } from "./structured-cli";
@@ -25,6 +32,21 @@ const planSchema = z
       .min(15)
       .max(80),
     reviews: arr(3, 6),
+    placement: z
+      .array(
+        z
+          .object({
+            phase: t,
+            level: z.union([z.literal(2), z.literal(3)]),
+            prompt: t,
+            options: arr(3, 3),
+            correct: z.number().int().min(0).max(2),
+            why: t,
+          })
+          .strict(),
+      )
+      .min(2)
+      .max(16),
   })
   .strict();
 const generatedQuestion = z
@@ -35,20 +57,20 @@ const generatedQuestion = z
     why: t,
     hint: t,
     option_feedback: arr(3, 3).optional(),
+    level: levelSchema,
   })
   .strict();
 const generatedLesson = z
   .object({
-    beginner_html: t,
-    mechanism_html: t,
-    judgment_html: t,
+    intuition_html: t.nullable(),
+    mechanism_html: t.nullable(),
+    frontier_html: t.nullable(),
     example_title: t,
     example_setup: t,
     example_steps: arr(3, 3),
     visual: visualSchema.nullable(),
     illustrations: z.array(illustrationSchema).max(4).default([]),
-    quiz_question: z.number().int().min(0).max(2).optional(),
-    questions: z.array(generatedQuestion).length(3),
+    questions: z.array(generatedQuestion).min(1).max(4),
     transfer_prompt: t,
     rubric: arr(3, 4),
     transfer_example: t,
@@ -171,7 +193,7 @@ export async function generate(
   stage("writing", "Planning prerequisites and reading blocks.", documents[0].title);
   const plan = await checkpoint(
     "plan",
-    'Plan 8–12 topics, up to 20 for a broad goal. Order prerequisite concepts before applications. Name phases as "01 · Foundations". Each focus names one concrete idea; group related topics into roughly 30-minute reading blocks before quizzes. Introduce terms in plain English. Introductions use two short sentences. Review descriptions give situations without revealing verdicts.\n' +
+    'Plan 8–12 topics, up to 20 for a broad goal. Order prerequisite concepts before applications. Name phases as "01 · Foundations". Each focus names one concrete idea; group related topics into roughly 30-minute reading blocks before quizzes. Introduce terms in plain English. Introductions use two short sentences. Review descriptions give situations without revealing verdicts. For every phase, write placement probes: one level-2 (Mechanism) and one level-3 (Frontier) multiple-choice question that a reader who already works at that depth answers quickly and a newcomer cannot guess; never test vocabulary alone.\n' +
       corpus,
     planSchema,
   );
@@ -187,7 +209,7 @@ export async function generate(
     );
     const result = await checkpoint(
       "lesson-" + (i + 1),
-      "Write one lesson with 300–500 words of connected beginner prose and two optional depths of 150–250 words each. Define prerequisites before using them. Explain one small invented example in three steps, with a concrete title. Use a small number of purposeful visuals. Inline illustrations go after a numbered top-level paragraph in beginner_html: flow for relationships, binding for a one-site equilibrium occupancy model in nM, screen for natural-frequency true/false positives. Each has its own unique slug id. Use at most two inline illustrations and only where prose has introduced the question. Keep the worked-example visual null if it would repeat an inline illustration. A funnel is only for successive conditional retention rates from the same group. Binding assumes one-to-one binding, equilibrium and free ligand concentration; it says nothing about patient benefit. screen rates are fractions, not percentages. Always label invented assumptions. State units, denominator, assumptions, exact endpoint, and that fractional counts are expectations. Funnel has three gates, one per example step; flow steps are zero-based and ordered. Source_ids must be this lesson’s sources. Do not treat invented rates as measurements. Three questions test application, mechanism, judgment. Make the question self-contained and answerable from the main reading, with plausible misconceptions and similarly concise options. option_feedback explains the specific reasoning in each option. quiz_question is the zero-based index of the best question for the grouped quiz: favor application, prediction and evidence judgment over vocabulary. Do not make the correct answer obvious from length or wording. Transfer task is new, concrete and answerable from this lesson, with reasoning criteria.\n" +
+      "Write one topic at up to three depths, each a self-contained 300–600 word explanation for its reader, never the same text made longer: intuition_html (level 1) for a smart outsider: the concrete situation, the core idea and why it matters; mechanism_html (level 2) for someone who will build or operate it: real moving parts, numbers, code paths and trade-offs; frontier_html (level 3) for a researcher: evidence, how it was measured and where it breaks, competing approaches and open problems. Set a depth to null when it would add nothing (a prerequisite topic may be level 1 only; a specialist topic may be level 3 only). Anchor every level high; do not talk down. Define prerequisites before using them. Explain one small invented example in three steps, with a concrete title. Use a small number of purposeful visuals. Inline illustrations name the level whose text they sit in and go after a numbered top-level paragraph of that text: flow for relationships, binding for a one-site equilibrium occupancy model in nM, screen for natural-frequency true/false positives. Each has its own unique slug id. Use at most two inline illustrations and only where prose has introduced the question. Keep the worked-example visual null if it would repeat an inline illustration. A funnel is only for successive conditional retention rates from the same group. Binding assumes one-to-one binding, equilibrium and free ligand concentration; it says nothing about patient benefit. screen rates are fractions, not percentages. Always label invented assumptions. State units, denominator, assumptions, exact endpoint, and that fractional counts are expectations. Funnel has three gates, one per example step; flow steps are zero-based and ordered. Source_ids must be this lesson’s sources. Do not treat invented rates as measurements. Write one question per written level, tagged with that level; level 1 tests application, level 2 mechanism, level 3 judgment of evidence. Make the question self-contained and answerable from the main reading, with plausible misconceptions and similarly concise options. option_feedback explains the specific reasoning in each option. Do not make the correct answer obvious from length or wording. Transfer task is new, concrete and answerable from this lesson, with reasoning criteria.\n" +
         JSON.stringify({
           outline,
           earlier_lessons: plan.lessons.slice(0, i),
@@ -205,17 +227,20 @@ export async function generate(
       goal: outline.goal,
       needs: i ? ["idea-" + i] : [],
       recall: result.transfer_prompt,
-      predict: result.questions[1].prompt,
-      layers: [
-        cleanHTML(result.beginner_html),
-        cleanHTML(result.mechanism_html),
-        cleanHTML(result.judgment_html),
-      ],
+      predict: result.questions.at(-1)!.prompt,
+      levels: Object.fromEntries(
+        (
+          [
+            [1, result.intuition_html],
+            [2, result.mechanism_html],
+            [3, result.frontier_html],
+          ] as const
+        ).flatMap(([n, html]) => (html ? [[n, cleanHTML(html)]] : [])),
+      ),
       example: [result.example_setup, result.example_steps],
       example_title: result.example_title,
       visual: result.visual,
       illustrations: result.illustrations,
-      quiz_question: result.quiz_question,
       questions: result.questions.map((q, n) => ({ ...q, id: id + "-q" + (n + 1) })),
       transfer: [result.transfer_prompt, result.rubric, result.transfer_example],
       sources: outline.sources,
@@ -225,14 +250,14 @@ export async function generate(
   stage("checking", "Editing explanations and checking the teaching sequence.", plan.title);
   const edited = await checkpoint(
     "editorial-v2",
-    "Edit beginner explanations and examples. Keep 300–500 words each. Define terms and fix jumps in logic. Preserve every fact, number, lesson ID, quiz meaning, transfer task, visual, paragraph count and the relationship between inline illustrations and their preceding paragraphs. Remove slogans. Keep three example steps. Explain each percentage’s denominator and fractional expected counts. Name precise endpoints.\n" +
+    "Edit each topic's lowest written level and its example. Keep its length. Define terms and fix jumps in logic. Preserve every fact, number, lesson ID, quiz meaning, transfer task, visual, paragraph count and the relationship between inline illustrations and their preceding paragraphs. Remove slogans. Keep three example steps. Explain each percentage’s denominator and fractional expected counts. Name precise endpoints.\n" +
       JSON.stringify(lessons),
     z
       .object({
         lessons: z
           .array(
             z
-              .object({ id: t, beginner_html: t, example_setup: t, example_steps: arr(3, 3) })
+              .object({ id: t, lowest_level_html: t, example_setup: t, example_steps: arr(3, 3) })
               .strict(),
           )
           .length(lessons.length),
@@ -246,7 +271,8 @@ export async function generate(
     throw Error("Editorial pass omitted a lesson. Drafts are saved.");
   for (const l of lessons) {
     const e = edited.lessons.find((e) => e.id === l.id)!;
-    l.layers[0] = cleanHTML(e.beginner_html);
+    const lowest = ([1, 2, 3] as const).find((n) => l.levels[n])!;
+    l.levels[lowest] = cleanHTML(e.lowest_level_html);
     l.example = [e.example_setup, e.example_steps];
   }
   const reviews = [];
@@ -316,7 +342,7 @@ export async function generate(
       start_label: "START HERE",
       footnote:
         "Read and work through the examples in roughly 30-minute blocks. Questions come together afterward. Deeper reading is optional.",
-      depth_labels: ["Show me the mechanism", "Help me judge the evidence"],
+      placement: plan.placement.map((q, i) => ({ ...q, id: "place-" + (i + 1) })),
       about_html: about,
     },
     CONTENT_REVISION: "generated-" + item.revision,

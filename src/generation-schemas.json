@@ -2,14 +2,14 @@
   "LESSON": {
     "type": "object",
     "properties": {
-      "beginner_html": {
-        "type": "string"
+      "intuition_html": {
+        "type": ["string", "null"]
       },
       "mechanism_html": {
-        "type": "string"
+        "type": ["string", "null"]
       },
-      "judgment_html": {
-        "type": "string"
+      "frontier_html": {
+        "type": ["string", "null"]
       },
       "example_title": {
         "type": "string"
@@ -324,13 +324,17 @@
               },
               "minItems": 3,
               "maxItems": 3
+            },
+            "level": {
+              "type": "integer",
+              "enum": [1, 2, 3]
             }
           },
-          "required": ["prompt", "options", "correct", "why", "hint", "option_feedback"],
+          "required": ["prompt", "options", "correct", "why", "hint", "option_feedback", "level"],
           "additionalProperties": false
         },
-        "minItems": 3,
-        "maxItems": 3
+        "minItems": 1,
+        "maxItems": 4
       },
       "transfer_prompt": {
         "type": "string"
@@ -357,6 +361,10 @@
             "id": {
               "type": "string",
               "pattern": "^[a-z0-9][a-z0-9-]*$"
+            },
+            "level": {
+              "type": "integer",
+              "enum": [1, 2, 3]
             },
             "after_paragraph": {
               "type": "integer",
@@ -622,22 +630,17 @@
               ]
             }
           },
-          "required": ["id", "after_paragraph", "visual"],
+          "required": ["id", "level", "after_paragraph", "visual"],
           "additionalProperties": false
         },
         "minItems": 0,
         "maxItems": 4
-      },
-      "quiz_question": {
-        "type": "integer",
-        "minimum": 0,
-        "maximum": 2
       }
     },
     "required": [
-      "beginner_html",
+      "intuition_html",
       "mechanism_html",
-      "judgment_html",
+      "frontier_html",
       "example_title",
       "example_setup",
       "example_steps",
@@ -647,8 +650,7 @@
       "rubric",
       "transfer_example",
       "takeaway",
-      "illustrations",
-      "quiz_question"
+      "illustrations"
     ],
     "additionalProperties": false
   },

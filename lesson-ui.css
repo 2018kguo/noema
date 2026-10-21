@@ -897,3 +897,70 @@ main h3 {
     transition: none;
   }
 }
+
+/* Depth levels: a segmented switch per topic, and the placement result rows. */
+.level-bar {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0.75rem 0 0;
+  padding: 0.25rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.level-bar button {
+  padding: 0.375rem 0.75rem;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+.level-bar button[aria-pressed="true"] {
+  background: var(--soft);
+  color: var(--ink);
+  font-weight: 600;
+}
+.level-note {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.placement-section {
+  margin: 2rem 0;
+}
+.placement-results {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1.5rem 0;
+}
+.placement-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 1rem;
+}
+.placement-row select {
+  min-width: 10rem;
+  padding: 0.375rem 0.5rem;
+  font: inherit;
+}
+.level-key {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1.5rem 0;
+}
+.level-key dt {
+  font-weight: 600;
+}
+.level-key dd {
+  margin: 0;
+  color: var(--muted);
+}

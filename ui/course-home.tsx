@@ -11,7 +11,13 @@ import {
 import { Progress } from "./components/ui/progress";
 import { cn } from "./lib/utils";
 
-export type LessonSummary = { id: string; title: string; goal: string; phase: string };
+export type LessonSummary = {
+  id: string;
+  title: string;
+  goal: string;
+  phase: string;
+  skipped?: boolean;
+};
 export type HomeProps = {
   meta: { title: string; introduction: string; footnote: string };
   lessons: LessonSummary[];
@@ -28,6 +34,7 @@ export type HomeProps = {
   };
   routes: Record<string, string>;
   navigate: (route: string) => void;
+  placement: null | { placed: boolean; levels: { section: string; level: string }[] };
 };
 const phaseName = (phase: string) =>
   phase.includes(" · ") ? phase.split(" · ").slice(1).join(" · ") : phase;
@@ -41,6 +48,7 @@ export function CourseHome({
   routes,
   storageOK,
   navigate,
+  placement,
 }: HomeProps) {
   const phases = [...new Set(lessons.map((l) => l.phase))],
     currentPhase = phases.indexOf(current.phase);
@@ -129,6 +137,25 @@ export function CourseHome({
             block.
           </p>
         </header>
+        {placement && !placement.placed && !started && (
+          <Card className="ui:mb-6 ui:gap-4 ui:rounded-lg ui:shadow-none" data-course-placement>
+            <CardHeader className="ui:gap-3">
+              <CardTitle className="ui:text-xl ui:font-semibold ui:leading-7">
+                Start at the right depth
+              </CardTitle>
+              <CardDescription className="ui:text-base ui:leading-7">
+                Each topic is written at up to three depths: Intuition, Mechanism and Frontier. A
+                few questions per section show what you already know, so you skip what’s too easy.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="ui:text-base" onClick={() => navigate("placement")}>
+                Find my starting depth
+                <ArrowRight size={18} />
+              </Button>
+            </CardContent>
+          </Card>
+        )}
         <Card className="ui:mb-10 ui:gap-5 ui:rounded-lg ui:shadow-none" data-course-resume>
           <CardHeader className="ui:gap-3">
             <CardTitle className="ui:text-xl ui:font-semibold ui:leading-7">
@@ -150,6 +177,18 @@ export function CourseHome({
             </Button>
           </CardContent>
         </Card>
+        {placement?.placed && (
+          <p className="ui:-mt-6 ui:mb-10 ui:text-base ui:leading-7 ui:text-muted-foreground">
+            Your depth: {placement.levels.map((l) => `${l.section} · ${l.level}`).join(", ")}.{" "}
+            <button
+              type="button"
+              className="ui:underline ui:underline-offset-4"
+              onClick={() => navigate("placement")}
+            >
+              Change
+            </button>
+          </p>
+        )}
         <section aria-labelledby="curriculum-title" data-course-outline>
           <h2
             id="curriculum-title"
@@ -195,9 +234,19 @@ export function CourseHome({
                           {j + 1}
                         </span>
                         <span className="ui:min-w-0">
-                          <span className="ui:block ui:text-base ui:font-medium ui:leading-7">
+                          <span
+                            className={cn(
+                              "ui:block ui:text-base ui:font-medium ui:leading-7",
+                              l.skipped && "ui:text-muted-foreground",
+                            )}
+                          >
                             {l.title}
                           </span>
+                          {l.skipped && (
+                            <span className="ui:block ui:text-sm ui:text-muted-foreground">
+                              Skipped by your placement
+                            </span>
+                          )}
                           <span className="ui:mt-1 ui:block ui:text-base ui:leading-7 ui:text-muted-foreground">
                             {l.goal}
                           </span>

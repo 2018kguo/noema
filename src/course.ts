@@ -2,7 +2,9 @@ import { z } from "zod";
 import { readFileSync, realpathSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { paragraphCount } from "./html";
+import { available, LEVELS } from "../browser/levels";
 export const text = z.string().trim().min(1);
+export const levelSchema = z.union([z.literal(1), z.literal(2), z.literal(3)]);
 export const questionSchema = z
   .object({
     id: text,
@@ -12,8 +14,10 @@ export const questionSchema = z
     why: text,
     hint: text,
     option_feedback: z.array(text).optional(),
+    level: levelSchema,
     revision: z.string().optional(),
   })
+  .passthrough()
   .refine((q) => q.correct < q.options.length, "Invalid answer index")
   .refine(
     (q) => !q.option_feedback || q.option_feedback.length === q.options.length,
@@ -102,6 +106,7 @@ export const visualSchema = z.discriminatedUnion("kind", [
 export const illustrationSchema = z
   .object({
     id: z.string().regex(/^[a-z0-9][a-z0-9-]*$/),
+    level: levelSchema,
     after_paragraph: z.number().int().min(1).max(80),
     visual: visualSchema,
   })
@@ -116,11 +121,14 @@ export const lessonSchema = z.object({
   takeaway: text,
   needs: z.array(text),
   sources: z.array(text),
-  layers: z.tuple([text, text, text]),
+  // HTML for each depth this topic is written at: 1 Intuition, 2 Mechanism, 3 Frontier.
+  levels: z
+    .object({ 1: text.optional(), 2: text.optional(), 3: text.optional() })
+    .strict()
+    .refine((v) => LEVELS.some((n) => v[n]), "A topic needs at least one level"),
   example: z.tuple([text, z.array(text).min(2)]),
   example_title: z.string().optional(),
-  questions: z.array(questionSchema).length(3),
-  quiz_question: z.number().int().min(0).max(2).optional(),
+  questions: z.array(questionSchema).min(1).max(6),
   illustrations: z.array(illustrationSchema).max(4).optional(),
   transfer: z.tuple([text, z.array(text).min(1), text]),
   assessment_revision: z.string().optional(),
@@ -158,7 +166,23 @@ export const courseSchema = z.object({
       start_label: text,
       footnote: text,
       about_html: text,
-      depth_labels: z.tuple([text, text]),
+      // Probes that set a starting level per course section (phase).
+      placement: z
+        .array(
+          z
+            .object({
+              id: text,
+              phase: text,
+              level: z.union([z.literal(2), z.literal(3)]),
+              prompt: text,
+              options: z.array(text).min(2).max(5),
+              correct: z.number().int().nonnegative(),
+              why: text,
+            })
+            .strict()
+            .refine((q) => q.correct < q.options.length, "Invalid answer index"),
+        )
+        .optional(),
       progress_key: z.string().optional(),
       reading_block_size: z.number().int().min(2).max(12).optional(),
     })
@@ -218,6 +242,16 @@ export function validateCourse(raw: unknown, rawChallenges: unknown) {
   const contains = (values: string[], set: Set<string>, label: string) => {
     if (values.some((v) => !set.has(v))) throw Error("Unknown " + label);
   };
+  const placement = course.META.placement || [];
+  unique(
+    placement.map((q) => q.id),
+    "placement question",
+  );
+  contains(
+    placement.map((q) => q.phase),
+    new Set(course.LESSONS.map((l) => l.phase)),
+    "placement section",
+  );
   // Source ids are keys for links, not names a reader understands.
   const skipIds = (k: string, v: unknown) =>
     ["sources", "source_ids"].includes(k) ? undefined : v;
@@ -235,9 +269,15 @@ export function validateCourse(raw: unknown, rawChallenges: unknown) {
       (l.illustrations || []).map((v) => v.id),
       "illustration",
     );
+    const have = available(l);
+    for (const n of have)
+      if (!l.questions.some((q) => q.level === n))
+        throw Error(`Level ${n} of ${l.id} has no question`);
+    if (l.questions.some((q) => !have.includes(q.level)))
+      throw Error("Question targets a level the topic lacks: " + l.id);
     for (const illustration of l.illustrations || [])
-      if (illustration.after_paragraph > paragraphCount(l.layers[0]))
-        throw Error("Illustration placement exceeds the lesson's paragraphs: " + l.id);
+      if (illustration.after_paragraph > paragraphCount(l.levels[illustration.level] || ""))
+        throw Error("Illustration placement exceeds that level's paragraphs: " + l.id);
     for (const { visual: v, inExample } of [
       ...(l.visual ? [{ visual: l.visual, inExample: true }] : []),
       ...(l.illustrations || []).map((v) => ({ visual: v.visual, inExample: false })),
@@ -303,7 +343,7 @@ export function loadBundle(path: string): CourseBundle {
     prompt: l.transfer[0],
     revision: l.assessment_revision || course.CONTENT_REVISION,
     artifact: "Explain the idea in your own words; use a concrete example where helpful.",
-    context: l.layers.join("\n"),
+    context: LEVELS.map((n) => l.levels[n] || "").join("\n"),
     repo_paths: [],
     criteria: l.transfer[1].map((rule, i) => ({
       id: "reason-" + i,

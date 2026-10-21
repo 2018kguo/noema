@@ -32,6 +32,7 @@ checkpointed, so a restart can resume completed steps. A call interrupted before
 its result was saved may need to run again.
 
 - **Inbox:** capture, search, filter, inspect progress, retry, and add missing text.
+- **Depth levels:** every topic is written at up to three depths: Intuition, Mechanism and Frontier. A short placement quiz sets where each section of a course starts, so you skip what you already know. You can change depth per section or per topic at any time.
 - **Learning:** see topics read, topics practiced, and where to resume each course. Reading and worked examples are grouped into blocks estimated at about 30 minutes; the quiz follows the block. There is no timer or waiting requirement.
 - **Share:** open a ready item and choose **Download to share**.
 
@@ -65,7 +66,7 @@ The OpenRouter/Jev adapters below are for answer feedback.
 
 ## Try the included course
 
-**Inside Inference** has 18 lessons, prerequisite links, recall cards, seven guided
+**Inside Inference** has 18 lessons at up to three depths, a placement quiz, prerequisite links, seven guided
 review scenarios, and a small Python engine. It starts with no assumed machine
 learning background and builds toward reading DeepInfer and working on inference
 systems.

@@ -37,7 +37,7 @@ test("generation validates model output and reuses checkpointed steps without ne
     const keys = Object.keys(schema.properties as object);
     return keys.includes("glossary")
       ? fixtures.plan
-      : keys.includes("beginner_html")
+      : keys.includes("intuition_html")
         ? fixtures.lesson
         : keys.length === 1 && keys[0] === "lessons"
           ? fixtures.editor

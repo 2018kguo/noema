@@ -16,6 +16,7 @@ import { progress } from "../browser/progress";
 import { visuals } from "../browser/visuals";
 import { scheduleTimes } from "../src/visual-models";
 import { connections } from "../src/connections";
+import { view, place } from "../browser/levels";
 const cleanups: (() => void)[] = [];
 afterEach(() => {
   for (const f of cleanups.splice(0).reverse()) f();
@@ -363,7 +364,7 @@ test("course text rejects raw HTML introductions and bare source ids", () => {
   html.META.introduction = "<p>Raw tags</p>";
   expect(() => validateCourse(html, challenges)).toThrow("plain text");
   const ids = structuredClone(sample.course);
-  ids.LESSONS[0].layers[0] += "<p>As source1 says.</p>";
+  ids.LESSONS[0].levels[1] += "<p>As source1 says.</p>";
   expect(() => validateCourse(ids, challenges)).toThrow("Name sources");
 });
 test("schedule slack absorbs a delay until the task becomes critical", () => {
@@ -408,4 +409,40 @@ test("connections report sign-in state without account details", async () => {
     });
   expect(JSON.stringify(c)).not.toContain("a@b.c");
   await connections(true);
+});
+test("levels pick the shown depth, skip easier-only topics and place per section", () => {
+  const topic = (id: string, phase: string, ...have: number[]) => ({
+    id,
+    phase,
+    levels: Object.fromEntries(have.map((n) => [n, "<p>text</p>"])),
+  });
+  const basics = topic("basics", "A", 1),
+    core = topic("core", "A", 1, 2, 3),
+    deep = topic("deep", "B", 3);
+  const placed = { levels: { A: 2, B: 1 } };
+  expect(view(core, placed)).toMatchObject({ level: 2, status: "fit" });
+  expect(view(basics, placed)).toMatchObject({ level: 1, status: "below" });
+  expect(view(deep, placed)).toMatchObject({ level: 3, status: "above" });
+  expect(progress.path([basics, core, deep], placed).map((l) => l.id)).toEqual(["core", "deep"]);
+  // Choosing a level on a skipped topic puts it back in the path.
+  expect(
+    progress.path([basics, core], { ...placed, lessonLevels: { basics: 1 } }).map((l) => l.id),
+  ).toEqual(["basics", "core"]);
+  const probes = [
+    { id: "a2", phase: "A", level: 2, correct: 0 },
+    { id: "a3", phase: "A", level: 3, correct: 1 },
+    { id: "b2", phase: "B", level: 2, correct: 2 },
+  ];
+  expect(place(probes, { a2: 0, a3: 1, b2: -1 })).toEqual({ A: 3, B: 1 });
+  expect(place(probes, { a2: 0, a3: 0, b2: 2 })).toEqual({ A: 2, B: 2 });
+});
+test("course validation requires one question per written level", () => {
+  const challenges = Object.values(sample.challenges);
+  const full = sample.course.LESSONS.findIndex((l) => l.levels[1] && l.levels[2] && l.levels[3]);
+  const c = structuredClone(sample.course);
+  c.LESSONS[full].questions = c.LESSONS[full].questions.filter((q) => q.level !== 2);
+  expect(() => validateCourse(c, challenges)).toThrow("has no question");
+  const d = structuredClone(sample.course);
+  delete d.LESSONS[full].levels[3];
+  expect(() => validateCourse(d, challenges)).toThrow("level the topic lacks");
 });

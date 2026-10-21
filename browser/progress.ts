@@ -1,28 +1,30 @@
 import type { Course } from "../src/course";
+import { inPath, view, type LevelState } from "./levels";
 type Topic = {
   id: string;
   title?: string;
   phase?: string;
   reading_minutes?: number;
-  layers?: unknown[];
+  levels?: Partial<Record<string, unknown>>;
   example?: unknown[];
 };
 type ReadingBlock<T> = { id: string; index: number; start: number; minutes: number; lessons: T[] };
 type Summary = { key: string; size?: number; lessons: Topic[] };
 type CourseInfo = Pick<Course, "META" | "LESSONS">;
-type ProgressState = {
+type ProgressState = LevelState & {
   completed?: Record<string, unknown>;
   read?: Record<string, unknown>;
   lastLesson?: string | null;
   blocks?: Record<string, { step?: string }>;
 };
-function minutes(lesson: Topic) {
+// Minutes for the text at one level; summaries store one estimate per written level.
+function minutes(lesson: Topic, level = 1) {
   return (
     lesson.reading_minutes ||
     Math.max(
       5,
       Math.ceil(
-        (String(lesson.layers?.[0] || "")
+        (String(lesson.levels?.[level] || "")
           .replace(/<[^>]*>/g, " ")
           .split(/\s+/).length +
           (Array.isArray(lesson.example?.[1]) ? lesson.example[1] : []).join(" ").split(/\s+/)
@@ -70,13 +72,31 @@ function summary(course: CourseInfo): Summary {
       id: l.id,
       title: l.title,
       phase: l.phase,
-      reading_minutes: minutes(l),
+      // Placeholders keep which levels exist; values are minutes, not text.
+      levels: Object.fromEntries(
+        Object.keys(l.levels).map((n) => [n, minutes({ ...l, reading_minutes: undefined }, +n)]),
+      ),
+      reading_minutes: l.reading_minutes,
     })),
   };
 }
+// The topics this learner reads, in order, timed at the level each is shown at.
+function path<T extends Topic>(lessons: T[], state: LevelState = {}): T[] {
+  return lessons
+    .filter((l) => inPath(l, state))
+    .map((l) => {
+      const level = view(l, state).level,
+        stored = l.levels?.[level];
+      return {
+        ...l,
+        reading_minutes:
+          l.reading_minutes || (typeof stored === "number" ? stored : minutes(l, level)),
+      };
+    });
+}
 function snapshot(course: CourseInfo | Summary, state: ProgressState = {}) {
   const info = "lessons" in course ? course : summary(course),
-    lessons = info.lessons;
+    lessons = path(info.lessons, state);
   if (!lessons.length) throw Error("Course has no topics.");
   const practiced = lessons.filter((l) => state.completed?.[l.id]).length,
     read = lessons.filter((l) => state.read?.[l.id] || state.completed?.[l.id]).length,
@@ -124,7 +144,7 @@ function read(course: CourseInfo | Summary, storage: Pick<Storage, "getItem">) {
     return { kind: "unavailable" as const };
   }
 }
-export const progress = { blocks, summary, snapshot, read };
+export const progress = { blocks, path, summary, snapshot, read };
 declare global {
   interface Window {
     NoemaProgress: typeof progress;
