@@ -17,6 +17,8 @@ export const documentSchema = z.object({
   sha256: z.string(),
   links: z.array(z.string()),
   embeds: z.array(z.record(z.string(), z.string())),
+  // Added by research for context; generation gives these a smaller share of the prompt.
+  background: z.boolean().optional(),
 });
 export const readingSchema = z.object({
   documents: z.array(documentSchema).min(1),
@@ -366,7 +368,7 @@ export async function research(
     add = async (url: string, label = url) => {
       try {
         const [raw, final] = await fetcher(url);
-        documents.push(document(final, raw));
+        documents.push({ ...document(final, raw), background: true });
       } catch (e) {
         gaps.push(label + ": " + String(e));
       }

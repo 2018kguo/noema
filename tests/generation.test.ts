@@ -27,14 +27,21 @@ test("generation validates model output and reuses checkpointed steps without ne
     s = new InboxStore(join(dir, "inbox")),
     item = s.add("https://example.org/source").item;
   let calls = 0;
+  const shared = new Set<string>(),
+    prompts: string[] = [];
   const caller = async (
     _provider: string,
     _model: string,
-    _prompt: string,
+    prompt: string,
     schema: Record<string, unknown>,
+    _timeout?: number,
+    _cancelled?: () => boolean,
+    system = "",
   ) => {
     calls++;
+    prompts.push(prompt);
     const keys = Object.keys(schema.properties as object);
+    if (!keys.includes("example_setup") || keys.includes("questions")) shared.add(system);
     // The first plan answer cites a source by title, as a real model did; validation must
     // send it back once with the problem named.
     if (keys.includes("glossary") && calls === 1)
@@ -61,6 +68,11 @@ test("generation validates model output and reuses checkpointed steps without ne
       caller,
     );
     expect(calls).toBe(15);
+    // One cached prefix: every call that needs the sources gets the same system prompt, and
+    // no user prompt re-sends the source text.
+    expect(shared.size).toBe(1);
+    expect([...shared][0]).toContain("A source paragraph.");
+    expect(prompts.some((p) => p.includes("A source paragraph."))).toBe(false);
     const b = loadBundle(result.output);
     expect(b.course.LESSONS).toHaveLength(5);
     expect(Object.keys(b.challenges)).toHaveLength(3);

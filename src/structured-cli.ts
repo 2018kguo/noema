@@ -22,6 +22,7 @@ export async function runStructured(
   const work = await mkdtemp(join(tmpdir(), "noema-model-"));
   let command: string[];
   try {
+    if (system) await writeFile(join(work, "system.md"), system);
     if (provider === "codex") {
       await writeFile(join(work, "schema.json"), JSON.stringify(schema));
       command = [
@@ -64,7 +65,8 @@ export async function runStructured(
         "--disable-slash-commands",
         "--settings",
         '{"disableAllHooks":true}',
-        ...(system ? ["--system-prompt", system] : []),
+        // A file, because a large argument exceeds Linux's per-argument limit.
+        ...(system ? ["--system-prompt-file", join(work, "system.md")] : []),
         ...(model ? ["--model", model] : []),
       ];
     else throw Error("Choose the Codex or Claude CLI.");
