@@ -92,6 +92,12 @@ const TELLS: Tell[] = [
     re: /\b(?:honest(?:ly)?|load-bearing|the trap|full stop|quietly|crucial|pivotal|underscores?|leverag(?:e|es|ing)|multifaceted|delv\w*|tapestry|testament|landscape|realm|seamless\w*|game-?changer|unlock\w*|empower\w*)\b/i,
     fix: "use a plainer word",
   },
+  {
+    kind: "everyday analogy",
+    strong: true,
+    re: /\b(?:does|do) the same job\b|\bmuch like a\b|\bthe same way a \w+\b|\b(?:a|the) speed limit\b|\bthink of (?:a|the) (?:kitchen|highway|road|library)\b/i,
+    fix: "explain with the real thing instead of a stand-in that needs explaining itself",
+  },
   { kind: "em dash", strong: true, re: /—|\s–\s/, fix: "use a period, comma or parentheses" },
   {
     kind: "invented label",
@@ -183,6 +189,20 @@ export const titleTells = (title: string): Hit[] =>
   [...TITLE_TELLS, ...TELLS.filter((t) => t.strong)]
     .filter((t) => t.re.test(strip(title)))
     .map(({ kind, strong, fix }) => ({ kind, sentence: title, strong, fix }));
+// Share of a text's four-word phrases already used in earlier text: a level that rephrases the
+// one before scores high; one that covers new ground stays low.
+const grams = (html: string) => {
+  const w =
+    strip(html)
+      .toLowerCase()
+      .match(/[a-z0-9]+/g) || [];
+  return new Set(w.slice(3).map((_, i) => w.slice(i, i + 4).join(" ")));
+};
+export function repetition(html: string, earlier: string) {
+  const mine = grams(html),
+    before = grams(earlier);
+  return mine.size ? +([...mine].filter((g) => before.has(g)).length / mine.size).toFixed(2) : 0;
+}
 // How much of a text is calculation: operators between numbers, equals signs, multiplication.
 export const arithmetic = (text: string) =>
   (text.match(/[0-9][0-9.,]*\s*(?:×|÷|\/|=|\*|−|\+)\s*[0-9(]|[×÷=]/g) || []).length;

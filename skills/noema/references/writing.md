@@ -26,6 +26,11 @@ material that is easy to grade.
   system, a decision someone made, a failure that taught the field something.
   Invent a scenario only when no real one shows the idea, and keep it qualitative
   unless the numbers are the point.
+- Levels are passes taken in order, so each one assumes the earlier ones and covers
+  new ground. Intro gives the situation, the core idea and the real case; High level
+  how it works, with the parts Intro left out; Depth the evidence, prior and competing
+  work, and what is unsettled. Never rewrite an earlier level at a different reading
+  level. `course inspect` reports how much of each level repeats the ones before it.
 - A level is optional. Write High level or Depth only when the sources give it
   something to say: how the thing works in the cases they discuss, the evidence
   behind their claims, where people disagree. Textbook material the sources never
@@ -180,3 +185,34 @@ and explain which results depend on it. Keep the original example visible
 beside the changed case. Motion should show a meaningful change, stop on its
 own, and respect reduced-motion settings. Do not generate bespoke JavaScript
 or fetch an external animation just to illustrate a paragraph.
+
+## Self-review checklist
+
+Every generated topic is reviewed against this list before a learner sees it, and
+rewritten when anything fails. Each item comes from a reader's complaint.
+
+- **Teaches the subject.** The topic explains what the sources are about: what was built
+  or found, how it works, why it matters, how it compares with prior work. A topic or
+  diagram about how to judge claims in general ("what a cost claim has to show",
+  "sorting one sentence from the post") is filler; weave judgment into the subject.
+- **Says something substantive.** Every paragraph gives the reader a fact, mechanism or
+  case they didn't have. Cut paragraphs that only restate, hedge or announce.
+- **Each level adds new ground.** High level does not rephrase Intro at a harder reading
+  level, and Depth does not rephrase High level. A level that would mostly repeat is dropped.
+- **No textbook padding.** Formulas, derivations and side topics the sources never use
+  are dropped, along with any level that would be made of them.
+- **Sounds like a person.** None of the tells above, no flashcard openers, no staccato,
+  no everyday analogies standing in for the real thing (speed limits, roads, kitchens),
+  no cute or three-item titles.
+- **Examples fit their level.** Intro tells a real case in words. Invented worked
+  numbers belong at High level or deeper, and only when the topic is quantitative.
+- **Visuals show the subject.** A source figure, the source's own video, or a plot
+  when quantities relate; flow diagrams only for a real mechanism. No checklists drawn
+  as boxes. Most topics have one.
+- **Questions are worth answering.** A situation to reason about, plausible options,
+  feedback that explains each choice, a hint that points back to the specific idea in
+  that level's words, and an explain-it-back task an Intro reader can do in a few
+  sentences.
+- **Stands alone.** Every term is explained or linked where it appears; no "the post"
+  or "the article" as if the reader had it open; no planner notes ("Reading block 1")
+  or internal ids.

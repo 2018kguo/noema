@@ -1,4 +1,5 @@
 import { createRoot, type Root } from "react-dom/client";
+import katex from "katex";
 import { flushSync } from "react-dom";
 import { ReadyCourse, type ReadyCourseProps } from "./ready-course";
 import { CourseHome, type HomeProps } from "./course-home";
@@ -28,6 +29,15 @@ const ui = {
     mount(element, <ReadyCourse {...props} />);
   },
   lesson() {
+    // Formulas are TeX in <span|div data-math>; MathML output renders natively, no fonts needed.
+    document.querySelectorAll<HTMLElement>("[data-math]:not([data-math-done])").forEach((el) => {
+      el.innerHTML = katex.renderToString(el.textContent || "", {
+        output: "mathml",
+        displayMode: el.tagName === "DIV",
+        throwOnError: false,
+      });
+      el.dataset.mathDone = "";
+    });
     document.querySelectorAll<HTMLElement>("[data-example-card]").forEach((element) => {
       const step = Number(element.dataset.exampleStep),
         count = Number(element.dataset.exampleCount);

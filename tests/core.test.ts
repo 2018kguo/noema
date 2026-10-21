@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { InboxStore, normalizeLink } from "../src/inbox-store";
-import { loadBundle, validateCourse, ROOT } from "../src/course";
+import { loadBundle, validateCourse, ROOT, visualSchema, checkVisual } from "../src/course";
 import { validateGrade, selectedContext } from "../src/grade";
 import { extractArticle, cleanHTML, canonical } from "../src/html";
 import { collect, publicURL, NeedsInput, research } from "../src/source-reader";
@@ -518,7 +518,7 @@ test("structured calls never send a $schema URI and surface the CLI's own error"
     process.env.PATH = path;
   }
 });
-test("research fetches only links the sources contain, plus named reference pages", async () => {
+test("research fetches links the sources contain, named reference pages and searched https pages", async () => {
   const dir = temp(),
     fetched: string[] = [];
   const page = (title: string) =>
@@ -542,10 +542,19 @@ test("research fetches only links the sources contain, plus named reference page
     { id: "a", url: "https://example.org/post", note: "" } as never,
     reading,
     dir,
-    async () => ({
-      links: ["https://example.org/paper", "https://evil.example/made-up"],
-      background: ["Attention (machine learning)"],
-    }),
+    async (_prompt, _schema, search) => {
+      expect(search).toBe(true);
+      return {
+        links: ["https://example.org/paper", "https://evil.example/made-up"],
+        background: ["Attention (machine learning)"],
+        // Only https search results are fetched; plain http and already-read pages are skipped.
+        found: [
+          "https://lab.example/write-up",
+          "http://lab.example/insecure",
+          "https://example.org/post",
+        ],
+      };
+    },
     async (url) => {
       fetched.push(url);
       return [page(url), url];
@@ -554,13 +563,45 @@ test("research fetches only links the sources contain, plus named reference page
   expect(fetched.sort()).toEqual([
     "https://en.wikipedia.org/api/rest_v1/page/html/Attention_(machine_learning)",
     "https://example.org/paper",
+    "https://lab.example/write-up",
   ]);
-  expect(result.documents.map((d) => d.id)).toEqual(["source1", "source2", "source3"]);
+  expect(result.documents.map((d) => d.id)).toEqual(["source1", "source2", "source3", "source4"]);
   // Saved: a second run neither asks the model nor fetches.
   const again = await research({ id: "a", url: "", note: "" } as never, reading, dir, async () => {
     throw Error("asked again");
   });
-  expect(again.documents).toHaveLength(3);
+  expect(again.documents).toHaveLength(4);
+});
+test("a plot is drawn as SVG from its numbers and rejects points off its axes", () => {
+  const roof = visualSchema.parse({
+    kind: "plot",
+    title: "A roofline",
+    caption: "Invented chip.",
+    source_ids: ["source1"],
+    x: { label: "FLOPs per byte", log: true, min: 0.1, max: 100 },
+    y: { label: "GFLOP/s", log: true, min: 1, max: 1000 },
+    series: [
+      {
+        label: "Roof",
+        style: "line",
+        points: [
+          { x: 0.1, y: 10 },
+          { x: 10, y: 1000 },
+          { x: 100, y: 1000 },
+        ],
+      },
+    ],
+    marks: [{ x: 1, y: 40, label: "Kernel A" }],
+  });
+  const lesson = { sources: ["source1"] } as never;
+  expect(() => checkVisual(roof, lesson, false)).not.toThrow();
+  const svg = visuals.render(roof, 0, "roof");
+  expect(svg).toContain("<svg");
+  expect(svg).toContain("<polyline");
+  expect(svg).toContain("Kernel A");
+  expect(() =>
+    checkVisual({ ...roof, marks: [{ x: 1000, y: 40, label: "off" }] } as never, lesson, false),
+  ).toThrow("inside the axis");
 });
 test("quoted citations link to a highlighted passage", () => {
   expect(sourceHref("https://x.org/a", "rate-limited, by design")).toBe(
@@ -612,6 +653,7 @@ test("tell detector names the sentences an editor must rewrite", () => {
     ["Think of it as a ledger.", "teacher voice"],
     ["Despite these challenges, the engine shipped.", "challenges brush-off"],
     ["We were fast — too fast.", "em dash"],
+    ["A speed limit sign does the same job on a road.", "everyday analogy"],
     ["The schema change itself was not hard. The week it cost us was.", "contrast reversal"],
   ])
     expect(tells(text).map((f) => f.kind)).toContain(kind);

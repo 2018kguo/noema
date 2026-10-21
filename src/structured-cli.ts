@@ -14,6 +14,8 @@ export async function runStructured(
   // Stable instructions. Claude gets them as its system prompt (replacing the coding-agent
   // default, which this task never uses) so every call shares one cached prefix.
   system = "",
+  // Allow web search and nothing else (research only).
+  search = false,
 ): Promise<unknown> {
   if (system && provider !== "claude") prompt = system + "\n\n" + prompt;
   // The Claude CLI rejects a `$schema` draft URI it can't resolve; the schema itself is unchanged.
@@ -44,7 +46,7 @@ export async function runStructured(
         "-c",
         "features.apply_patch_freeform=false",
         "-c",
-        'web_search="disabled"',
+        search ? 'web_search="live"' : 'web_search="disabled"',
         ...(model ? ["--model", model] : []),
         "-",
       ];
@@ -57,7 +59,8 @@ export async function runStructured(
         "--json-schema",
         JSON.stringify(schema),
         "--tools",
-        "",
+        search ? "WebSearch" : "",
+        ...(search ? ["--allowedTools", "WebSearch"] : []),
         "--strict-mcp-config",
         "--mcp-config",
         '{"mcpServers":{}}',

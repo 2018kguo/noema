@@ -1,17 +1,27 @@
 import type { Course } from "./course";
 import { paragraphCount, extractArticle } from "./html";
 import { available, LEVEL_NAMES } from "../browser/levels";
-import { tells, titleTells, arithmetic } from "./tells";
+import { tells, titleTells, arithmetic, repetition } from "./tells";
 
 // An authoring inventory, not a claim that a course teaches well. It flags the problems readers
 // reported: LLM tells, examples and questions whose difficulty is arithmetic, and examples with no
 // level of their own.
+function repeats(lesson: Course["LESSONS"][number], n: number) {
+  return repetition(
+    lesson.levels[n as 1] || "",
+    available(lesson)
+      .filter((m) => m < n)
+      .map((m) => lesson.levels[m])
+      .join(" "),
+  );
+}
 export function inspectCourse(course: Course) {
   return course.LESSONS.map((lesson) => ({
     id: lesson.id,
     title: lesson.title,
     phase: lesson.phase,
     levels: available(lesson).map((n) => ({
+      repeats: repeats(lesson, n),
       level: n + " · " + LEVEL_NAMES[n],
       paragraphs: paragraphCount(lesson.levels[n]!),
       words: extractArticle(lesson.levels[n]!).blocks.join(" ").split(/\s+/).filter(Boolean).length,

@@ -730,6 +730,161 @@
                   },
                   "required": ["kind", "title", "caption", "source_ids", "youtube_id", "credit"],
                   "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "clip"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "caption": {
+                      "type": "string"
+                    },
+                    "source_ids": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "src": {
+                      "type": "string"
+                    },
+                    "credit": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["kind", "title", "caption", "source_ids", "src", "credit"],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "plot"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "caption": {
+                      "type": "string"
+                    },
+                    "source_ids": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "x": {
+                      "type": "object",
+                      "properties": {
+                        "label": {
+                          "type": "string"
+                        },
+                        "log": {
+                          "type": "boolean"
+                        },
+                        "min": {
+                          "type": "number"
+                        },
+                        "max": {
+                          "type": "number"
+                        }
+                      },
+                      "required": ["label", "log", "min", "max"],
+                      "additionalProperties": false
+                    },
+                    "y": {
+                      "type": "object",
+                      "properties": {
+                        "label": {
+                          "type": "string"
+                        },
+                        "log": {
+                          "type": "boolean"
+                        },
+                        "min": {
+                          "type": "number"
+                        },
+                        "max": {
+                          "type": "number"
+                        }
+                      },
+                      "required": ["label", "log", "min", "max"],
+                      "additionalProperties": false
+                    },
+                    "series": {
+                      "type": "array",
+                      "minItems": 1,
+                      "maxItems": 4,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "label": {
+                            "type": "string"
+                          },
+                          "style": {
+                            "enum": ["line", "points"]
+                          },
+                          "points": {
+                            "type": "array",
+                            "minItems": 2,
+                            "maxItems": 60,
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "x": {
+                                  "type": "number"
+                                },
+                                "y": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": ["x", "y"],
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": ["label", "style", "points"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "marks": {
+                      "type": "array",
+                      "maxItems": 6,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "x": {
+                            "type": "number"
+                          },
+                          "y": {
+                            "type": "number"
+                          },
+                          "label": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["x", "y", "label"],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "title",
+                    "caption",
+                    "source_ids",
+                    "x",
+                    "y",
+                    "series",
+                    "marks"
+                  ],
+                  "additionalProperties": false
                 }
               ]
             }

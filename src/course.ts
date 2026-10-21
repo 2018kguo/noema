@@ -25,6 +25,12 @@ export const questionSchema = z
   );
 const visualText = text.max(1500),
   step = z.number().int().nonnegative();
+const finite = z.number().finite(),
+  pointSchema = z.object({ x: finite, y: finite }).strict(),
+  axisSchema = z
+    .object({ label: visualText, log: z.boolean(), min: finite, max: finite })
+    .strict()
+    .refine((a) => a.max > a.min && (!a.log || a.min > 0), "Axis range must be valid");
 export const visualSchema = z.discriminatedUnion("kind", [
   // Rich media from the open web: an image (diagram, photo, chart) or a YouTube video.
   z
@@ -48,6 +54,49 @@ export const visualSchema = z.discriminatedUnion("kind", [
       youtube_id: z.string().regex(/^[\w-]{11}$/),
       start: z.number().int().nonnegative().optional(),
       credit: visualText,
+    })
+    .strict(),
+  // A video file a source embeds directly (an X post's clip, a page's <video>).
+  z
+    .object({
+      kind: z.literal("clip"),
+      title: visualText,
+      caption: visualText,
+      source_ids: z.array(text),
+      src: z
+        .url()
+        .refine(
+          (u) => u.startsWith("https://") && /\.(mp4|webm)(\?|$)/.test(u),
+          "An https video file",
+        ),
+      credit: visualText,
+    })
+    .strict(),
+  // A chart drawn by the reader from numbers: lines or points on linear or log axes.
+  z
+    .object({
+      kind: z.literal("plot"),
+      title: visualText,
+      caption: visualText,
+      source_ids: z.array(text),
+      x: axisSchema,
+      y: axisSchema,
+      series: z
+        .array(
+          z
+            .object({
+              label: visualText,
+              style: z.enum(["line", "points"]),
+              points: z.array(pointSchema).min(2).max(60),
+            })
+            .strict(),
+        )
+        .min(1)
+        .max(4),
+      marks: z
+        .array(pointSchema.extend({ label: visualText }).strict())
+        .max(6)
+        .optional(),
     })
     .strict(),
   z
@@ -193,6 +242,12 @@ export function checkVisual(
     )
   )
     throw Error("Invalid flow order");
+  if (v.kind === "plot") {
+    const inside = (p: { x: number; y: number }) =>
+      p.x >= v.x.min && p.x <= v.x.max && p.y >= v.y.min && p.y <= v.y.max;
+    if (![...v.series.flatMap((s) => s.points), ...(v.marks || [])].every(inside))
+      throw Error("Plot points must lie inside the axis ranges");
+  }
   if (v.kind === "binding" && (v.ligand_nm > v.max_nm || v.kd_nm > v.max_nm))
     throw Error("Binding plot must include the initial concentration and Kd");
   if (v.kind === "schedule") {

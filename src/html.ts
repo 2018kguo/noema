@@ -8,6 +8,12 @@ export const escapeHTML = (v: string) =>
     /[&<>"']/g,
     (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
   );
+const textOf = (n: Node): string =>
+  n.nodeName === "#text" && "value" in n
+    ? n.value
+    : "childNodes" in n
+      ? n.childNodes.map(textOf).join(" ")
+      : "";
 export function extractArticle(html: string) {
   const blocks: string[] = [],
     links: string[] = [],
@@ -46,10 +52,18 @@ export function extractArticle(html: string) {
             Object.entries(attrs).filter(([k]) => ["src", "title"].includes(k)),
           ),
         });
-      if (tag === "img")
-        figures.push(
-          Object.fromEntries(Object.entries(attrs).filter(([k]) => ["src", "alt"].includes(k))),
-        );
+      if (tag === "img") {
+        // The largest srcset candidate is the sharpest copy (Wikipedia's src is a 330px thumb).
+        const large = attrs.srcset?.split(",").at(-1)?.trim().split(/\s+/)[0];
+        // Rendered formulas ("{\\displaystyle W}") are typography, not figures.
+        if (!/\/math\/render\//.test(attrs.src || "") && !/\\displaystyle/.test(attrs.alt || ""))
+          figures.push({ src: large || attrs.src || "", alt: attrs.alt || "" });
+      }
+      // Wikipedia and most CMSs leave alt empty and describe the image in its caption.
+      if (tag === "figcaption") {
+        const last = figures.at(-1);
+        if (last && !last.alt) last.alt = textOf(n).replace(/\s+/g, " ").trim();
+      }
       // The page's own preview image (what a chat app shows for the link).
       if (
         tag === "meta" &&
@@ -110,6 +124,12 @@ export function cleanHTML(
       if (hidden.has(n.tagName)) return "";
       const inCode = code || n.tagName === "code" || n.tagName === "pre";
       const content = "childNodes" in n ? n.childNodes.map((c) => walk(c, inCode)).join("") : "";
+      // TeX for the reader to typeset; the text stays plain and escaped.
+      if (
+        (n.tagName === "span" || n.tagName === "div") &&
+        n.attrs.some((a) => a.name === "data-math")
+      )
+        return `<${n.tagName} data-math>${content}</${n.tagName}>`;
       const mark = { dfn: "data-term", a: "data-source" }[n.tagName];
       if (mark) {
         const target = n.attrs.find((a) => a.name === mark)?.value || "",

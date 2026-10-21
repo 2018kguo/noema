@@ -27,7 +27,8 @@ test("generation validates model output and reuses checkpointed steps without ne
     s = new InboxStore(join(dir, "inbox")),
     item = s.add("https://example.org/source").item;
   let calls = 0,
-    failedOnce = false;
+    failedOnce = false,
+    critiques = 0;
   const shared = new Set<string>(),
     prompts: string[] = [];
   const caller = async (
@@ -55,10 +56,19 @@ test("generation validates model output and reuses checkpointed steps without ne
       !keys.includes("glossary") &&
       !keys.includes("questions") &&
       !keys.includes("example_setup") &&
+      !keys.includes("problems") &&
       !failedOnce
     ) {
       failedOnce = true;
       throw Error("claude exited with status 1");
+    }
+    // Self-review: the first topic gets one problem, so its draft is revised once.
+    if (keys.includes("problems")) {
+      critiques++;
+      return {
+        problems:
+          critiques === 1 ? [{ where: "level 1", problem: "says nothing", fix: "add the case" }] : [],
+      };
     }
     return keys.includes("glossary")
       ? fixtures.plan
@@ -79,7 +89,10 @@ test("generation validates model output and reuses checkpointed steps without ne
       caller,
       0,
     );
-    expect(calls).toBe(16);
+    // 16 drafting calls, one self-review per topic, and a revision per topic: the fixture draft
+    // trips the mechanical checks, so every topic is rewritten before anyone sees it.
+    expect(critiques).toBe(5);
+    expect(calls).toBe(26);
     // One cached prefix: every call that needs the sources gets the same system prompt, and
     // no user prompt re-sends the source text.
     expect(shared.size).toBe(1);

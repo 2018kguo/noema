@@ -133,12 +133,14 @@ function funnel(visual: Funnel, part: number, id: string) {
 
 // Media figures. A video shows its thumbnail until played, so nothing loads from YouTube
 // (and no player script runs) unless the reader asks for it.
-function media(visual: Extract<Visual, { kind: "image" | "video" }>, id: string) {
+function media(visual: Extract<Visual, { kind: "image" | "video" | "clip" }>, id: string) {
   const caption = `<figcaption class="media-caption"><span>${escape(visual.caption)}</span><span class="media-credit">${visual.kind === "image" ? `<a href="${escape(visual.credit_url)}" target="_blank" rel="noopener">${escape(visual.credit)}</a>` : escape(visual.credit)}</span></figcaption>`;
   const body =
     visual.kind === "image"
       ? `<img src="${escape(visual.url)}" alt="${escape(visual.alt)}" loading="lazy" decoding="async">`
-      : `<button type="button" class="video-poster" data-youtube="${escape(visual.youtube_id)}" data-start="${visual.start || 0}" aria-label="Play video: ${escape(visual.title)}"><img src="https://i.ytimg.com/vi/${escape(visual.youtube_id)}/hqdefault.jpg" alt="" loading="lazy"><span class="play" aria-hidden="true"></span></button>`;
+      : visual.kind === "clip"
+        ? `<video src="${escape(visual.src)}" controls preload="metadata" playsinline></video>`
+        : `<button type="button" class="video-poster" data-youtube="${escape(visual.youtube_id)}" data-start="${visual.start || 0}" aria-label="Play video: ${escape(visual.title)}"><img src="https://i.ytimg.com/vi/${escape(visual.youtube_id)}/hqdefault.jpg" alt="" loading="lazy"><span class="play" aria-hidden="true"></span></button>`;
   return `<figure class="teaching-media" data-visual="${escape(id)}"><h2>${escape(visual.title)}</h2>${body}${caption}</figure>`;
 }
 function play(button: HTMLElement) {
@@ -157,9 +159,86 @@ if (typeof document !== "undefined")
     if (poster) play(poster);
   });
 
+// A chart drawn from the course's numbers as SVG: no script, no outside requests.
+type Plot = Extract<Visual, { kind: "plot" }>;
+type Axis = Plot["x"];
+const tickLabel = (n: number) =>
+  Math.abs(n) >= 1e6 || (n !== 0 && Math.abs(n) < 1e-3)
+    ? n.toExponential(0).replace("e+", "e")
+    : n.toLocaleString("en-US", { maximumSignificantDigits: 3 });
+function ticks(a: Axis) {
+  if (a.log) {
+    const out = [];
+    for (let e = Math.ceil(Math.log10(a.min)); e <= Math.floor(Math.log10(a.max)); e++)
+      out.push(10 ** e);
+    return out.length >= 2 ? out : [a.min, a.max];
+  }
+  const raw = (a.max - a.min) / 5,
+    base = 10 ** Math.floor(Math.log10(raw)),
+    step = [1, 2, 5, 10].map((m) => m * base).find((m) => m >= raw)!,
+    out = [];
+  for (let t = Math.ceil(a.min / step) * step; t <= a.max + step / 1e6; t += step)
+    out.push(+t.toPrecision(12));
+  return out;
+}
+function plot(v: Plot, id: string) {
+  const W = 640,
+    H = 360,
+    L = 64,
+    R = 20,
+    T = 16,
+    B = 56;
+  const scale = (a: Axis, lo: number, hi: number) => (n: number) => {
+    const f = a.log
+      ? (Math.log10(n) - Math.log10(a.min)) / (Math.log10(a.max) - Math.log10(a.min))
+      : (n - a.min) / (a.max - a.min);
+    return +(lo + f * (hi - lo)).toFixed(1);
+  };
+  const sx = scale(v.x, L, W - R),
+    sy = scale(v.y, H - B, T);
+  const grid =
+    ticks(v.x)
+      .map(
+        (t) =>
+          `<line class="plot-grid" x1="${sx(t)}" x2="${sx(t)}" y1="${T}" y2="${H - B}"/><text class="plot-tick" x="${sx(t)}" y="${H - B + 18}" text-anchor="middle">${tickLabel(t)}</text>`,
+      )
+      .join("") +
+    ticks(v.y)
+      .map(
+        (t) =>
+          `<line class="plot-grid" x1="${L}" x2="${W - R}" y1="${sy(t)}" y2="${sy(t)}"/><text class="plot-tick" x="${L - 8}" y="${sy(t) + 4}" text-anchor="end">${tickLabel(t)}</text>`,
+      )
+      .join("");
+  const series = v.series
+    .map((s, i) =>
+      s.style === "line"
+        ? `<polyline class="plot-line plot-s${i}" points="${s.points.map((p) => sx(p.x) + "," + sy(p.y)).join(" ")}"/>`
+        : s.points
+            .map(
+              (p) =>
+                `<circle class="plot-dot plot-s${i}" cx="${sx(p.x)}" cy="${sy(p.y)}" r="4.5"/>`,
+            )
+            .join(""),
+    )
+    .join("");
+  const marks = (v.marks || [])
+    .map(
+      (m) =>
+        `<circle class="plot-mark" cx="${sx(m.x)}" cy="${sy(m.y)}" r="4"/><text class="plot-mark-label" x="${sx(m.x) + 8}" y="${sy(m.y) - 8}">${escape(m.label)}</text>`,
+    )
+    .join("");
+  const axes = `<line class="plot-axis" x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}"/><line class="plot-axis" x1="${L}" x2="${L}" y1="${T}" y2="${H - B}"/><text class="plot-axis-label" x="${(L + W - R) / 2}" y="${H - 12}" text-anchor="middle">${escape(v.x.label)}</text><text class="plot-axis-label" transform="translate(16 ${(T + H - B) / 2}) rotate(-90)" text-anchor="middle">${escape(v.y.label)}</text>`;
+  const legend =
+    v.series.length > 1
+      ? `<ul class="plot-legend">${v.series.map((s, i) => `<li><i class="plot-s${i} plot-key-${s.style}"></i>${escape(s.label)}</li>`).join("")}</ul>`
+      : "";
+  return `<figure class="teaching-visual plot" data-visual="${escape(id)}"><figcaption><h2>${escape(v.title)}</h2></figcaption><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${escape(v.title)}">${grid}${axes}${series}${marks}</svg>${legend}<p class="visual-caption">${escape(v.caption)}</p></figure>`;
+}
 function render(visual: Visual | null | undefined, part: number, id: string) {
   if (!visual) return "";
-  if (visual.kind === "image" || visual.kind === "video") return media(visual, id);
+  if (visual.kind === "image" || visual.kind === "video" || visual.kind === "clip")
+    return media(visual, id);
+  if (visual.kind === "plot") return plot(visual, id);
   const body =
     visual.kind === "binding" || visual.kind === "screen" || visual.kind === "schedule"
       ? interactive(visual, id)

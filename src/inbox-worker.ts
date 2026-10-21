@@ -39,8 +39,21 @@ export class InboxWorker {
     try {
       let reading = await this.reader(item, join(directory, "sources"));
       stage("researching", "Finding background reading the source assumes.");
-      reading = await this.researcher(item, reading, join(directory, "sources"), (prompt, schema) =>
-        runStructured(settings.provider, settings.model, prompt, schema, 300, cancelled),
+      reading = await this.researcher(
+        item,
+        reading,
+        join(directory, "sources"),
+        (prompt, schema, search) =>
+          runStructured(
+            settings.provider,
+            settings.model,
+            prompt,
+            schema,
+            300,
+            cancelled,
+            "",
+            search,
+          ),
       );
       if (cancelled()) throw new Cancelled("Preparation stopped.");
       const { output, title } = await this.prepare(

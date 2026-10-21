@@ -1154,3 +1154,110 @@ dfn[data-term]:hover {
   color: var(--ink);
   border-color: #a9b3ad;
 }
+
+/* Plots: drawn from course numbers as SVG. Series colours stay legible on the paper background. */
+.plot svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  font: 12px/1 inherit;
+}
+.plot-grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.plot-axis {
+  stroke: var(--muted);
+  stroke-width: 1.2;
+}
+.plot-tick {
+  fill: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.plot-axis-label {
+  fill: var(--ink);
+  font-size: 13px;
+}
+.plot-line {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+.plot-s0 {
+  stroke: var(--green);
+  fill: var(--green);
+}
+.plot-s1 {
+  stroke: #b45309;
+  fill: #b45309;
+}
+.plot-s2 {
+  stroke: #2563eb;
+  fill: #2563eb;
+}
+.plot-s3 {
+  stroke: #7c3aed;
+  fill: #7c3aed;
+}
+.plot-line.plot-s0,
+.plot-line.plot-s1,
+.plot-line.plot-s2,
+.plot-line.plot-s3 {
+  fill: none;
+}
+.plot-mark {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+.plot-mark-label {
+  fill: var(--ink);
+  font-size: 12px;
+}
+.plot-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.plot-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.plot-legend i {
+  display: inline-block;
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+  background: currentColor;
+}
+.plot-legend i.plot-s0 {
+  background: var(--green);
+}
+.plot-legend i.plot-s1 {
+  background: #b45309;
+}
+.plot-legend i.plot-s2 {
+  background: #2563eb;
+}
+.plot-legend i.plot-s3 {
+  background: #7c3aed;
+}
+.plot-legend i.plot-key-points {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.teaching-media video {
+  display: block;
+  width: 100%;
+  max-height: 520px;
+  border-radius: 8px;
+  background: #000;
+}

@@ -451,14 +451,14 @@ function blockPage(id, step = "read") {
   if (step === "practice")
     return (
       header +
-      `<h1>Questions</h1>${blockQuizSummary(block)}${block.lessons.map((l, i) => `<section class="block-question"><p class="small">${i + 1} · ${e(l.title)}</p>${question(levelQuestion(l), { guided: true, batch: true })}</section>`).join("")}${flowFooter({ back: `<button class="text-button" data-block-step="read" data-block="${id}">← Back to reading</button>`, primary: blockChecked(block) ? "block-explain" : "check-block", value: id, primaryText: blockChecked(block) ? "Next: explain an idea" : "Check all answers" })}`
+      `<h1>Questions</h1>${blockQuizSummary(block)}${block.lessons.map((l, i) => `<section class="block-question"><p class="small">${i + 1} · ${e(l.title)}</p>${question(levelQuestion(l), { guided: true, batch: true })}</section>`).join("")}${flowFooter({ back: `<button class="text-button" data-block-step="read" data-block="${id}">← Back to reading</button>`, primary: blockChecked(block) ? "block-explain" : "check-block", value: id, primaryText: blockChecked(block) ? "Next: explain an idea" : "Check all answers", secondary: blockChecked(block) ? "" : `<button class="text-button" data-block-step="explain" data-block="${id}">Skip questions</button>` })}`
     );
   if (step === "explain") return header + explainStep(block.lessons[block.lessons.length - 1]);
   const next = readingBlocks()[block.index + 1];
   if (!next) return header + passFinished();
   return (
     header +
-    `<h1>Block finished.</h1><p class="lead">You have read and practiced these topics. Your answers are saved, including anything you want to revisit.</p><ul class="block-done-topics">${block.lessons.map((l) => `<li>${e(l.title)}</li>`).join("")}</ul><div class="actions">${next ? `<button class="primary" data-go="block/${next.id}/read">Start the next reading block →</button>` : '<a class="primary" href="#home">Return to the course</a>'}<a href="#home">Take a break</a></div>${block.lessons
+    `<h1>Block finished.</h1><ul class="block-done-topics">${block.lessons.map((l) => `<li>${e(l.title)}</li>`).join("")}</ul><div class="actions">${next ? `<button class="primary" data-go="block/${next.id}/read">Start the next reading block →</button>` : '<a class="primary" href="#home">Return to the course</a>'}<a href="#home">Take a break</a></div>${block.lessons
       .filter((l) => l.activity)
       .map(
         (l) =>
@@ -1100,7 +1100,8 @@ function explanationFooter(l) {
             ? "Get feedback"
             : "Compare my explanation",
       disabled: busy,
-      secondary: '<a class="save-later" href="#home">Save and return</a>',
+      // Explaining is worth doing, never required to move on.
+      secondary: `<button class="text-button" data-skip-explain="${block.id}">Skip</button>`,
     });
   }
   return footer(l, {
@@ -1660,6 +1661,10 @@ document.addEventListener("click", async (event) => {
   }
   if (b.blockQuiz) {
     blockStep(blockById(b.blockQuiz), "practice");
+    return;
+  }
+  if (b.skipExplain) {
+    blockStep(blockById(b.skipExplain), "done");
     return;
   }
   if (b.finishBlock) {

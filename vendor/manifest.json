@@ -50,6 +50,7 @@
     "@radix-ui/react-use-layout-effect": "1.1.4",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
+    "katex": "0.16.22",
     "lucide-react": "1.60.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
@@ -58,10 +59,10 @@
     "tailwindcss": "4.3.3"
   },
   "sha256": {
-    "reader-ui.js": "edb10a5b7fb5a497e77c0c6c8b0b8e95fa4dd246f57b42f445218bef480593a4",
+    "reader-ui.js": "10ac8cc82dc58f87324d4719f7a86f9b5c8057933dbe84cdc035a832009c5e87",
     "reader-ui.js.LEGAL.txt": "9a84f992d48f6646e796f8b36a12973d815e64650bfe77897c3e9a6465ff852a",
     "reader-ui.css": "6414472ed54979601421bcf6202f19ca506798cd7c24d7078a252ca3762293c6",
     "geist-latin-wght-normal.woff2": "19f9c92546aa300c312235e3125af1b81394d8db9a4bc4a425cd5b641d2d54e1",
-    "THIRD-PARTY-LICENSES.txt": "a4b6b6cb5a21a441a9893922a1f7ffb9b716641a63dcfd44cc12f02fbfcbd15e"
+    "THIRD-PARTY-LICENSES.txt": "79f33cfc79d02288fe1a7e63ea2d961ecb06e4cbcea8e734d71c0234c1a66557"
   }
 }

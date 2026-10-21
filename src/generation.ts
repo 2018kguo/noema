@@ -15,7 +15,7 @@ import { type Item, type Settings } from "./inbox-store";
 import { type Reading } from "./source-reader";
 import { runStructured, Cancelled } from "./structured-cli";
 import { cleanHTML, escapeHTML, paragraphCount } from "./html";
-import { tells, titleTells, arithmetic } from "./tells";
+import { tells, titleTells, arithmetic, repetition } from "./tells";
 import schemas from "./generation-schemas.json";
 const t = z.string(),
   arr = (min: number, max: number) => z.array(t).min(min).max(max);
@@ -235,7 +235,7 @@ export async function generate(
   const plan = await checkpoint(
     "plan",
     "",
-    'Plan 8–12 topics, up to 20 for a broad goal. Order prerequisite concepts before applications. Name phases as "01 · Foundations". Each focus names one concrete idea; titles name that idea plainly, as a person would label a chapter, with no flourishes and no "A, B and C" lists; group related topics into roughly 30-minute reading blocks before quizzes. Introduce terms in plain English. Introductions use two short sentences. Review descriptions give situations without revealing verdicts. For every phase, write placement probes: one level-2 (High level) and one level-3 (Depth) multiple-choice question that a reader who already works at that depth answers quickly and a newcomer cannot guess; test understanding of ideas, never vocabulary alone or arithmetic.' +
+    'Plan 8–12 topics, up to 20 for a broad goal. Order prerequisite concepts before applications. Name phases as "01 · Foundations". Every topic teaches the subject itself (what was built or found, how it works, why it matters, how it compares with prior work); never plan a standalone topic about how to judge claims in general, and weave judgment of the sources’ claims into the subject topics. Each focus names one concrete idea; titles name that idea plainly, as a person would label a chapter, with no flourishes and no "A, B and C" lists; group related topics into roughly 30-minute reading blocks before quizzes. Introduce terms in plain English. Introductions use two short sentences. Review descriptions give situations without revealing verdicts. For every phase, write placement probes: one level-2 (High level) and one level-3 (Depth) multiple-choice question that a reader who already works at that depth answers quickly and a newcomer cannot guess; test understanding of ideas, never vocabulary alone or arithmetic.' +
       " Cite sources only by their id field.",
     planSchema
       .refine((p) => p.lessons.every((l) => l.sources.every((id) => sourceIds.includes(id))), {
@@ -280,32 +280,124 @@ export async function generate(
         ),
       ).values(),
     ].slice(0, 12),
+    // Video files a source embeds itself (an X post's clip).
+    clips: documents
+      .flatMap((d) =>
+        d.embeds
+          .map((e) => e.src || "")
+          .filter((src) => /^https:\/\/[^ ]+\.(mp4|webm)(\?|$)/.test(src))
+          .map((src) => ({ src, source_id: d.id! })),
+      )
+      .slice(0, 6),
     images: documents
       .flatMap((d) => (d.figures || []).map((f) => ({ url: f.src, alt: f.alt, source_id: d.id! })))
       .slice(0, 30),
   };
   const allowedMedia = new Set([
     ...media.videos.map((v) => v.youtube_id),
+    ...media.clips.map((c) => c.src),
     ...media.images.map((i) => i.url),
   ]);
+  const lessonInstruction =
+    "Write one topic at up to three depths, each a self-contained 300–600 word explanation for its reader, never the same text made longer: intuition_html (level 1) for a smart outsider: the concrete situation, the core idea and why it matters; mechanism_html (level 2) for someone who will build or operate it: real moving parts, numbers, code paths and trade-offs; frontier_html (level 3) for a researcher: evidence, how it was measured and where it breaks, competing approaches and open problems. Readers take the passes in order, so each level assumes the earlier ones and covers new ground: level 1 the situation, the core idea and the real case; level 2 how it works, with parts and mechanisms level 1 left out; level 3 the evidence, prior and competing work and what is unsettled. Never restate an earlier level's points in other words; a level that would mostly repeat is set to null. A level is optional: write mechanism_html or frontier_html only when the sources give that reader something, such as how the thing works in the cases they discuss, the evidence behind their claims or where people disagree. Textbook material the sources never use (formulas, kinetics, derivations, unit conversions) is not depth; set that level to null rather than pad it. A prerequisite topic may be level 1 only. Write as a knowledgeable person explaining to a colleague: lead into each idea from the last, fold definitions into the sentences that use them and vary sentence length; never open paragraphs with clipped X-is-Y definitions. Anchor every level high; do not talk down. Define prerequisites before using them. Every named thing must be explained where it appears or linked: mark the first use per level of a course glossary term as <dfn data-term='exact glossary term'>term</dfn>, and cite a source as <a data-source='source id' data-quote='a short exact phrase copied from that source'>readable name</a> so the link opens at that passage; never refer to 'the post' or 'the README' as if the reader had it open. Teach what the source is about, spending words where it spends them; never bend a topic into arithmetic to make it gradable. Give one example only if it helps (at level 1 a real case told in words; worked numbers belong at level 2 or deeper): a concrete case walked through in two to four steps, real when possible (an event, system, decision or failure the sources report), with a title naming what it shows, and example_level set to the depth whose reader it suits; use numbers only when the topic itself is quantitative; set example_setup and example_steps to null rather than invent a filler example. Visuals show the subject itself, and most topics should have one: embed a media_candidates image, video (youtube_id) or clip (src, the source's own video file) when it shows what a paragraph discusses, with credit (and credit_url = the source page for images); never invent media. Use plot when the topic relates quantities (a roofline, a curve, measured points): label both axes with units, use log axes when values span orders of magnitude, and say in the caption which numbers are invented. Use flow only for a real sequence or mechanism in the system being taught, never for a checklist or a procedure for reading claims. Inline illustrations name the level whose text they sit in and go after a numbered top-level paragraph of that text; binding is a one-site equilibrium occupancy model in nM and screen shows natural-frequency true/false positives. Write a formula, only when the topic is quantitative, as TeX inside <span data-math>…</span> (inline) or <div data-math>…</div> (display). Explain with the real thing; never lean on everyday analogies (speed limits, roads, kitchens) that need explaining themselves. Each has its own unique slug id. Use at most two inline illustrations and only where prose has introduced the question. Keep the worked-example visual null if it would repeat an inline illustration. A funnel is only for successive conditional retention rates from the same group. Binding assumes one-to-one binding, equilibrium and free ligand concentration; it says nothing about patient benefit. screen rates are fractions, not percentages. Always label invented assumptions. When numbers appear, state units and what a percentage is a share of. Funnel has three gates, one per example step; flow steps are zero-based and ordered. Source_ids must be this lesson’s sources. Do not treat invented rates as measurements. Write one question per written level, tagged with that level, that starts from a concrete situation or a real case from the sources and asks the reader to predict, diagnose, decide or explain (what happens if something changes, which check to run next, what a claim does and does not show), never a definition lookup or arithmetic; every option must be something a reader who half-understood might pick, with no joke options and options parallel in length; level 1 tests the core idea, level 2 how it works, level 3 judgment of evidence. Make the question self-contained and answerable from the main reading, with plausible misconceptions and similarly concise options. option_feedback explains the specific reasoning in each option. Do not make the correct answer obvious from length or wording. Each question's hint points the reader back to the specific idea in that level's reading, in that reader's words, without giving the answer. The transfer task is new and concrete, and a level-1 reader can answer it in a few sentences by explaining an idea in their own words; no derivations, calculations or values to state.";
+  // Self-review before a learner sees anything: the mechanical checks plus a reviewer reading the
+  // draft against writing.md's checklist. A topic with problems is rewritten once with them listed.
+  const reviewSchema = z
+    .object({
+      problems: z
+        .array(z.object({ where: z.string(), problem: z.string(), fix: z.string() }).strict())
+        .max(15),
+    })
+    .strict();
+  function mechanical(d: z.infer<typeof generatedLesson>) {
+    const levels = [d.intuition_html, d.mechanism_html, d.frontier_html];
+    const found = [
+      ...levels.flatMap((html, n) =>
+        html
+          ? tells(html)
+              .filter((t) => t.strong)
+              .map((t) => ({ where: `level ${n + 1}: ${t.sentence}`, problem: t.kind, fix: t.fix }))
+          : [],
+      ),
+      ...d.questions.flatMap((q) =>
+        tells([q.prompt, ...q.options, q.why, q.hint, ...(q.option_feedback || [])].join(" "))
+          .filter((t) => t.strong)
+          .map((t) => ({ where: `question: ${t.sentence}`, problem: t.kind, fix: t.fix })),
+      ),
+      ...levels.flatMap((html, n) => {
+        const earlier = levels.slice(0, n).filter(Boolean).join(" ");
+        return html && earlier && repetition(html, earlier) > 0.12
+          ? [
+              {
+                where: `level ${n + 1}`,
+                problem: "repeats an earlier level in other words",
+                fix: "cover new ground or set the level to null",
+              },
+            ]
+          : [];
+      }),
+    ];
+    if (
+      d.example_setup &&
+      d.example_steps &&
+      (d.example_level ?? 1) === 1 &&
+      arithmetic(d.example_setup + " " + d.example_steps.join(" ")) >= 3
+    )
+      found.push({
+        where: "example",
+        problem: "worked arithmetic at Intro",
+        fix: "tell a real case in words at level 1, or move the numbers to level 2",
+      });
+    return found;
+  }
+  async function selfReview(
+    draft: z.infer<typeof generatedLesson>,
+    outline: (typeof plan.lessons)[number],
+    i: number,
+  ) {
+    const automatic = mechanical(draft);
+    const review = await checkpoint(
+      "critique-" + (i + 1),
+      JSON.stringify({ topic: outline, draft, automatic_findings: automatic }),
+      "Review this draft topic as the learner whose feedback shaped the writing guide, before any learner sees it. Use the guide's self-review checklist. List every place the draft breaks it, quoting the passage in where, saying what is wrong and how to fix it. Include the automatic findings you agree with. Return an empty list only if you would ship the topic as it is.",
+      reviewSchema,
+    );
+    const problems = [...automatic, ...review.problems];
+    if (!problems.length) return draft;
+    return checkpoint(
+      "revise-" + (i + 1),
+      JSON.stringify({
+        course_title: plan.title,
+        all_topics: plan.lessons,
+        media_candidates: media,
+        draft,
+        problems,
+      }),
+      lessonInstruction +
+        "\nRevise topic " +
+        (i + 1) +
+        ": " +
+        JSON.stringify(outline) +
+        ". DRAFT was reviewed and PROBLEMS lists what is wrong with it. Return the complete topic with every problem fixed, keeping what works.",
+      generatedLesson,
+      schemas.LESSON,
+    );
+  }
   let written = 0;
   const lessons: Lesson[] = await pool(plan.lessons, 3, async (outline, i) => {
     const id = "idea-" + (i + 1);
-    const result = await checkpoint(
+    const draft = await checkpoint(
       "lesson-" + (i + 1),
       JSON.stringify({
         course_title: plan.title,
         all_topics: plan.lessons,
         media_candidates: media,
       }),
-      "Write one topic at up to three depths, each a self-contained 300–600 word explanation for its reader, never the same text made longer: intuition_html (level 1) for a smart outsider: the concrete situation, the core idea and why it matters; mechanism_html (level 2) for someone who will build or operate it: real moving parts, numbers, code paths and trade-offs; frontier_html (level 3) for a researcher: evidence, how it was measured and where it breaks, competing approaches and open problems. A level is optional: write mechanism_html or frontier_html only when the sources give that reader something, such as how the thing works in the cases they discuss, the evidence behind their claims or where people disagree. Textbook material the sources never use (formulas, kinetics, derivations, unit conversions) is not depth; set that level to null rather than pad it. A prerequisite topic may be level 1 only. Write as a knowledgeable person explaining to a colleague: lead into each idea from the last, fold definitions into the sentences that use them and vary sentence length; never open paragraphs with clipped X-is-Y definitions. Anchor every level high; do not talk down. Define prerequisites before using them. Every named thing must be explained where it appears or linked: mark the first use per level of a course glossary term as <dfn data-term='exact glossary term'>term</dfn>, and cite a source as <a data-source='source id' data-quote='a short exact phrase copied from that source'>readable name</a> so the link opens at that passage; never refer to 'the post' or 'the README' as if the reader had it open. Teach what the source is about, spending words where it spends them; never bend a topic into arithmetic to make it gradable. Give one example only if it helps: a concrete case walked through in two to four steps, real when possible (an event, system, decision or failure the sources report), with a title naming what it shows, and example_level set to the depth whose reader it suits; use numbers only when the topic itself is quantitative; set example_setup and example_steps to null rather than invent a filler example. Use a small number of purposeful visuals. When a media_candidates video or image shows exactly what a paragraph discusses, embed it as an illustration of kind video (youtube_id, credit) or image (url, alt, credit, credit_url = its source page); never invent media. Inline illustrations name the level whose text they sit in and go after a numbered top-level paragraph of that text: flow for relationships, binding for a one-site equilibrium occupancy model in nM, screen for natural-frequency true/false positives. Each has its own unique slug id. Use at most two inline illustrations and only where prose has introduced the question. Keep the worked-example visual null if it would repeat an inline illustration. A funnel is only for successive conditional retention rates from the same group. Binding assumes one-to-one binding, equilibrium and free ligand concentration; it says nothing about patient benefit. screen rates are fractions, not percentages. Always label invented assumptions. When numbers appear, state units and what a percentage is a share of. Funnel has three gates, one per example step; flow steps are zero-based and ordered. Source_ids must be this lesson’s sources. Do not treat invented rates as measurements. Write one question per written level, tagged with that level, that starts from a concrete situation or a real case from the sources and asks the reader to predict, diagnose, decide or explain (what happens if something changes, which check to run next, what a claim does and does not show), never a definition lookup or arithmetic; every option must be something a reader who half-understood might pick, with no joke options and options parallel in length; level 1 tests the core idea, level 2 how it works, level 3 judgment of evidence. Make the question self-contained and answerable from the main reading, with plausible misconceptions and similarly concise options. option_feedback explains the specific reasoning in each option. Do not make the correct answer obvious from length or wording. Transfer task is new, concrete and answerable from this lesson, with reasoning criteria." +
-        "\nWrite topic " +
-        (i + 1) +
-        ": " +
-        JSON.stringify(outline),
+      lessonInstruction + "\nWrite topic " + (i + 1) + ": " + JSON.stringify(outline),
       generatedLesson,
       schemas.LESSON,
     );
+    const result = await selfReview(draft, outline, i);
     const levels = Object.fromEntries(
       (
         [
@@ -338,7 +430,7 @@ export async function generate(
         example,
         rewrite_these_sentences: flagged,
       }),
-      "Edit this topic as a demanding editor using the writing guide's second-pass questions. Remove LLM tics, slogans and self-narration; define terms before use; fix jumps in logic. Preserve every fact, number, level, paragraph count and the paragraph each illustration follows. Rewrite every sentence listed in rewrite_these_sentences so the named tell is gone. Set mechanism_html or frontier_html to null when it is textbook padding the sources never use. Otherwise return the same levels (null for a level that is absent) and the example (both example fields null when there is none or it should go).",
+      "Edit this topic as a demanding editor using the writing guide's second-pass questions. Remove LLM tics, slogans and self-narration; define terms before use; fix jumps in logic. Preserve every fact, number, level, paragraph count and the paragraph each illustration follows. Rewrite every sentence listed in rewrite_these_sentences so the named tell is gone. Cut any point a deeper level restates from an earlier one; each level adds new material. Set mechanism_html or frontier_html to null when it is textbook padding the sources never use. Otherwise return the same levels (null for a level that is absent) and the example (both example fields null when there is none or it should go).",
       editSchema,
       undefined,
       base,
@@ -401,7 +493,9 @@ export async function generate(
         fits(i.visual, false) &&
         (i.visual.kind === "video"
           ? allowedMedia.has(i.visual.youtube_id)
-          : i.visual.kind !== "image" || allowedMedia.has(i.visual.url)) &&
+          : i.visual.kind === "clip"
+            ? allowedMedia.has(i.visual.src)
+            : i.visual.kind !== "image" || allowedMedia.has(i.visual.url)) &&
         i.after_paragraph <= paragraphCount(lesson.levels[i.level] || ""),
     );
     return lesson;
