@@ -18,10 +18,12 @@ bun run start
 ```
 
 Open **http://127.0.0.1:8765**. Paste one or more links and add a note about what
-you want to understand. In **Preparation settings**, choose an installed,
-signed-in Claude Code or Codex CLI and a model available to your account.
-Preparation uses that account's usage limits. You can capture links before
-connecting a model; they stay queued until you start preparation.
+you want to understand. Open **Settings** to see whether the Claude Code and
+Codex CLIs are installed and signed in; if one isn't, Settings shows the command
+to run (`claude auth login` or `codex login`) and a Recheck button. Noema never
+handles or stores your login. Pick a CLI and, optionally, a model. Preparation
+uses that account's usage limits. You can capture links before connecting a
+model; they stay queued until you start preparation.
 
 The queue reads the source, plans prerequisites, writes lessons and guided
 reviews, then makes a separate editing pass. It handles one item at a time and
@@ -93,8 +95,8 @@ bun run start --course courses/deepinfer
 ## Add live feedback
 
 You can compare every written answer with a worked explanation for free. Live
-feedback is optional and uses your own account. Install and sign in to your
-chosen CLI first, then restart the server:
+feedback is optional and uses the same CLI and model you chose in **Settings**.
+To use a different one for feedback only, pass it when starting the server:
 
 ```bash
 bun run start --provider claude --model haiku

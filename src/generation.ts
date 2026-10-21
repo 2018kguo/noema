@@ -2,7 +2,7 @@ import { z } from "zod";
 import { mkdir, readFile, writeFile, rename } from "node:fs/promises";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
-import { ROOT, loadBundle, visualSchema, type Lesson } from "./course";
+import { ROOT, loadBundle, visualSchema, illustrationSchema, type Lesson } from "./course";
 import { type Item, type Settings } from "./inbox-store";
 import { type Reading } from "./source-reader";
 import { runStructured, Cancelled } from "./structured-cli";
@@ -34,6 +34,7 @@ const generatedQuestion = z
     correct: z.number().int().min(0).max(2),
     why: t,
     hint: t,
+    option_feedback: arr(3, 3).optional(),
   })
   .strict();
 const generatedLesson = z
@@ -45,6 +46,8 @@ const generatedLesson = z
     example_setup: t,
     example_steps: arr(3, 3),
     visual: visualSchema.nullable(),
+    illustrations: z.array(illustrationSchema).max(4).default([]),
+    quiz_question: z.number().int().min(0).max(2).optional(),
     questions: z.array(generatedQuestion).length(3),
     transfer_prompt: t,
     rubric: arr(3, 4),
@@ -184,7 +187,7 @@ export async function generate(
     );
     const result = await checkpoint(
       "lesson-" + (i + 1),
-      "Write one lesson with 300–500 words of connected beginner prose and two optional depths of 150–250 words each. Define prerequisites before using them. Explain one small invented example in three steps, with a concrete title. Use a flow visual to show relationships, or a funnel only for successive conditional retention rates from the same group. Use null if neither fits. State units, denominator, assumptions, exact endpoint, and that fractional counts are expectations. Funnel has three gates, one per example step; flow steps are zero-based and ordered. Source_ids must be this lesson’s sources. Do not treat invented rates as measurements. Three questions test application, mechanism, judgment; use plausible misconceptions and explain why. Transfer task is new, concrete and answerable from this lesson, with reasoning criteria.\n" +
+      "Write one lesson with 300–500 words of connected beginner prose and two optional depths of 150–250 words each. Define prerequisites before using them. Explain one small invented example in three steps, with a concrete title. Use a small number of purposeful visuals. Inline illustrations go after a numbered top-level paragraph in beginner_html: flow for relationships, binding for a one-site equilibrium occupancy model in nM, screen for natural-frequency true/false positives. Each has its own unique slug id. Use at most two inline illustrations and only where prose has introduced the question. Keep the worked-example visual null if it would repeat an inline illustration. A funnel is only for successive conditional retention rates from the same group. Binding assumes one-to-one binding, equilibrium and free ligand concentration; it says nothing about patient benefit. screen rates are fractions, not percentages. Always label invented assumptions. State units, denominator, assumptions, exact endpoint, and that fractional counts are expectations. Funnel has three gates, one per example step; flow steps are zero-based and ordered. Source_ids must be this lesson’s sources. Do not treat invented rates as measurements. Three questions test application, mechanism, judgment. Make the question self-contained and answerable from the main reading, with plausible misconceptions and similarly concise options. option_feedback explains the specific reasoning in each option. quiz_question is the zero-based index of the best question for the grouped quiz: favor application, prediction and evidence judgment over vocabulary. Do not make the correct answer obvious from length or wording. Transfer task is new, concrete and answerable from this lesson, with reasoning criteria.\n" +
         JSON.stringify({
           outline,
           earlier_lessons: plan.lessons.slice(0, i),
@@ -211,6 +214,8 @@ export async function generate(
       example: [result.example_setup, result.example_steps],
       example_title: result.example_title,
       visual: result.visual,
+      illustrations: result.illustrations,
+      quiz_question: result.quiz_question,
       questions: result.questions.map((q, n) => ({ ...q, id: id + "-q" + (n + 1) })),
       transfer: [result.transfer_prompt, result.rubric, result.transfer_example],
       sources: outline.sources,
@@ -220,7 +225,7 @@ export async function generate(
   stage("checking", "Editing explanations and checking the teaching sequence.", plan.title);
   const edited = await checkpoint(
     "editorial-v2",
-    "Edit beginner explanations and examples. Keep 300–500 words each. Define terms and fix jumps in logic. Preserve every fact, number, lesson ID, quiz meaning, transfer task and visual. Remove slogans. Keep three example steps. Explain each percentage’s denominator and fractional expected counts. Name precise endpoints.\n" +
+    "Edit beginner explanations and examples. Keep 300–500 words each. Define terms and fix jumps in logic. Preserve every fact, number, lesson ID, quiz meaning, transfer task, visual, paragraph count and the relationship between inline illustrations and their preceding paragraphs. Remove slogans. Keep three example steps. Explain each percentage’s denominator and fractional expected counts. Name precise endpoints.\n" +
       JSON.stringify(lessons),
     z
       .object({
@@ -323,7 +328,6 @@ export async function generate(
       ]),
     ),
     LESSONS: lessons,
-    CARDS: lessons.map((l) => [l.title, l.transfer[0], l.takeaway, l.id]),
     GLOSSARY: Object.fromEntries(plan.glossary.map((g) => [g.term, g.definition])),
   };
   if (cancelled()) throw new Cancelled("Preparation stopped before publication.");

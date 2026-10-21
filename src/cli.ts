@@ -7,6 +7,7 @@ import { InboxWorker } from "./inbox-worker";
 import { makeServer } from "./server";
 import { bundle, bundleBytes } from "./share";
 import { Crawler } from "./crawl";
+import { inspectCourse } from "./course-inspect";
 const [command = "serve", ...args] = process.argv.slice(2);
 const { values: v, positionals: p } = parseArgs({
   args,
@@ -15,7 +16,7 @@ const { values: v, positionals: p } = parseArgs({
     course: { type: "string" },
     data: { type: "string", default: join(ROOT, "local-data") },
     port: { type: "string", default: "8765" },
-    provider: { type: "string", default: "none" },
+    provider: { type: "string" },
     model: { type: "string", default: "" },
     repo: { type: "string" },
     "generate-provider": { type: "string" },
@@ -54,7 +55,12 @@ async function main() {
     const worker = store ? new InboxWorker(store) : null;
     worker?.start();
     console.log("Noema: http://127.0.0.1:" + server.port);
-    console.log("Live grader: " + v.provider + "; model: " + (v.model || "CLI default"));
+    console.log(
+      "Answer checks: " +
+        (v.provider
+          ? v.provider + "; model: " + (v.model || "CLI default")
+          : "model from Settings"),
+    );
     let stopping = false;
     const stop = async () => {
       if (stopping) return;
@@ -69,12 +75,14 @@ async function main() {
   }
   if (command === "course") {
     const [action, path] = p;
-    if (!path) throw Error("Usage: bun run course validate|bundle|init COURSE");
+    if (!path) throw Error("Usage: bun run course validate|inspect|bundle|init COURSE");
     if (action === "validate") {
       const b = loadBundle(path);
       console.log(
         `Valid: ${b.course.LESSONS.length} topics, ${Object.keys(b.challenges).length} review scenarios`,
       );
+    } else if (action === "inspect") {
+      console.log(JSON.stringify(inspectCourse(loadBundle(path).course), null, 2));
     } else if (action === "bundle") {
       if (!v.out) throw Error("Use --out course.zip");
       console.log(await bundle(path, v.out));
@@ -100,7 +108,6 @@ async function main() {
             LABS: [],
             SOURCES: {},
             LESSONS: [],
-            CARDS: [],
             GLOSSARY: {},
           },
           null,
@@ -109,7 +116,7 @@ async function main() {
       );
       await writeFile(join(path, "challenges.json"), "[]\n");
       console.log("Draft created. Author lessons using docs/AUTHORING.md, then validate.");
-    } else throw Error("Choose validate, bundle or init.");
+    } else throw Error("Choose validate, inspect, bundle or init.");
     return;
   }
   if (command === "inbox") {

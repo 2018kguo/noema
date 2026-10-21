@@ -1,5 +1,48 @@
 "use strict";
 (() => {
+  // src/visual-models.ts
+  function bindingFraction(kd, concentration) {
+    if (!Number.isFinite(kd) || kd <= 0 || !Number.isFinite(concentration) || concentration < 0)
+      throw Error("Binding needs positive Kd and nonnegative free ligand concentration.");
+    return concentration / (kd + concentration);
+  }
+  function screenCounts(population, prevalence, sensitivity, falsePositiveRate) {
+    if (!Number.isFinite(population) || population <= 0 || [prevalence, sensitivity, falsePositiveRate].some((n) => !Number.isFinite(n) || n < 0 || n > 1))
+      throw Error("Screening needs a positive population and rates from 0 to 1.");
+    const positive = population * prevalence, negative = population - positive, truePositive = positive * sensitivity, falsePositive = negative * falsePositiveRate, flagged = truePositive + falsePositive;
+    return {
+      positive,
+      negative,
+      truePositive,
+      falsePositive,
+      falseNegative: positive - truePositive,
+      trueNegative: negative - falsePositive,
+      flagged,
+      precision: flagged ? truePositive / flagged : null
+    };
+  }
+  function scheduleTimes(tasks) {
+    const times = /* @__PURE__ */ new Map();
+    for (const task of tasks) {
+      if (times.has(task.id) || !Number.isFinite(task.duration) || task.duration < 0 || task.after.some((id) => !times.has(id)))
+        throw Error(
+          "Schedule tasks need unique IDs, nonnegative durations and dependencies listed first."
+        );
+      const start = Math.max(0, ...task.after.map((id) => times.get(id).end));
+      times.set(task.id, { start, end: start + task.duration });
+    }
+    const finish = Math.max(0, ...[...times.values()].map((t) => t.end)), critical = /* @__PURE__ */ new Set();
+    const visit = (id) => {
+      if (critical.has(id)) return;
+      critical.add(id);
+      const task = tasks.find((t) => t.id === id);
+      for (const dependency of task.after)
+        if (times.get(dependency).end === times.get(id).start) visit(dependency);
+    };
+    for (const task of tasks) if (times.get(task.id).end === finish) visit(task.id);
+    return { times, finish, critical };
+  }
+
   // browser/visuals.ts
   var escape = (value) => String(value).replace(
     /[&<>"']/g,
@@ -8,6 +51,65 @@
   var number = (value) => new Intl.NumberFormat("en", { maximumFractionDigits: 1 }).format(value);
   var overrides = /* @__PURE__ */ new Map();
   var previous = /* @__PURE__ */ new Map();
+  var modelValues = /* @__PURE__ */ new Map();
+  var entries = (lessons) => lessons.flatMap((l) => [
+    ...l.visual ? [{ id: l.id, visual: l.visual }] : [],
+    ...(l.illustrations || []).map((i) => ({ id: l.id + "--" + i.id, visual: i.visual }))
+  ]);
+  var find = (lessons, id) => entries(lessons).find((v) => v.id === id);
+  function bindingPlot(v, concentration) {
+    const points = Array.from({ length: 101 }, (_, i) => {
+      const x = v.max_nm * i / 100;
+      return `${i ? "L" : "M"}${i * 6},${200 - 200 * bindingFraction(v.kd_nm, x)}`;
+    }).join(" ");
+    return `<div class="binding-chart"><p>Occupied binding sites \xB7 0\u2013100%</p><svg viewBox="0 0 600 210" role="img" aria-label="Binding occupancy rises toward saturation as free ligand increases"><path d="M0 100H600 M0 200H600" class="plot-grid"/><path d="${points}" class="binding-curve"/><path d="M${600 * concentration / v.max_nm} 200V${200 - 200 * bindingFraction(v.kd_nm, concentration)}H0" class="plot-guide"/><circle cx="${600 * concentration / v.max_nm}" cy="${200 - 200 * bindingFraction(v.kd_nm, concentration)}" r="6" class="plot-point"/></svg><div class="plot-axis"><span>0 nM</span><span>Free ligand concentration</span><span>${number(v.max_nm)} nM</span></div></div>`;
+  }
+  function modelResult(v, value) {
+    if (v.kind === "binding") {
+      const baseline = bindingFraction(v.kd_nm, v.ligand_nm), current = bindingFraction(v.kd_nm, value);
+      return `${bindingPlot(v, value)}<table class="model-comparison"><caption>Original example and your change \xB7 Kd stays ${number(v.kd_nm)} nM</caption><thead><tr><th scope="col">Quantity</th><th scope="col">Original</th><th scope="col">Now</th></tr></thead><tbody><tr><th scope="row">Free ligand</th><td>${number(v.ligand_nm)} nM</td><td>${number(value)} nM</td></tr><tr><th scope="row">Sites occupied</th><td>${number(baseline * 100)}%</td><td>${number(current * 100)}%</td></tr></tbody></table><p class="model-readout" role="status">${number(value)} \xF7 (${number(v.kd_nm)} + ${number(value)}) = ${number(current * 100)}% occupied. ${value === v.kd_nm ? "At Kd, half the sites are occupied." : "The concentration changes occupancy; Kd stays fixed."}</p>`;
+    }
+    if (v.kind === "screen") {
+      const original = screenCounts(v.population, v.prevalence, v.sensitivity, v.false_positive_rate), now = screenCounts(v.population, v.prevalence, v.sensitivity, value), percent = (n) => n === null ? "No flags" : number(n * 100) + "%";
+      return `<div class="screen-counts"><div><h3>Would meet the later criterion</h3><p>${number(now.positive)} of ${number(v.population)} candidates</p><div class="count-pair"><span><b>${number(now.truePositive)}</b> flagged</span><span><b>${number(now.falseNegative)}</b> missed</span></div></div><div><h3>Would fail the later criterion</h3><p>${number(now.negative)} of ${number(v.population)} candidates</p><div class="count-pair"><span><b>${number(now.falsePositive)}</b> false alarms</span><span><b>${number(now.trueNegative)}</b> rejected</span></div></div></div><div class="flagged-mixture" aria-hidden="true"><span style="width:${(now.precision || 0) * 100}%"></span></div><p class="mixture-key"><span>True flags: ${number(now.truePositive)}</span><span>False alarms: ${number(now.falsePositive)}</span></p><table class="model-comparison"><caption>Original example and your change</caption><thead><tr><th scope="col">Flagged candidates</th><th scope="col">Original</th><th scope="col">Now</th></tr></thead><tbody><tr><th scope="row">True flags</th><td>${number(original.truePositive)}</td><td>${number(now.truePositive)}</td></tr><tr><th scope="row">False alarms</th><td>${number(original.falsePositive)}</td><td>${number(now.falsePositive)}</td></tr><tr><th scope="row">Share truly good (PPV)</th><td>${percent(original.precision)}</td><td>${percent(now.precision)}</td></tr></tbody></table><p class="model-readout" role="status">${now.flagged ? `${number(now.truePositive)} of ${number(now.flagged)} flags would meet the later criterion: ${percent(now.precision)}.` : "No candidates are flagged, so the share of flags that are truly good is undefined."} The base rate and true positive rate stay fixed.</p>`;
+    }
+    if (v.kind === "schedule") {
+      const plan = (d) => scheduleTimes(v.tasks.map((t) => t.id === v.adjustable_task ? { ...t, duration: d } : t)), original = plan(v.tasks.find((t) => t.id === v.adjustable_task).duration), now = plan(value), span = Math.max(original.finish, now.finish, 1), moved = now.finish - original.finish;
+      return `<ol class="schedule-chart">${v.tasks.map((t) => {
+        const time = now.times.get(t.id);
+        return `<li class="${now.critical.has(t.id) ? "critical" : ""} ${t.id === v.adjustable_task ? "adjusted" : ""}"><span>${escape(t.label)}</span><span class="schedule-track"><i style="left:${100 * time.start / span}%;width:${Math.max(0.5, 100 * (time.end - time.start) / span)}%"></i></span><b>wk ${number(time.start)}\u2013${number(time.end)}</b></li>`;
+      }).join(
+        ""
+      )}</ol><p class="schedule-key">Dark bars are the critical path: a delay there moves the finish.</p><table class="model-comparison"><caption>Original plan and your change</caption><thead><tr><th scope="col">Quantity</th><th scope="col">Original</th><th scope="col">Now</th></tr></thead><tbody><tr><th scope="row">Adjusted task</th><td>${number(v.tasks.find((t) => t.id === v.adjustable_task).duration)} weeks</td><td>${number(value)} weeks</td></tr><tr><th scope="row">Finish</th><td>week ${number(original.finish)}</td><td>week ${number(now.finish)}</td></tr></tbody></table><p class="model-readout" role="status">${moved > 0 ? `The finish moves ${number(moved)} week${moved === 1 ? "" : "s"} later. The adjusted task is now on the critical path.` : moved < 0 ? `The finish moves ${number(-moved)} week${moved === -1 ? "" : "s"} earlier.` : now.critical.has(v.adjustable_task) ? "The finish holds, but this task now has no slack left." : "The finish holds. The parallel branch still takes longer, so this task has slack."}</p>`;
+    }
+    return "";
+  }
+  var control = (v) => v.kind === "binding" ? {
+    label: "Free ligand concentration",
+    unit: " nM",
+    initial: v.ligand_nm,
+    max: v.max_nm,
+    step: v.max_nm / 200,
+    scale: 1
+  } : v.kind === "screen" ? {
+    label: "False positive rate",
+    unit: "%",
+    initial: v.false_positive_rate,
+    max: 100,
+    step: 0.5,
+    scale: 100
+  } : {
+    label: v.tasks.find((t) => t.id === v.adjustable_task).label + " duration",
+    unit: " weeks",
+    initial: v.tasks.find((t) => t.id === v.adjustable_task).duration,
+    max: v.max_duration,
+    step: 1,
+    scale: 1
+  };
+  function interactive(v, id) {
+    const c = control(v), value = modelValues.get(id) ?? c.initial;
+    return `<div data-explorable="${escape(id)}"><p class="model-prediction">${escape(v.predict)}</p><label for="model-${escape(id)}">${escape(c.label)}: <output data-model-value>${number(value * c.scale)}${c.unit}</output></label><input id="model-${escape(id)}" data-model-control type="range" min="0" max="${c.max}" step="${c.step}" value="${value * c.scale}"><div data-model-result>${modelResult(v, value)}</div><button type="button" class="text-button" data-model-reset>Restore the original example</button></div>`;
+  }
   function funnelCounts(initial, rates) {
     if (!Number.isFinite(initial) || initial <= 0 || !rates.length || rates.some((rate) => !Number.isFinite(rate) || rate < 0 || rate > 1)) {
       throw new Error("A funnel needs a positive starting count and rates from 0 to 1.");
@@ -37,12 +139,12 @@
   }
   function render(visual, part, id) {
     if (!visual) return "";
-    const body = visual.kind === "funnel" ? funnel(visual, part, id) : `<ol class="concept-flow">${visual.nodes.map((node) => `<li class="${node.step === part ? "current" : node.step > part ? "upcoming" : ""}" ${node.step === part ? 'aria-current="step"' : ""}><span class="flow-node-number">${node.step + 1}</span><div><b>${escape(node.label)}</b><p>${escape(node.detail)}</p></div></li>`).join("")}</ol>`;
+    const body = visual.kind === "binding" || visual.kind === "screen" || visual.kind === "schedule" ? interactive(visual, id) : visual.kind === "funnel" ? funnel(visual, part, id) : `<ol class="concept-flow">${visual.nodes.map((node) => `<li class="${node.step === part ? "current" : node.step > part ? "upcoming" : ""}" ${node.step === part ? 'aria-current="step"' : ""}><span class="flow-node-number">${node.step + 1}</span><div><b>${escape(node.label)}</b><p>${escape(node.detail)}</p></div></li>`).join("")}</ol>`;
     return `<figure class="teaching-visual" data-visual="${escape(id)}"><figcaption><h2>${escape(visual.title)}</h2></figcaption>${body}<p class="visual-caption">${escape(visual.caption)}</p></figure>`;
   }
   function updateExperiment(lesson, rate) {
-    const visual = lesson.visual;
-    if (visual?.kind !== "funnel") return;
+    const visual = lesson?.visual;
+    if (!lesson || visual?.kind !== "funnel") return;
     overrides.set(lesson.id, { rate });
     const rates = visual.stages.map((s, i) => i === visual.adjustable_stage ? rate : s.rate);
     const baseline = funnelCounts(
@@ -60,6 +162,24 @@
     box.innerHTML = `<table><caption>Original example \u2192 your changed rate</caption><thead><tr><th>Stage</th><th>Original</th><th>Changed</th></tr></thead><tbody>${visual.stages.map((s, i) => `<tr><th scope="row">${escape(s.label)}</th><td>${number(baseline[i + 1])}</td><td>${number(counts[i + 1])}</td></tr>`).join("")}</tbody></table><p role="status">${number(counts[visual.adjustable_stage])} enter the changed gate. ${number(rate * 100)}% of that group continue. Earlier counts stay the same; this gate and later counts are recalculated.</p>`;
   }
   function mount(lessons) {
+    document.querySelectorAll("[data-explorable]").forEach((host) => {
+      const id = host.dataset.explorable, entry = find(lessons, id), visual = entry?.visual;
+      if (!visual || visual.kind !== "binding" && visual.kind !== "screen" && visual.kind !== "schedule")
+        return;
+      const c = control(visual);
+      const input = host.querySelector("[data-model-control]"), output = host.querySelector("[data-model-value]"), result = host.querySelector("[data-model-result]"), reset = host.querySelector("[data-model-reset]");
+      const update = () => {
+        const value = Number(input.value) / c.scale;
+        modelValues.set(id, value);
+        output.textContent = number(Number(input.value)) + c.unit;
+        result.innerHTML = modelResult(visual, value);
+      };
+      input.oninput = update;
+      reset.onclick = () => {
+        input.value = String(c.initial * c.scale);
+        update();
+      };
+    });
     document.querySelectorAll("[data-funnel]").forEach((host) => {
       const id = host.dataset.funnel, share = Number(host.dataset.share);
       const old = previous.get(id);
@@ -76,11 +196,11 @@
       }
       previous.set(id, share);
       const slider = host.querySelector("[data-visual-rate]");
-      const lesson = lessons.find((l) => l.id === id);
+      const lesson = find(lessons, id);
       if (slider && lesson) updateExperiment(lesson, Number(slider.value) / 100);
     });
   }
-  var api = { render, mount, updateExperiment, funnelCounts };
+  var api = { render, mount, find, updateExperiment, funnelCounts };
   var visuals = api;
   if (typeof window !== "undefined") window.NoemaVisuals = visuals;
 })();

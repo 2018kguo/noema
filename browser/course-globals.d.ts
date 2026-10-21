@@ -5,7 +5,6 @@ declare global {
   const LESSONS: Course["LESSONS"];
   const SOURCES: Course["SOURCES"];
   const LABS: Course["LABS"];
-  const CARDS: Course["CARDS"];
   const GLOSSARY: Course["GLOSSARY"];
   const CONTENT_REVISION: string;
   const NoemaUI: {

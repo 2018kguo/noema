@@ -14,6 +14,8 @@ import { bundleBytes } from "../src/share";
 import { unzipSync } from "fflate";
 import { progress } from "../browser/progress";
 import { visuals } from "../browser/visuals";
+import { scheduleTimes } from "../src/visual-models";
+import { connections } from "../src/connections";
 const cleanups: (() => void)[] = [];
 afterEach(() => {
   for (const f of cleanups.splice(0).reverse()) f();
@@ -37,7 +39,6 @@ function article() {
   c.LABS = [];
   c.LESSONS = [c.LESSONS[0]];
   delete c.LESSONS[0].activity;
-  c.CARDS = c.CARDS.filter((c) => c[3] === "map");
   writeFileSync(join(dir, "course.json"), JSON.stringify(c));
   writeFileSync(join(dir, "challenges.json"), "[]");
   return { dir, c };
@@ -354,4 +355,57 @@ test("crawler follows relative article links and inventories external references
   expect(Object.keys(crawler.data.pages)).toContain("https://example.org/blog/b");
   expect(crawler.data.pages["https://example.org/blog/b"].status).toBe("fetched");
   expect(Object.keys(crawler.data.references)).toContain("https://elsewhere.org/paper");
+});
+test("course text rejects raw HTML introductions and bare source ids", () => {
+  const challenges = Object.values(sample.challenges);
+  expect(() => validateCourse(structuredClone(sample.course), challenges)).not.toThrow();
+  const html = structuredClone(sample.course);
+  html.META.introduction = "<p>Raw tags</p>";
+  expect(() => validateCourse(html, challenges)).toThrow("plain text");
+  const ids = structuredClone(sample.course);
+  ids.LESSONS[0].layers[0] += "<p>As source1 says.</p>";
+  expect(() => validateCourse(ids, challenges)).toThrow("Name sources");
+});
+test("schedule slack absorbs a delay until the task becomes critical", () => {
+  const plan = (d: number) =>
+    scheduleTimes([
+      { id: "a", duration: 4, after: [] },
+      { id: "b", duration: 10, after: ["a"] },
+      { id: "c", duration: d, after: ["a"] },
+      { id: "d", duration: 2, after: ["b", "c"] },
+    ]);
+  expect(plan(6).finish).toBe(16);
+  expect(plan(6).critical.has("c")).toBe(false);
+  expect(plan(10).finish).toBe(16);
+  expect(plan(13).finish).toBe(19);
+  expect([...plan(13).critical].sort()).toEqual(["a", "c", "d"]);
+});
+test("connections report sign-in state without account details", async () => {
+  const exec = async (cmd: string[]) =>
+    cmd.includes("--version")
+      ? { code: 0, out: cmd[0] === "claude" ? "2.1.305 (Claude Code)" : "codex-cli 0.163.0" }
+      : cmd[0] === "claude"
+        ? {
+            code: 0,
+            out: '{"loggedIn":true,"authMethod":"claude.ai","subscriptionType":"max","email":"a@b.c"}',
+          }
+        : { code: 1, out: "Not logged in" };
+  const c = await connections(true, exec);
+  if (Bun.which("claude"))
+    expect(c.claude).toEqual({
+      installed: true,
+      version: "2.1.305",
+      loggedIn: true,
+      method: "Claude max subscription",
+      fix: null,
+    });
+  if (Bun.which("codex"))
+    expect(c.codex).toMatchObject({
+      installed: true,
+      version: "0.163.0",
+      loggedIn: false,
+      fix: "codex login",
+    });
+  expect(JSON.stringify(c)).not.toContain("a@b.c");
+  await connections(true);
 });

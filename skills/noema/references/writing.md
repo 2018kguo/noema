@@ -28,6 +28,14 @@ without a failure mode, "game-changing," "it's worth noting," "at its core,"
 "the key takeaway," and repeated "not X, but Y" constructions. Do not praise the
 learner for clicking Next or turn every correction into a pep talk.
 
+Aim for the tone of a good [Distill](https://distill.pub/) article: a person
+explaining something they understand, to someone they respect. Credit people
+inside the sentence ("Scannell and Bosley simulated…") and name a source the
+way a reader would recognize it, never by an internal id like `source3`. Say
+once, plainly, where a number comes from; do not repeat a disclaimer after every
+figure. Do not narrate the lesson ("This lesson shows…", "The question here
+is…"). State the idea. Do not end paragraphs with a moral.
+
 Use a second pass to ask:
 
 - Which sentence depends on a fact the reader has not learned yet?

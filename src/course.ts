@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { readFileSync, realpathSync, existsSync } from "node:fs";
 import { join } from "node:path";
+import { paragraphCount } from "./html";
 export const text = z.string().trim().min(1);
 export const questionSchema = z
   .object({
@@ -10,12 +11,66 @@ export const questionSchema = z
     correct: z.number().int().nonnegative(),
     why: text,
     hint: text,
+    option_feedback: z.array(text).optional(),
     revision: z.string().optional(),
   })
-  .refine((q) => q.correct < q.options.length, "Invalid answer index");
+  .refine((q) => q.correct < q.options.length, "Invalid answer index")
+  .refine(
+    (q) => !q.option_feedback || q.option_feedback.length === q.options.length,
+    "Feedback must cover every option",
+  );
 const visualText = text.max(1500),
   step = z.number().int().nonnegative();
 export const visualSchema = z.discriminatedUnion("kind", [
+  z
+    .object({
+      kind: z.literal("schedule"),
+      title: visualText,
+      caption: visualText,
+      source_ids: z.array(text),
+      predict: visualText,
+      adjustable_task: text,
+      max_duration: z.number().positive().max(1000),
+      tasks: z
+        .array(
+          z
+            .object({
+              id: text,
+              label: visualText,
+              duration: z.number().nonnegative().max(1000),
+              after: z.array(text),
+            })
+            .strict(),
+        )
+        .min(2)
+        .max(8),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("binding"),
+      title: visualText,
+      caption: visualText,
+      source_ids: z.array(text),
+      kd_nm: z.number().positive().max(1e9),
+      ligand_nm: z.number().nonnegative().max(1e9),
+      max_nm: z.number().positive().max(1e9),
+      predict: visualText,
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("screen"),
+      title: visualText,
+      caption: visualText,
+      source_ids: z.array(text),
+      population: z.number().int().positive().max(1e9),
+      prevalence: z.number().min(0).max(1),
+      sensitivity: z.number().min(0).max(1),
+      false_positive_rate: z.number().min(0).max(1),
+      predict: visualText,
+    })
+    .strict(),
   z
     .object({
       kind: z.literal("funnel"),
@@ -44,6 +99,13 @@ export const visualSchema = z.discriminatedUnion("kind", [
     })
     .strict(),
 ]);
+export const illustrationSchema = z
+  .object({
+    id: z.string().regex(/^[a-z0-9][a-z0-9-]*$/),
+    after_paragraph: z.number().int().min(1).max(80),
+    visual: visualSchema,
+  })
+  .strict();
 export const lessonSchema = z.object({
   id: text,
   title: text,
@@ -58,6 +120,8 @@ export const lessonSchema = z.object({
   example: z.tuple([text, z.array(text).min(2)]),
   example_title: z.string().optional(),
   questions: z.array(questionSchema).length(3),
+  quiz_question: z.number().int().min(0).max(2).optional(),
+  illustrations: z.array(illustrationSchema).max(4).optional(),
   transfer: z.tuple([text, z.array(text).min(1), text]),
   assessment_revision: z.string().optional(),
   reading_minutes: z.number().positive().optional(),
@@ -88,7 +152,8 @@ export const courseSchema = z.object({
       id: z.string().regex(/^[a-z0-9][a-z0-9-]*$/),
       title: text,
       heading: text,
-      introduction: text,
+      // Rendered as plain text on the course home; HTML here shows up as raw tags.
+      introduction: text.max(600).refine((v) => !/[<>]/.test(v), "Introduction must be plain text"),
       eyebrow: text,
       start_label: text,
       footnote: text,
@@ -105,7 +170,6 @@ export const courseSchema = z.object({
     z.string(),
     z.tuple([text, z.url().refine((u) => ["http:", "https:"].includes(new URL(u).protocol)), text]),
   ),
-  CARDS: z.array(z.tuple([text, text, text, text])),
   GLOSSARY: z.record(z.string(), text),
 });
 export type Course = z.infer<typeof courseSchema>;
@@ -154,24 +218,62 @@ export function validateCourse(raw: unknown, rawChallenges: unknown) {
   const contains = (values: string[], set: Set<string>, label: string) => {
     if (values.some((v) => !set.has(v))) throw Error("Unknown " + label);
   };
+  // Source ids are keys for links, not names a reader understands.
+  const skipIds = (k: string, v: unknown) =>
+    ["sources", "source_ids"].includes(k) ? undefined : v;
+  for (const [label, value] of [
+    ...course.LESSONS.map((l) => [l.id, l] as const),
+    ...challenges.map((c) => [c.id, c] as const),
+    ["glossary", course.GLOSSARY] as const,
+  ])
+    if (/\bsource\d+\b/i.test(JSON.stringify(value, skipIds)))
+      throw Error("Name sources in prose instead of using their ids: " + label);
   for (const l of course.LESSONS) {
     contains(l.needs, ids, "prerequisite");
     contains(l.sources, new Set(Object.keys(course.SOURCES)), "source");
-    const v = l.visual;
-    if (v) {
+    unique(
+      (l.illustrations || []).map((v) => v.id),
+      "illustration",
+    );
+    for (const illustration of l.illustrations || [])
+      if (illustration.after_paragraph > paragraphCount(l.layers[0]))
+        throw Error("Illustration placement exceeds the lesson's paragraphs: " + l.id);
+    for (const { visual: v, inExample } of [
+      ...(l.visual ? [{ visual: l.visual, inExample: true }] : []),
+      ...(l.illustrations || []).map((v) => ({ visual: v.visual, inExample: false })),
+    ]) {
       contains(v.source_ids, new Set(l.sources), "visual source");
       if (
         v.kind === "funnel" &&
-        (v.stages.length !== l.example[1].length || v.adjustable_stage >= v.stages.length)
+        ((inExample && v.stages.length !== l.example[1].length) ||
+          v.adjustable_stage >= v.stages.length)
       )
         throw Error("Invalid funnel gate");
       if (
         v.kind === "flow" &&
         v.nodes.some(
-          (n, i) => n.step >= l.example[1].length || (i > 0 && n.step < v.nodes[i - 1].step),
+          (n, i) =>
+            n.step >= (inExample ? l.example[1].length : v.nodes.length) ||
+            (i > 0 && n.step < v.nodes[i - 1].step),
         )
       )
         throw Error("Invalid flow order");
+      if (v.kind === "binding" && (v.ligand_nm > v.max_nm || v.kd_nm > v.max_nm))
+        throw Error("Binding plot must include the initial concentration and Kd");
+      if (v.kind === "schedule") {
+        unique(
+          v.tasks.map((t) => t.id),
+          "schedule task",
+        );
+        const seen = new Set<string>();
+        for (const task of v.tasks) {
+          contains(task.after, seen, "earlier schedule dependency");
+          seen.add(task.id);
+        }
+        const task = v.tasks.find((t) => t.id === v.adjustable_task);
+        if (!task || task.duration > v.max_duration)
+          throw Error("Invalid adjustable schedule task");
+      }
     }
     if (
       l.activity?.kind === "workshop" &&
@@ -187,7 +289,6 @@ export function validateCourse(raw: unknown, rawChallenges: unknown) {
       "criterion",
     );
   }
-  for (const c of course.CARDS) contains([c[3]], ids, "recall lesson");
   return { course, challenges };
 }
 export function loadBundle(path: string): CourseBundle {

@@ -128,23 +128,21 @@
     else $("#nav-learning").setAttribute("aria-current", "page");
     $("#capture").hidden = learning;
     $("#filters").hidden = learning;
-    $("#breadcrumb").textContent = learning ? "Your learning" : "Your inbox";
     $("#collection-title").textContent = learning ? "Your courses" : "Your links";
-    $("#collection-summary").hidden = learning;
     $("#collection-title").setAttribute("aria-level", learning ? "1" : "2");
     document.querySelector(".collection").classList.toggle("learning", learning);
-    $("#collection-summary").textContent = learning ? "Your courses, with your place saved as you go." : active.length ? active.length + " preparing" + (queued.length ? " \xB7 " + queued.length + " queued" : "") : queued.length ? queued.length + " queued" + (inbox.settings.enabled ? "" : " \xB7 preparation paused") : needs.length ? needs.length + " " + (needs.length === 1 ? "item needs" : "items need") + " your attention" : inbox.items.length ? "Saved links and courses." : "Save something you\u2019d like to understand.";
-    const configured = inbox.settings.provider !== "none", running = inbox.settings.enabled;
-    const controls = `<div class="queue-status ${running ? "running" : ""}"><span aria-hidden="true"></span><span>${running ? "Queue running" : configured ? "Queue paused" : "Preparation not connected"}</span>${configured ? `<button data-toggle-queue>${running ? "Pause" : "Resume"}</button>` : ""}<button data-settings>${configured ? "Settings" : "Connect a model"}</button></div>`;
+    $("#collection-summary").textContent = learning ? "Your courses, with your place saved as you go." : active.length ? active.length + " preparing" + (queued.length ? " \xB7 " + queued.length + " queued" : "") : queued.length ? queued.length + " queued" + (inbox.settings.enabled ? "" : " \xB7 preparation paused") : needs.length ? needs.length + " " + (needs.length === 1 ? "item needs" : "items need") + " your attention" : inbox.items.length ? "" : "Save something you\u2019d like to understand.";
+    $("#collection-summary").hidden = learning || !$("#collection-summary").textContent;
+    const configured = inbox.settings.provider !== "none", running = inbox.settings.enabled, signedOut = configured && links && !links[inbox.settings.provider].loggedIn;
+    const controls = `<div class="queue-status ${running && !signedOut ? "running" : ""}"><span aria-hidden="true"></span><span>${signedOut ? `${NAMES[inbox.settings.provider]} isn\u2019t signed in` : running ? "Queue running" : configured ? "Queue paused" : "No model connected"}</span>${configured && !signedOut ? `<button data-toggle-queue>${running ? "Pause" : "Resume"}</button>` : ""}${configured && !signedOut ? "" : "<button data-settings>Connect</button>"}</div>`;
     if (controls !== lastControls) {
       $("#queue-control").innerHTML = controls;
       lastControls = controls;
     }
-    $("#worker-note").textContent = running ? "Preparation continues while this server is running." : "Links are saved even while preparation is paused.";
     let items = inbox.items.filter((item) => !learning || item.state === "ready");
     if (!learning && filter !== "all")
       items = items.filter(
-        (item) => filter === "preparing" ? ["queued", ...activeStates].includes(item.state) : filter === "needs" ? ["needs_input", "failed"].includes(item.state) : item.state === "ready"
+        (item) => filter === "preparing" ? ["queued", ...activeStates].includes(item.state) : ["needs_input", "failed"].includes(item.state)
       );
     if (query)
       items = items.filter(
@@ -153,7 +151,7 @@
     let content = items.map(row).join("");
     if (learning && (!query || "inside inference deepinfer".includes(query))) content += sampleRow();
     if (!content)
-      content = `<div class="empty"><span class="empty-mark" aria-hidden="true">${query ? "\u2315" : "n"}</span><h3>${query ? "No matching links" : filter !== "all" ? "Nothing here yet" : "A good question is a place to start."}</h3><p>${query ? "Try a different word or clear your search." : filter === "ready" ? "Finished courses will appear here. You can try Inside Inference while you wait." : filter === "needs" ? "Items that need more source text or a retry will appear here." : "Save a link above. You\u2019ll see its progress here, then open the lessons when they\u2019re ready."}</p>${!query && filter === "all" ? '<a class="quiet" href="/learn/deepinfer/">Explore the included course \u2197</a>' : ""}</div>`;
+      content = `<div class="empty"><span class="empty-mark" aria-hidden="true">${query ? "\u2315" : "n"}</span><h3>${query ? "No matching links" : filter !== "all" ? "Nothing here yet" : "A good question is a place to start."}</h3><p>${query ? "Try a different word or clear your search." : filter === "needs" ? "Items that need more source text or a retry will appear here." : "Save a link above. You\u2019ll see its progress here, then open the lessons when they\u2019re ready."}</p>${!query && filter === "all" ? '<a class="quiet" href="/learn/deepinfer/">Explore the included course \u2197</a>' : ""}</div>`;
     if (content !== lastList) {
       window.NoemaUI?.unmount();
       $("#items").innerHTML = content;
@@ -218,19 +216,47 @@
       toast(error instanceof Error ? error.message : String(error));
     }
   }
+  var links = null;
+  var NAMES = { claude: "Claude Code", codex: "Codex" };
+  async function loadConnections(refresh2 = false) {
+    const response = await fetch("/api/connections" + (refresh2 ? "?refresh=1" : ""));
+    links = await response.json();
+    renderConnections();
+  }
+  function renderConnections() {
+    if (!links) return;
+    $("#connections").innerHTML = ["claude", "codex"].map((name) => {
+      const c = links[name], state = !c.installed ? "Not installed" : c.loggedIn ? "Connected" : "Not signed in", detail = [c.version && "v" + c.version, c.method].filter(Boolean).join(" \xB7 ");
+      return `<li class="${c.loggedIn ? "ok" : "off"}"><div><b>${NAMES[name]}</b><span>${state}${detail ? " \xB7 " + escapeHTML(detail) : ""}</span></div>${c.fix ? `<div class="fix"><code>${escapeHTML(c.fix)}</code><button type="button" class="quiet" data-copy="${escapeHTML(c.fix)}">Copy</button></div><p class="form-help">Run this in a terminal, then press Recheck.</p>` : ""}</li>`;
+    }).join("");
+    for (const option of document.querySelector("#provider").options)
+      option.disabled = !links[option.value].loggedIn;
+    const ready = ["claude", "codex"].filter((n) => links[n].loggedIn);
+    if (!links[$("#provider").value].loggedIn && ready[0])
+      $("#provider").value = ready[0];
+    $("#save-settings").disabled = !ready.length;
+  }
   function openSettings() {
     if (!inbox) return;
-    $("#provider").value = inbox.settings.provider === "none" ? inbox.providers.claude ? "claude" : "codex" : inbox.settings.provider;
+    if (inbox.settings.provider !== "none") $("#provider").value = inbox.settings.provider;
     $("#generation-model").value = inbox.settings.model || "";
     $("#settings-error").hidden = true;
-    $("#save-settings").textContent = inbox.settings.enabled ? "Save changes" : "Start preparing";
-    updateProviderHelp();
+    $("#save-settings").textContent = inbox.settings.enabled ? "Save" : "Start preparing";
+    renderConnections();
     $("#settings-dialog").showModal();
   }
-  function updateProviderHelp() {
-    const provider = $("#provider").value, installed = inbox.providers[provider];
-    $("#provider-help").textContent = installed ? "Detected on this computer. Make sure you\u2019re signed in to the CLI." : `The ${provider === "claude" ? "Claude Code" : "Codex"} CLI isn\u2019t installed on this computer yet. Install it and sign in, then return here.`;
-  }
+  $("#recheck").addEventListener("click", async () => {
+    $("#recheck").disabled = true;
+    try {
+      await loadConnections(true);
+    } finally {
+      $("#recheck").disabled = false;
+    }
+  });
+  $("#connections").addEventListener("click", (event) => {
+    const value = event.target.closest("[data-copy]")?.dataset.copy;
+    if (value) void navigator.clipboard.writeText(value).then(() => toast("Copied."));
+  });
   $("#capture-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     $("#capture-error").hidden = true;
@@ -343,7 +369,6 @@
     }
   });
   $("#search").addEventListener("input", renderList);
-  $("#provider").addEventListener("change", updateProviderHelp);
   window.addEventListener("hashchange", renderList);
   $("#item-dialog").addEventListener("close", () => {
     detailId = null;
@@ -375,7 +400,10 @@
     $("#links").value = text.split("\n").filter((line) => line && !line.startsWith("#")).join("\n");
     $("#links").focus();
   });
-  refresh();
+  void Promise.all([refresh(), loadConnections()]).then(() => {
+    void refresh();
+    if (location.hash === "#settings") openSettings();
+  });
   setInterval(() => {
     if (!document.hidden) refresh();
   }, 2500);

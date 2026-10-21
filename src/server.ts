@@ -4,6 +4,7 @@ import { ROOT, READER_ASSETS, loadBundle, type CourseBundle } from "./course";
 import { InboxStore, normalizeLink, settingsSchema } from "./inbox-store";
 import { assess } from "./grade";
 import { workshop } from "./workshop";
+import { connections } from "./connections";
 // Inject sharing to keep exported reader servers independent of the authoring/build tools.
 export type ServerOptions = {
   course: string;
@@ -38,8 +39,12 @@ async function body(request: Request, limit: number) {
 export function makeServer(options: ServerOptions) {
   const initial = loadBundle(options.course),
     store = options.inbox,
-    provider = options.provider || "none",
-    model = options.model || "";
+    // A --provider flag wins; otherwise written answers use the model chosen in Settings.
+    grader = () =>
+      options.provider
+        ? { provider: options.provider, model: options.model || "" }
+        : (store?.settings() ?? { provider: "none", model: "" });
+  void connections();
   let grading = false;
   const file = async (path: string, download?: string) => {
     const f = Bun.file(path);
@@ -56,7 +61,6 @@ export function makeServer(options: ServerOptions) {
     return {
       items: store!.list().map((i) => store!.projection(i)),
       settings: store!.settings(),
-      providers: { claude: !!Bun.which("claude"), codex: !!Bun.which("codex") },
       sample: {
         title: initial.course.META.title,
         url: "/learn/deepinfer/",
@@ -111,8 +115,8 @@ export function makeServer(options: ServerOptions) {
           }
           if (path === "/api/inbox/settings" && request.method === "POST") {
             const b = settingsSchema.strict().parse(await body(request, 150000));
-            if (b.enabled && b.provider !== "none" && !Bun.which(b.provider))
-              throw Error("Install and sign in to that CLI on this computer first.");
+            if (b.enabled && b.provider !== "none" && !(await connections())[b.provider].loggedIn)
+              throw Error("Connect that CLI first: install it and sign in, then press Recheck.");
             return json(200, store.configure(b.provider, b.model, b.enabled));
           }
           const itemRoute = /^\/api\/inbox\/items\/([a-f0-9]{16})(\/action)?$/.exec(path);
@@ -172,14 +176,16 @@ export function makeServer(options: ServerOptions) {
           }
         }
         if (request.method === "GET") {
-          if (path === "/api/status")
+          if (path === "/api/connections")
+            return json(200, await connections(new URL(request.url).searchParams.has("refresh")));
+          if (path === "/api/status") {
+            const g = grader();
             return json(200, {
-              provider,
-              model: model || "CLI default",
+              provider: g.provider,
+              model: g.model || "CLI default",
               repo: options.repo || null,
-              cli: { codex: !!Bun.which("codex"), claude: !!Bun.which("claude") },
-              openrouter_key_present: !!process.env.OPENROUTER_API_KEY,
             });
+          }
           if (path === "/api/challenges") return json(200, Object.values(bundle.challenges));
           if (path === "/api/workshop/source")
             return bundle.course.LABS.includes("tiny-engine")
@@ -213,6 +219,7 @@ export function makeServer(options: ServerOptions) {
             if (grading)
               return json(409, { error: "A grade is already running; wait before retrying." });
             grading = true;
+            const { provider, model } = grader();
             try {
               return json(
                 200,

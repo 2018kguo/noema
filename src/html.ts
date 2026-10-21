@@ -1,5 +1,7 @@
 import { parse, parseFragment, type DefaultTreeAdapterMap } from "parse5";
 type Node = DefaultTreeAdapterMap["node"];
+export const paragraphCount = (html: string) =>
+  parseFragment(html).childNodes.filter((n) => "tagName" in n && n.tagName === "p").length;
 const hidden = new Set(["script", "style", "svg", "noscript", "iframe"]);
 export const escapeHTML = (v: string) =>
   v.replace(

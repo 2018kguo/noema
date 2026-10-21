@@ -105,8 +105,6 @@ const WORKSHOP_FUNCTIONS = [
     "This loop can use either cached execution or the full-prefix reference.",
   ],
 ];
-let reviewRevealed = false;
-let activeLab = "softmax";
 const $ = (selector: string): HTMLInputElement & HTMLTextAreaElement & HTMLFormElement =>
   document.querySelector<HTMLInputElement & HTMLTextAreaElement & HTMLFormElement>(selector);
 const e = (value) =>
@@ -118,8 +116,6 @@ const lookup = (id) => LESSONS.find((lesson) => lesson.id === id);
 const saved = (id) => state.answers[id] || {};
 const savedQuestion = (q) =>
   q.revision && saved(q.id).question_revision !== q.revision ? {} : saved(q.id);
-const link = (route, label) =>
-  `<button class="text-button" data-go="${e(route)}">${e(label)}</button>`;
 const sourceLinks = (ids) =>
   `<div class="source-links">${ids.map((id) => `<a href="${e(SOURCES[id][1])}" target="_blank" rel="noopener">${e(SOURCES[id][0])} ↗</a>`).join("")}</div>`;
 const STEPS = [
@@ -195,10 +191,16 @@ function blockStep(block, step) {
   go("block/" + block.id + "/" + step);
 }
 function blockQuestions(block) {
-  return block.lessons.map((l) => l.questions[0]);
+  return block.lessons.map((l) => l.questions[l.quiz_question ?? 0]);
 }
 function blockChecked(block) {
   return blockQuestions(block).every((q) => savedQuestion(q).checked);
+}
+function blockQuizSummary(block) {
+  if (!blockChecked(block)) return "";
+  const questions = blockQuestions(block),
+    missed = questions.filter((q) => !savedQuestion(q).correct);
+  return `<section class="quiz-summary" role="status"><h2>${questions.length - missed.length} of ${questions.length} answers correct</h2><p>${missed.length ? "Read the explanations below, then revisit the parts you missed. Your first attempts stay saved." : "Use the explanations to check your reasoning before moving on."}</p>${missed.length ? `<button class="secondary" data-retry-missed="${block.id}">Try the missed questions again</button>` : ""}</section>`;
 }
 function checkBlock(block) {
   const missing = blockQuestions(block).find((q) => !Number.isInteger(savedQuestion(q).choice));
@@ -214,10 +216,23 @@ function checkBlock(block) {
   focusContent();
 }
 function readingHTML(l) {
-  return l.layers[0]
+  const reading = l.layers[0]
     .replace("<div data-cache-code></div>", () => cacheCode(0, false))
     .replace("<div data-cache-visibility></div>", () => cachePositions([0, 1]))
     .replace("<div data-workshop-tools></div>", workshopTools);
+  const container = document.createElement("div");
+  container.innerHTML = reading;
+  const paragraphs = [...container.children].filter((node) => node.tagName === "P");
+  // Insert in reverse order so illustrations at the same paragraph keep their authored order.
+  for (const illustration of [...(l.illustrations || [])].reverse()) {
+    const anchor = paragraphs[illustration.after_paragraph - 1];
+    if (!anchor) continue;
+    anchor.insertAdjacentHTML(
+      "afterend",
+      NoemaVisuals.render(illustration.visual, 100, l.id + "--" + illustration.id),
+    );
+  }
+  return container.innerHTML;
 }
 function depthHTML(l) {
   return `<section class="optional-reading"><div data-depths><details><summary>${e(META.depth_labels[0])}</summary><div class="prose">${l.layers[1]}</div></details><details><summary>${e(META.depth_labels[1])}</summary><div class="prose">${l.layers[2]}</div></details></div></section>`;
@@ -253,7 +268,7 @@ function blockPage(id, step = "read") {
   if (step === "practice")
     return (
       header +
-      `<h1>Practice this block.</h1><p class="lead compact">Answer the ${block.lessons.length} questions, then check them together. You can reopen the reading at any point.</p>${block.lessons.map((l, i) => `<section class="block-question"><p class="small">${i + 1} · ${e(l.title)}</p>${question(l.questions[0], { guided: true, batch: true })}</section>`).join("")}${flowFooter({ back: `<button class="text-button" data-block-step="read" data-block="${id}">← Back to reading</button>`, primary: blockChecked(block) ? "block-explain" : "check-block", value: id, primaryText: blockChecked(block) ? "Next: explain an idea" : "Check all answers" })}`
+      `<h1>Put the ideas to work.</h1><p class="lead compact">Answer these ${block.lessons.length} questions, then check them together. Each asks you to use an idea from the reading.</p>${blockQuizSummary(block)}${block.lessons.map((l, i) => `<section class="block-question"><p class="small">${i + 1} · ${e(l.title)}</p>${question(l.questions[l.quiz_question ?? 0], { guided: true, batch: true })}<a class="quiz-reading-link" href="#block/${id}/read/${l.id}">Revisit this explanation →</a></section>`).join("")}${flowFooter({ back: `<button class="text-button" data-block-step="read" data-block="${id}">← Back to reading</button>`, primary: blockChecked(block) ? "block-explain" : "check-block", value: id, primaryText: blockChecked(block) ? "Next: explain an idea" : "Check all answers" })}`
     );
   if (step === "explain") return header + explainStep(block.lessons[block.lessons.length - 1]);
   const next = readingBlocks()[block.index + 1];
@@ -348,13 +363,10 @@ function background(l) {
 }
 function question(q, { guided = false, batch = false } = {}) {
   const a = savedQuestion(q);
-  return `<form class="question" data-q="${q.id}" data-guided="${guided}"><fieldset><legend>${e(q.prompt)}</legend>${q.options.map((option, i) => `<label class="choice"><input type="radio" name="choice" value="${i}" ${a.choice === i ? "checked" : ""} required><span>${e(option)}</span></label>`).join("")}</fieldset>${a.hint ? `<p class="hint-text">${e(q.hint)}</p>` : ""}<div class="question-actions">${batch ? "" : !a.checked ? (guided ? "" : '<button class="primary" type="submit">Check my answer</button>') : '<button class="text-button" type="submit">Check again</button>'}<button class="text-button" data-hint="${q.id}" type="button">${a.hint ? "Hint is above" : "I’m stuck"}</button></div>${a.checked ? `<div class="answer-feedback ${a.correct ? "correct" : "revisit"}" role="status"><h3>${a.correct ? "Yes — here’s why." : "Here’s the part to rethink."}</h3>${!a.correct ? `<p>The best answer here is <b>${e(q.options[q.correct])}</b>.</p>` : ""}<p>${e(q.why)}</p>${!a.correct ? '<p class="small">It’s fine to continue after a mistake. You can return to this question later.</p>' : ""}${a.hint ? '<span class="small">You used a hint on this question.</span>' : ""}</div>` : ""}</form>`;
+  return `<form class="question" data-q="${q.id}" data-guided="${guided}"><fieldset><legend>${e(q.prompt)}</legend>${q.options.map((option, i) => `<label class="choice ${a.checked ? (i === q.correct ? "answer-correct" : a.choice === i ? "answer-missed" : "") : ""}"><input type="radio" name="choice" value="${i}" ${a.choice === i ? "checked" : ""} required><span>${e(option)}${a.checked && i === q.correct ? '<strong class="answer-marker">Correct answer</strong>' : a.checked && a.choice === i ? '<strong class="answer-marker">Your answer</strong>' : ""}</span></label>`).join("")}</fieldset>${a.hint ? `<p class="hint-text">${e(q.hint)}</p>` : ""}<div class="question-actions">${batch ? "" : !a.checked ? (guided ? "" : '<button class="primary" type="submit">Check my answer</button>') : '<button class="text-button" type="submit">Check again</button>'}<button class="text-button" data-hint="${q.id}" type="button">${a.hint ? "Hint is above" : "I’m stuck"}</button></div>${a.checked ? `<div class="answer-feedback ${a.correct ? "correct" : "revisit"}" role="status"><h3>${a.correct ? "Why this follows" : "What your answer missed"}</h3>${q.option_feedback?.[a.choice] ? `<p>${e(q.option_feedback[a.choice])}</p>` : ""}<p>${e(q.why)}</p>${a.hint ? '<span class="small">You used a hint on this question.</span>' : ""}</div>` : ""}</form>`;
 }
 function readStep(l) {
-  const reading = l.layers[0]
-    .replace("<div data-cache-code></div>", () => cacheCode(0, false))
-    .replace("<div data-cache-visibility></div>", () => cachePositions([0, 1]))
-    .replace("<div data-workshop-tools></div>", workshopTools);
+  const reading = readingHTML(l);
   return `<h1>${e(l.title)}</h1><p class="lesson-goal">${e(l.goal)}</p><article class="prose">${reading}</article><div class="remember"><p>${e(l.takeaway)}</p></div><section class="optional-reading"><p class="small">Want more detail? These are optional on your first pass.</p><div data-depths><details><summary>${e(META.depth_labels[0])}</summary><div class="prose">${l.layers[1]}</div></details><details><summary>${e(META.depth_labels[1])}</summary><div class="prose">${l.layers[2]}</div></details></div></section>${background(l)}${footer(l, { primary: "next-example", primaryText: "Next: see an example" })}`;
 }
 function cacheCode(start, editable) {
@@ -918,7 +930,7 @@ function doneStep(l) {
         `<button class="option-row" data-go="challenges/${c.id}"><span>Use this idea in a review<small>${e(c.title)} Start with background, then judge the proposal.</small></span><span>→</span></button>`,
     )
     .join("");
-  return `<p class="lesson-context">Lesson ${index + 1} · Your place is saved</p><h1>That’s the main idea.</h1><p class="completion-takeaway">${e(l.takeaway)}</p><p class="lead compact">${next ? `Next, we’ll build on this in “${e(next.title)}.”` : "Your experiment is already taking shape in the lesson activities. Revisit the notes here as you collect results for your own model."}</p><div class="completion-actions"><button class="primary" ${next ? `data-go="lesson/${next.id}"` : `data-open-activity="${l.id}"`}>${next ? "Start the next lesson" : "Revisit your experiment"} →</button><a href="#home">Take a break</a></div><div class="optional-next"><h2>Want to spend more time here?</h2>${l.activity ? `<button class="option-row" data-open-activity="${l.id}"><span>Return to the hands-on activity<small>${e(l.activity.title)} Your notes and results are saved here.</small></span><span>→</span></button>` : ""}${related}<button class="option-row" data-go="practice/${l.id}/1"><span>Try a harder question<small>Read the mechanics and apply them to a new situation.</small></span><span>→</span></button><button class="option-row" data-step="learn" data-lesson="${l.id}"><span>Read the explanation again<small>Including the optional calculations and engineering detail.</small></span><span>→</span></button></div>${background(l)}`;
+  return `<p class="lesson-context">Lesson ${index + 1} · Your place is saved</p><h1>That’s the main idea.</h1><p class="completion-takeaway">${e(l.takeaway)}</p><p class="lead compact">${next ? `Next, we’ll build on this in “${e(next.title)}.”` : "Your experiment is already taking shape in the lesson activities. Revisit the notes here as you collect results for your own model."}</p><div class="completion-actions"><button class="primary" ${next ? `data-go="lesson/${next.id}"` : `data-open-activity="${l.id}"`}>${next ? "Start the next lesson" : "Revisit your experiment"} →</button><a href="#home">Take a break</a></div><div class="optional-next"><h2>Want to spend more time here?</h2>${l.activity ? `<button class="option-row" data-open-activity="${l.id}"><span>Return to the hands-on activity<small>${e(l.activity.title)} Your notes and results are saved here.</small></span><span>→</span></button>` : ""}${related}<button class="option-row" data-step="learn" data-lesson="${l.id}"><span>Read the explanation again<small>Including the optional calculations and engineering detail.</small></span><span>→</span></button></div>${background(l)}`;
 }
 function lesson(id) {
   const l = lookup(id);
@@ -937,46 +949,7 @@ function lesson(id) {
           : readStep(l);
   return lessonHeader(l, flow.step) + content;
 }
-function advancedPractice(id, questionIndex = 1) {
-  const l = lookup(id);
-  if (!l) return practiceHome();
-  const index = questionIndex === 2 ? 2 : 1,
-    q = l.questions[index];
-  return `<div class="lesson-topline"><a href="#lesson/${l.id}">← Back to the lesson</a><span>Optional practice</span></div><p class="lesson-context">${e(l.title)}</p><h1>Take the idea further.</h1><p class="lead compact">First read the extra explanation. Then try the question underneath it.</p><div class="prose">${l.layers[index]}</div>${question(q)}<div class="actions">${index === 1 ? `<button class="secondary" data-go="practice/${l.id}/2">Try the judgment question →</button>` : ""}${link("lesson/" + l.id, "Back to the guided lesson")}</div>${background(l)}`;
-}
-function practiceHome() {
-  const l = resumeLesson();
-  return `<h1>Practice what you’ve learned.</h1><p class="lead">You can follow the course without choosing anything here. Come back when you want to revisit an idea or try a different kind of question.</p><div class="practice-options"><a class="option-row" href="#review"><span>Recall the ideas<small>Answer from memory, then compare the explanation.</small></span><span>→</span></a><a class="option-row" href="#challenges"><span>Review code and claims<small>Explain whether a change is sound, find a counterexample, and suggest a check.</small></span><span>→</span></a>${LABS.includes("tiny-engine") ? `<a class="option-row" href="#labs"><span>Try an interactive experiment<small>Change a control to see how the mechanism responds.</small></span><span>→</span></a>` : ""}<button class="option-row" data-go="practice/${l.id}/1"><span>Go deeper on your current lesson<small>${e(l.title)}</small></span><span>→</span></button></div>`;
-}
-function labs() {
-  const options = [
-    ["softmax", "Choosing a next token"],
-    ["roofline", "Memory versus arithmetic"],
-    ["kv", "Attention-cache size"],
-    ["overlap", "CPU and GPU timing"],
-    ["spec", "Which draft tokens to verify"],
-  ];
-  return `<div class="lesson-topline"><a href="#practice">← Practice</a></div><h1>Change one thing.<br>See what happens.</h1><label class="field-label" for="lab-select">Choose an experiment</label><select class="page-select" id="lab-select">${options.map(([id, title]) => `<option value="${id}" ${id === activeLab ? "selected" : ""}>${e(title)}</option>`).join("")}</select>${lab(activeLab)}`;
-}
-function dueCards() {
-  const encountered = new Set(
-    LESSONS.filter(
-      (l) => state.completed[l.id] || l.questions.some((q) => saved(q.id).checked),
-    ).map((l) => l.id),
-  );
-  return CARDS.map((card, i) => ({ card, i, ...(state.cards[i] || { due: 0, stage: 0 }) })).filter(
-    (item) => (encountered.has(item.card[3]) || state.cards[item.i]) && item.due <= Date.now(),
-  );
-}
-function review() {
-  const due = dueCards();
-  if (!due.length)
-    return `<div class="lesson-topline"><a href="#practice">← Practice</a></div><h1>No review due yet.</h1><p class="lead">After you try a lesson, its recall questions become available here. Reviewed questions come back later so you can check what you still remember.</p><a class="button primary" href="#lesson/${resumeLesson().id}">Continue your lesson →</a>`;
-  const item = due[0],
-    card = item.card,
-    days = [1, 3, 7, 14, 30][item.stage] || 30;
-  return `<div class="lesson-topline"><a href="#practice">← Practice</a><span>${due.length} ${due.length === 1 ? "question" : "questions"} ready</span></div><p class="lesson-context">${e(card[0])}</p><h1>What do you remember?</h1><p class="recall-prompt">${e(card[1])}</p><p class="small">Say your answer out loud or think it through before you reveal it.</p>${reviewRevealed ? `<div class="sample-answer"><p>${e(card[2])}</p></div><p>How did that compare with your answer?</p><div class="actions"><button class="primary" data-rate="again" data-card="${item.i}">I need another try</button><button class="secondary" data-rate="good" data-card="${item.i}">I remembered it</button></div><p class="small">Another try: in 10 minutes. Remembered: in ${days} ${days === 1 ? "day" : "days"}.</p>` : '<button class="primary" data-reveal-card>Show the explanation</button>'}<div class="review-back">${link("lesson/" + card[3], "Revisit the lesson")}</div>`;
-}
+
 function reviewState(id) {
   return state.reviews[id] || { step: "background", prediction: "" };
 }
@@ -1012,7 +985,7 @@ function reviewFooter(
     value: c.id,
     back: back
       ? `<button class="text-button" data-review-step="${back}" data-challenge="${c.id}">← Back</button>`
-      : '<a href="#practice">Practice options</a>',
+      : '<a href="#home">Course outline</a>',
   });
 }
 function reviewWritingFooter(c) {
@@ -1058,7 +1031,7 @@ function challengePage(id) {
     answer = state.challengeAnswers[c.id] || "",
     guide = c.guide;
   const picker = `<details class="background scenario-picker"><summary>Choose a different review</summary><label class="field-label" for="challenge-select">Scenario</label><select class="page-select" id="challenge-select">${challenges.map((x) => `<option value="${x.id}" ${x.id === c.id ? "selected" : ""}>${e(x.title)} · ${e(x.difficulty)}</option>`).join("")}</select></details>`;
-  const header = `<div class="lesson-topline"><a href="#practice">← Practice</a><span>${e(c.kind)} · ${e(c.difficulty)}</span></div>${review.step === "done" ? "" : stepper(c, review.step, REVIEW_STEPS, "review-step", "challenge")}`;
+  const header = `<div class="lesson-topline"><a href="#home">← Course</a><span>${e(c.kind)} · ${e(c.difficulty)}</span></div>${review.step === "done" ? "" : stepper(c, review.step, REVIEW_STEPS, "review-step", "challenge")}`;
   let content = "";
   if (review.step === "background")
     content = `<h1>${e(c.title)}</h1><article class="prose">${guide.setup.map((p) => `<p>${e(p)}</p>`).join("")}</article><p class="small">Useful earlier lessons: ${guide.needs.map((id) => `<a href="#lesson/${id}">${e(lookup(id).title)}</a>`).join(" · ")}. You can return here afterward; your place is saved.</p><p class="small">This is an illustrative teaching scenario. The proposal was written for this exercise.</p>${reviewFooter(c, { primary: "review-next", primaryText: "Next: inspect the proposal" })}`;
@@ -1067,7 +1040,7 @@ function challengePage(id) {
   else if (review.step === "predict")
     content = `<h1>What would happen?</h1><p class="explain-prompt">${e(guide.trace)}</p><p class="small">This is a scratchpad, not a graded answer. A guess gives you something to revisit when you write the full review.</p><details class="background"><summary>See the proposal again</summary><pre><code>${e(c.artifact)}</code></pre></details><label class="field-label" for="review-prediction">Your prediction</label><textarea id="review-prediction" data-review-prediction="${c.id}" placeholder="Walk through the small case. What do you expect to observe, and why?">${e(review.prediction || "")}</textarea><button class="text-button" data-review-hint="${c.id}">I’m stuck</button>${review.hint ? `<p class="hint-text">${e(guide.trace_hint)}</p>` : ""}${reviewFooter(c, { back: "change", primary: "review-next", primaryText: "Next: write your review" })}`;
   else if (review.step === "done")
-    content = `<h1>Keep this check in mind.</h1><p class="completion-takeaway">${e(guide.takeaway)}</p><p class="lead compact">Your prediction, review, and any feedback are saved. Working through an exercise is practice; it is not a correctness certificate.</p><div class="completion-actions"><button class="primary" data-go="lesson/${resumeLesson().id}">Continue your course →</button><a href="#practice">More practice options</a></div><button class="option-row" data-review-step="write" data-challenge="${c.id}"><span>Revisit your reasoning<small>Read your prediction alongside your review and revise it.</small></span><span>→</span></button>`;
+    content = `<h1>Keep this check in mind.</h1><p class="completion-takeaway">${e(guide.takeaway)}</p><p class="lead compact">Your prediction, review, and any feedback are saved. Working through an exercise is practice; it is not a correctness certificate.</p><div class="completion-actions"><button class="primary" data-go="lesson/${resumeLesson().id}">Continue your course →</button><a href="#home">Return to the course</a></div><button class="option-row" data-review-step="write" data-challenge="${c.id}"><span>Revisit your reasoning<small>Read your prediction alongside your review and revise it.</small></span><span>→</span></button>`;
   else
     content = `<h1>Explain your decision.</h1><p class="challenge-prompt">${e(c.prompt)}</p><details class="background"><summary>See the proposal and your prediction</summary><pre><code>${e(c.artifact)}</code></pre><p><b>Your first prediction:</b> ${e(review.prediction || "You skipped the scratchpad. You can still reason through the example now.")}</p></details><p class="small">Start with your decision and why. Use the small case to support it, say what you would keep or change, and describe a check that could show you are right.</p><label for="challenge-answer" class="field-label">Your review</label><textarea id="challenge-answer" data-challenge-answer="${c.id}" placeholder="I would approve, reject, or investigate this because… In the small case… I would keep or change… To check this, I would…">${e(answer)}</textarea><div class="explain-options"><button class="text-button" data-review-step="change" data-challenge="${c.id}">Reopen the proposal</button><button class="text-button" data-compare-review="${c.id}">Compare without AI feedback</button></div><details class="background"><summary>What should my review explain?</summary><ul>${c.criteria.map((row) => `<li>${e(row.label)}</li>`).join("")}</ul></details><div id="grade-result">${reviewFeedback(c)}</div>${reviewWritingFooter(c)}`;
   return header + content + picker;
@@ -1090,9 +1063,6 @@ function renderGrade(record, task, answer) {
     .join(
       "",
     )}<p class="small">${e(record.meta.provider)} · ${e(record.meta.model)} · ${e(record.meta.seconds)} seconds. This is an AI assessment, not a verified correctness result. ${e(record.meta.context_note)}</p></details></section>`;
-}
-function settings() {
-  return `<h1>Feedback settings</h1><p class="lead">Written answers can be checked against the lesson’s criteria. You can also compare your answer with an example without calling a model.</p><div class="connection-status"><span class="status-dot"></span><div><b>${serverStatus?.provider && serverStatus.provider !== "none" ? "Feedback is connected" : "No live grader connected"}</b><p>${e(serverStatus?.provider || "none")}${serverStatus?.model ? " · " + e(serverStatus.model) : ""}</p></div></div><p>The live check sends your answer, the exercise, its criteria, and selected source context to the configured provider. It returns suggestions and a follow-up question. Your progress is saved in this browser.</p><details class="background"><summary>Change the feedback provider</summary><p>Restart the server with one of these commands in the workbook folder. Codex and Claude use the CLI’s existing login. OpenRouter needs its key in the server environment.</p><pre>bun run start --provider claude --model haiku\nbun run start --provider codex\nbun run start --provider openrouter --model MODEL_ID\nbun run start --provider jev --model typesafe/jev-1.13</pre><p class="small">Account limits and model availability apply. Jev returns criterion probabilities rather than custom prose; no mastery threshold is calibrated for this course.</p></details>`;
 }
 function refreshAssessmentView() {
   const parts = location.hash.slice(1).split("/");
@@ -1153,6 +1123,17 @@ function render() {
   readingObserver = null;
   const route = location.hash.slice(1) || "home",
     parts = route.split("/");
+  if (["practice", "review", "labs"].includes(parts[0])) {
+    const lesson = lookup(parts[1]) || resumeLesson(),
+      block = readingBlocks().find((b) => b.lessons.some((l) => l.id === lesson.id));
+    history.replaceState(
+      null,
+      "",
+      `#block/${block.id}/${parts[0] === "practice" ? "practice" : "read"}`,
+    );
+    render();
+    return;
+  }
   if (parts[0] === "lesson" && lookup(parts[1]) && STEPS.some((step) => step.id === parts[2])) {
     state.flow[parts[1]] = { step: parts[2] };
     save();
@@ -1167,24 +1148,17 @@ function render() {
       (!!c && reviewState(c.id).step !== "done"),
   );
   document.querySelectorAll<HTMLInputElement>("[data-nav]").forEach((a) => {
-    const active =
-      a.dataset.nav === "home"
-        ? ["home", "lesson", "block"].includes(parts[0])
-        : ["practice", "labs", "review", "challenges"].includes(parts[0]);
+    const active = ["home", "lesson", "block", "challenges"].includes(parts[0]);
     if (active) a.setAttribute("aria-current", "page");
     else a.removeAttribute("aria-current");
   });
   const views = {
     home,
     block: () => blockPage(parts[1], parts[2]),
-    practice: () => (parts[1] ? advancedPractice(parts[1], Number(parts[2])) : practiceHome()),
     lesson: () => lesson(parts[1]),
-    labs,
-    review,
     glossary,
     sources,
     challenges: () => challengePage(parts[1]),
-    settings,
   };
   if (!Object.hasOwn(views, parts[0])) {
     history.replaceState(null, "", "#home");
@@ -1228,6 +1202,7 @@ function recordQuestionCheck(q, choice) {
     checked: true,
     correct: choice === q.correct,
     firstCorrect: old.firstCorrect ?? (choice === q.correct && !old.hint),
+    firstChoice: old.firstChoice ?? choice,
     tries: (old.tries || 0) + 1,
   };
 }
@@ -1270,7 +1245,10 @@ document.addEventListener("input", (event) => {
   )
     return;
   if (el.dataset.visualRate) {
-    NoemaVisuals.updateExperiment(lookup(el.dataset.visualRate), Number(el.value) / 100);
+    NoemaVisuals.updateExperiment(
+      NoemaVisuals.find(LESSONS, el.dataset.visualRate),
+      Number(el.value) / 100,
+    );
     return;
   }
   recordActivityField(el);
@@ -1327,10 +1305,6 @@ document.addEventListener("change", (event) => {
     return;
   recordActivityField(el);
   if (el.hasAttribute("data-lab-input")) calculateLabs();
-  if (el.id === "lab-select") {
-    activeLab = el.value;
-    render();
-  }
   if (el.id === "challenge-select") go("challenges/" + el.value);
   if (el.id === "engine-function") {
     activeWorkshopSource = el.value;
@@ -1387,6 +1361,21 @@ document.addEventListener("click", async (event) => {
     checkBlock(blockById(b.checkBlock));
     return;
   }
+  if (b.retryMissed) {
+    const block = blockById(b.retryMissed);
+    for (const q of blockQuestions(block)) {
+      const answer = savedQuestion(q);
+      if (answer.checked && !answer.correct) state.answers[q.id] = { ...answer, checked: false };
+    }
+    save();
+    render();
+    document
+      .querySelector<HTMLInputElement>(
+        ".block-question:has(.question:not(:has(.answer-feedback))) input",
+      )
+      ?.focus();
+    return;
+  }
   if (b.blockExplain) {
     blockStep(blockById(b.blockExplain), "explain");
     return;
@@ -1418,7 +1407,7 @@ document.addEventListener("click", async (event) => {
     return;
   }
   if (b.visualReset) {
-    const l = lookup(b.visualReset),
+    const l = NoemaVisuals.find(LESSONS, b.visualReset),
       slider = document.querySelector<HTMLInputElement>(
         '[data-visual-rate="' + b.visualReset + '"]',
       );
@@ -1590,26 +1579,6 @@ document.addEventListener("click", async (event) => {
     await requestFeedback(b.grade, state.challengeAnswers[b.grade] || "");
     return;
   }
-  if (button.hasAttribute("data-reveal-card")) {
-    reviewRevealed = true;
-    render();
-    return;
-  }
-  if (b.rate) {
-    const id = Number(b.card),
-      old = state.cards[id] || { stage: 0 },
-      stage = old.stage || 0,
-      days = [1, 3, 7, 14, 30][stage] || 30;
-    state.cards[id] = {
-      stage: b.rate === "good" ? Math.min(stage + 1, 4) : 0,
-      due: Date.now() + (b.rate === "again" ? 600000 : days * 86400000),
-      lastRating: b.rate,
-    };
-    reviewRevealed = false;
-    save();
-    render();
-    return;
-  }
   if (button.id === "export") {
     const url = URL.createObjectURL(
       new Blob([JSON.stringify(state, null, 2)], { type: "application/json" }),
@@ -1625,7 +1594,6 @@ window.addEventListener("hashchange", () => {
   document
     .querySelectorAll<HTMLInputElement>(".reference-menu[open]")
     .forEach((el) => el.removeAttribute("open"));
-  reviewRevealed = false;
   render();
   window.scrollTo(0, 0);
   focusContent();
@@ -1812,7 +1780,7 @@ Promise.allSettled([
   if (results[1].status === "fulfilled") serverStatus = results[1].value;
   const route = location.hash.slice(1).split("/");
   if (
-    ["challenges", "settings"].includes(route[0]) ||
+    route[0] === "challenges" ||
     (route[0] === "lesson" && flowFor(route[1]).step === "explain") ||
     (route[0] === "block" && route[2] === "explain")
   )

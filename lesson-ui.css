@@ -648,3 +648,252 @@ main h3 {
     margin-top: 12px;
   }
 }
+
+/* Inline teaching models use the surrounding prose size and native keyboard controls. */
+.prose > .teaching-visual {
+  max-width: 100%;
+  margin: 36px 0;
+  padding: 24px;
+}
+[data-explorable] label {
+  display: block;
+  margin: 20px 0 4px;
+  font-size: 1rem;
+  font-weight: 500;
+}
+[data-explorable] input[type="range"] {
+  width: 100%;
+  min-height: 44px;
+  margin: 0 0 20px;
+  accent-color: #2563eb;
+}
+.model-prediction {
+  font-size: 1rem;
+  line-height: 1.8;
+}
+.binding-chart p,
+.plot-axis,
+.mixture-key {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+.binding-chart svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+  margin-top: 16px;
+}
+.plot-axis,
+.mixture-key {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.plot-grid {
+  stroke: #d4d4d8;
+  fill: none;
+  stroke-width: 1;
+}
+.binding-curve {
+  stroke: #2563eb;
+  fill: none;
+  stroke-width: 4;
+}
+.plot-guide {
+  stroke: #52525b;
+  stroke-dasharray: 6 5;
+  fill: none;
+  stroke-width: 2;
+}
+.plot-point {
+  fill: #2563eb;
+  stroke: white;
+  stroke-width: 2;
+}
+.model-comparison {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  margin: 24px 0;
+  font-variant-numeric: tabular-nums;
+}
+.model-comparison caption {
+  text-align: left;
+  margin-bottom: 12px;
+  line-height: 1.7;
+}
+.model-comparison th,
+.model-comparison td {
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--line);
+}
+.model-comparison th:first-child {
+  padding-left: 0;
+}
+.model-readout {
+  font-size: 1rem;
+  line-height: 1.8;
+}
+.screen-counts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+.screen-counts h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+.screen-counts p {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+.count-pair {
+  display: grid;
+  gap: 12px;
+  margin: 20px 0;
+  font-size: 1rem;
+}
+.count-pair b {
+  display: block;
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+}
+.flagged-mixture {
+  height: 28px;
+  background: #fbbf24;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.flagged-mixture span {
+  display: block;
+  height: 100%;
+  background: #2563eb;
+}
+.mixture-key span:first-child::before,
+.mixture-key span:last-child::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 8px;
+  background: #2563eb;
+}
+.mixture-key span:last-child::before {
+  background: #fbbf24;
+}
+.quiz-summary {
+  margin: 32px 0;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.quiz-summary h2 {
+  margin-top: 0;
+}
+.quiz-summary p {
+  font-size: 1rem;
+  line-height: 1.8;
+}
+.quiz-reading-link {
+  display: inline-block;
+  font-size: 1rem;
+  min-height: 44px;
+  padding-block: 10px;
+}
+.answer-marker {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.875rem;
+}
+.choice.answer-correct {
+  border-color: #166534;
+  background: #f0fdf4;
+}
+.choice.answer-missed {
+  border-color: #92400e;
+  background: #fffbeb;
+}
+@media (max-width: 680px) {
+  .prose > .teaching-visual {
+    padding: 18px;
+    margin-block: 28px;
+  }
+  .screen-counts {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .count-pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .model-comparison th,
+  .model-comparison td {
+    padding-inline: 4px;
+    overflow-wrap: anywhere;
+  }
+}
+
+/* Schedule: bars on a shared week axis; the critical path is darker. */
+.schedule-chart {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.schedule-chart li {
+  display: grid;
+  grid-template-columns: 12rem 1fr 6.5rem;
+  gap: 0.75rem;
+  align-items: center;
+  font-size: 1rem;
+}
+.schedule-chart b {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.schedule-track {
+  position: relative;
+  height: 0.875rem;
+  border-radius: 4px;
+  background: #eef2ea;
+}
+.schedule-track i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 4px;
+  background: #a9bfa3;
+  transition:
+    left 0.25s,
+    width 0.25s;
+}
+.schedule-chart li.critical .schedule-track i {
+  background: #23634b;
+}
+.schedule-chart li.adjusted span:first-child {
+  font-weight: 600;
+}
+.schedule-key {
+  margin: 0 0 1rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+@media (max-width: 560px) {
+  .schedule-chart li {
+    grid-template-columns: 1fr auto;
+  }
+  .schedule-track {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .schedule-track i {
+    transition: none;
+  }
+}

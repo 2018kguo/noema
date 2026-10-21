@@ -1356,7 +1356,7 @@
             "kind": "number",
             "label": "What is the largest absolute score difference?",
             "answer": 0.005,
-            "tolerance": 1e-09,
+            "tolerance": 1e-9,
             "why": "The second entry differs by 0.805 − 0.8 = 0.005. The other entries match."
           },
           {
@@ -2069,116 +2069,6 @@
         "revision": "embedded-practice-2026-10-20"
       }
     }
-  ],
-  "CARDS": [
-    [
-      "Model vs engine",
-      "What changes during fine-tuning, and what does an engine optimize?",
-      "Fine-tuning changes weights/adapters. The engine executes the model efficiently, managing kernels, requests and state.",
-      "map"
-    ],
-    [
-      "Matmul shapes",
-      "X[B,d] W[d,h] produces what shape and approximate FLOPs?",
-      "[B,h], about 2Bdh FLOPs. Check the library’s storage orientation.",
-      "numbers"
-    ],
-    [
-      "Tokens vs words",
-      "Why does “one word = one token” fail?",
-      "Tokenization may use word pieces, punctuation, bytes and control markers. Exact IDs matter.",
-      "tokens"
-    ],
-    [
-      "KV purpose",
-      "What does KV caching save, and what work remains?",
-      "It avoids recomputing past K/V and upstream prefix processing; new queries still read and attend to cached state.",
-      "attention"
-    ],
-    [
-      "Latency boundary",
-      "Name two reasons TTFT can be high before GPU prefill starts.",
-      "Queueing and preprocessing/tokenization; also network or routing within the measured boundary.",
-      "phases"
-    ],
-    [
-      "Roofline",
-      "Write the ideal-overlap lower bound on operator time.",
-      "max(FLOPs/compute_rate, bytes/bandwidth), before additional overheads and imperfect overlap.",
-      "gpu"
-    ],
-    [
-      "Batch tradeoff",
-      "Why can more batch throughput worsen user latency?",
-      "Larger steps and waiting to batch can delay each user even while more total work is completed.",
-      "batch"
-    ],
-    [
-      "Cache scale",
-      "Double batch and context. How does conventional raw KV scale?",
-      "Fourfold, assuming all other dimensions fixed.",
-      "cache"
-    ],
-    [
-      "Cache identity",
-      "Can two adapters safely share arbitrary prefix state?",
-      "Not by default. Cached computation can depend on adapter and base weights; compatibility identity must include them.",
-      "artifacts"
-    ],
-    [
-      "Replay",
-      "Why is bounded SWA replay not automatically exact?",
-      "Multi-layer state has upstream dependencies beyond a single local replay segment; truncated reconstruction can approximate it.",
-      "special"
-    ],
-    [
-      "MoE balance",
-      "Why don’t equal expert counts guarantee equal rank time?",
-      "Router demand and per-expert token work can be skewed; synchronization waits for the slowest required rank.",
-      "parallel"
-    ],
-    [
-      "Speculation",
-      "For conditional acceptance 0.8 over three drafts, expected accepted drafts?",
-      "0.8+0.64+0.512=1.952, excluding correction/bonus target tokens.",
-      "speculate"
-    ],
-    [
-      "Exactness",
-      "Does equal output distribution imply the same string for the same seed across engines?",
-      "No. Distributional equality is distinct from identical random paths or numerical execution.",
-      "correctness"
-    ],
-    [
-      "Disaggregation",
-      "Name a benefit and a cost of splitting prefill and decode.",
-      "Independent resource/scheduling choices; state transfer, networking and coordination overhead.",
-      "service"
-    ],
-    [
-      "LoRA algebra",
-      "Write merged and unmerged LoRA outputs for column-vector x.",
-      "(W+sBA)x = Wx+sB(Ax). Floating-point rounding can differ.",
-      "artifacts"
-    ],
-    [
-      "Reference oracle",
-      "How do you isolate a cache bug before text trajectories diverge?",
-      "Use identical prefixes/teacher forcing and compare logits or layer outputs against a full-forward reference.",
-      "workshop"
-    ],
-    [
-      "Benchmark",
-      "What must a “2× faster” claim include to be useful?",
-      "Baseline, artifacts, hardware, workload, cache/precision settings, quality contract and latency/throughput measurement.",
-      "bench"
-    ],
-    [
-      "Graduation",
-      "What evidence shows you can work on an engine?",
-      "A reproducible real-model change with an explicit correctness oracle, representative measurements and a justified design tradeoff.",
-      "bench"
-    ]
   ],
   "GLOSSARY": {
     "Activation": "An intermediate numerical value produced while executing the model.",

@@ -165,21 +165,6 @@ p {
   color: #52525b;
   margin: 0 12px 10px;
 }
-.sidebar-bottom > a {
-  display: block;
-  margin: 0 2px 23px;
-  padding: 13px;
-  background: #fafbf4;
-  border-radius: 8px;
-  box-shadow: 0 0 0 1px #00000009;
-  font-size: 0.875rem;
-  font-weight: 600;
-  text-decoration: none;
-}
-.sidebar-bottom > a > span {
-  float: right;
-  color: var(--muted);
-}
 .sidebar-bottom small {
   display: block;
   margin-top: 4px;
@@ -563,15 +548,6 @@ main {
 .sample-row {
   margin-top: 0;
 }
-.workspace-footer {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-  color: var(--muted);
-  font-size: 0.875rem;
-  padding-top: 25px;
-  line-height: 1.8;
-}
 #main:focus {
   outline: 0;
 }
@@ -826,10 +802,6 @@ textarea::placeholder {
   h1 {
     font-size: 32px;
   }
-  .workspace-footer {
-    flex-wrap: wrap;
-    gap: 4px 20px;
-  }
 }
 @media (max-width: 680px) {
   .sidebar {
@@ -1012,14 +984,6 @@ textarea::placeholder {
   .row-link {
     font-size: 0.875rem;
   }
-  .workspace-footer {
-    font-size: 0.875rem;
-    display: block;
-    line-height: 2;
-  }
-  .workspace-footer > span {
-    display: block;
-  }
   dialog {
     padding: 23px;
     width: calc(100vw - 24px);
@@ -1087,9 +1051,6 @@ textarea::placeholder {
   background: #edf1e5;
 }
 @media (max-width: 370px) {
-  .topbar > #breadcrumb {
-    display: none;
-  }
   .topbar {
     justify-content: flex-end;
   }
@@ -1141,4 +1102,61 @@ h1 {
   line-height: 1.3;
   margin: 0;
   letter-spacing: -0.5px;
+}
+
+/* Settings: one row per CLI, with its fix command when it isn't connected. */
+#settings-dialog h3 {
+  margin: 1.5rem 0 0.25rem;
+  font-size: 1.125rem;
+}
+.connections {
+  list-style: none;
+  margin: 0.75rem 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.connections li {
+  padding: 0.75rem 1rem;
+}
+.connections li + li {
+  border-top: 1px solid var(--line);
+}
+.connections li > div:first-child {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  align-items: baseline;
+}
+.connections li span {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.connections li.ok b::before,
+.connections li.off b::before {
+  content: "";
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-right: 0.5rem;
+  border-radius: 50%;
+  vertical-align: middle;
+  background: var(--green);
+}
+.connections li.off b::before {
+  background: #b45309;
+}
+.connections .fix {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+.connections .fix code {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.connections .form-help {
+  margin: 0.25rem 0 0;
 }

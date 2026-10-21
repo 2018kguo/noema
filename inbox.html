@@ -45,14 +45,12 @@
         >
       </nav>
       <div class="sidebar-bottom">
-        <a href="/learn/deepinfer/"
-          >Inside Inference <span>↗</span><small>From first principles to a tiny engine.</small></a
-        ><button id="settings-button" class="settings-button">Preparation settings</button>
+        <button id="settings-button" class="settings-button">Settings</button>
       </div>
     </aside>
     <div class="workspace">
       <header class="topbar">
-        <span id="breadcrumb">Your inbox</span>
+        <span></span>
         <div id="queue-control"></div>
       </header>
       <main id="main" tabindex="-1">
@@ -114,22 +112,17 @@
           <div class="filters" id="filters" aria-label="Filter links">
             <button data-filter="all" aria-pressed="true">All</button
             ><button data-filter="preparing" aria-pressed="false">Preparing</button
-            ><button data-filter="ready" aria-pressed="false">Ready to learn</button
             ><button data-filter="needs" aria-pressed="false">Needs you</button>
           </div>
           <div id="connection-error" class="error" role="status" hidden></div>
           <div id="items"></div>
         </section>
-        <footer class="workspace-footer">
-          <span>Saved on this computer.</span
-          ><span id="worker-note">You can leave this tab open or come back later.</span>
-        </footer>
       </main>
     </div>
     <dialog id="settings-dialog" aria-labelledby="settings-title">
       <form id="settings-form">
         <div class="dialog-heading">
-          <h2 id="settings-title">How should Noema prepare links?</h2>
+          <h2 id="settings-title">Settings</h2>
           <button
             type="button"
             class="close"
@@ -139,21 +132,24 @@
             ×
           </button>
         </div>
+        <h3>Connections</h3>
         <p>
-          Choose an installed CLI. Preparation uses its signed-in account and usage limits. Your
-          links and drafts stay on this computer.
+          Noema uses the Claude Code or Codex CLI on this computer and its existing sign-in. It
+          never sees or stores your login.
         </p>
-        <label for="provider">Prepare with</label
+        <ul id="connections" class="connections"></ul>
+        <button type="button" class="quiet" id="recheck">Recheck</button>
+        <h3>Model</h3>
+        <p>Used to prepare courses from your links and to check written answers.</p>
+        <label for="provider">Use</label
         ><select id="provider">
           <option value="claude">Claude Code</option>
           <option value="codex">Codex</option></select
         ><label for="generation-model">Model <span>Optional</span></label
-        ><input id="generation-model" placeholder="Use the CLI’s default model" maxlength="120" />
+        ><input id="generation-model" placeholder="The CLI’s default model" maxlength="120" />
         <p class="form-help">
-          For Claude, you can use <code>sonnet</code> for writing or <code>haiku</code> for a
-          cheaper first pass. Use a model available to your account.
+          For Claude, <code>sonnet</code> writes better courses; <code>haiku</code> is cheaper.
         </p>
-        <p id="provider-help" class="form-help"></p>
         <p id="settings-error" class="error" role="alert" hidden></p>
         <div class="dialog-actions">
           <button type="button" class="quiet" data-close="settings-dialog">Cancel</button

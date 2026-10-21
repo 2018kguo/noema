@@ -4,6 +4,7 @@ export type Answer = {
   checked?: boolean;
   correct?: boolean;
   firstCorrect?: boolean;
+  firstChoice?: number;
   tries?: number;
   hint?: boolean;
   question_revision?: string;

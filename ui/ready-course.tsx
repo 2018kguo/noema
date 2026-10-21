@@ -64,7 +64,9 @@ export function ReadyCourse({ id, title, domain, url, sample, progress }: ReadyC
             </>
           ) : (
             <p className="ui:my-3 ui:text-sm ui:text-muted-foreground">
-              {progress ? "Progress unavailable in this browser" : "Loading saved progress…"}
+              {progress
+                ? "Couldn’t load this course. Open it to see the error."
+                : "Loading saved progress…"}
             </p>
           )}
           <span className="ui:mt-4 ui:flex ui:items-center ui:gap-2 ui:text-base ui:font-medium ui:text-foreground">

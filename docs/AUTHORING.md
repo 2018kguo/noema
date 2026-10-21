@@ -24,8 +24,10 @@ changes so older feedback is not presented as current.
 
 `SOURCES` maps ids to `[title, URL, what this supports]`. A source entry is a claim
 that the author inspected that material. List missing/unread citations separately
-in private `coverage.md`. `CARDS` is a list of `[short title, question, answer,
-lesson id]`. `GLOSSARY` maps terms to plain-English definitions. `LABS` is `[]`
+in private `coverage.md`. Prose names sources the way a reader would ("the FDA's
+page on clinical research"); validation rejects bare ids such as `source3` outside
+`sources` and `source_ids`. `META.introduction` is plain text (no HTML, at most 600
+characters); scope notes belong in `about_html`. `GLOSSARY` maps terms to plain-English definitions. `LABS` is `[]`
 for ordinary courses or `["tiny-engine"]` for the shipped inference exercise.
 
 ## Lessons
@@ -145,6 +147,27 @@ case. Captions must explain assumptions, fractional expected counts and scope
 where relevant. `source_ids` must reference sources already on that lesson;
 use an empty array for wholly invented examples. Never relabel an intermediate
 gate as proof of the ultimate outcome.
+
+### Inline illustrations
+
+`illustrations: [{ id, after_paragraph, visual }]` places up to four figures
+after numbered top-level paragraphs of the main explanation. Besides `flow` and
+`funnel`, three explorable kinds each have one slider and keep the original
+case beside the changed one:
+
+- `binding`: one-site equilibrium occupancy, `kd_nm`, `ligand_nm`, `max_nm`
+  (both values ≤ `max_nm`). The slider moves free ligand concentration.
+- `screen`: natural-frequency screening, `population`, `prevalence`,
+  `sensitivity`, `false_positive_rate` (fractions). The slider moves the false
+  positive rate.
+- `schedule`: a dependency plan, `tasks: [{ id, label, duration, after }]` with
+  dependencies listed earlier, `adjustable_task`, `max_duration` (weeks). The
+  chart marks the critical path; the slider shows when slack runs out. Hand-
+  authored only for now; generation does not emit it.
+
+Every explorable has a `predict` prompt shown before the slider. Each lesson's
+`quiz_question` (0–2) picks the question used in the grouped block quiz, and a
+question may add `option_feedback`, one sentence per option.
 
 Cards, disclosures and progress indicators use the MIT-licensed shadcn/ui and Radix
 components. Their pinned assets ship locally and inside exported ZIPs. Add new
