@@ -2,7 +2,7 @@
   font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: #263b33;
   background: #fafaf7;
-  font-size: 14px;
+  font-size: 100%;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   --ink: #263b33;
@@ -124,32 +124,11 @@ p {
   align-items: center;
   gap: 11px;
   text-decoration: none;
-  font-size: 25px;
-  letter-spacing: -1px;
+  font-size: 22px;
+  letter-spacing: -0.5px;
   font-weight: 570;
   padding: 0 12px;
   margin-bottom: 45px;
-}
-.brand-mark {
-  font-family: Georgia, serif;
-  font-style: italic;
-  background: #dce7ce;
-  color: #3e6240;
-  border-radius: 10px;
-  font-size: 27px;
-  width: 34px;
-  height: 37px;
-  display: grid;
-  place-items: center;
-  padding-bottom: 3px;
-}
-.workspace-label {
-  font-size: 10px;
-  letter-spacing: 1.4px;
-  color: #81877c;
-  padding-left: 13px;
-  font-weight: 650;
-  margin-bottom: 12px;
 }
 .nav-item {
   display: flex;
@@ -160,30 +139,30 @@ p {
   text-decoration: none;
   border-radius: 7px;
   margin-bottom: 5px;
-  font-size: 13px;
-  color: #647060;
+  font-size: 1rem;
+  color: #52525b;
 }
 .nav-item > span:first-child {
   font-size: 19px;
   width: 18px;
 }
 .nav-item[aria-current="page"] {
-  background: #e1e8d9;
-  color: #36523e;
+  background: #e4e4e7;
+  color: #18181b;
   font-weight: 600;
 }
 .count {
   margin-left: auto;
-  font-size: 11px;
+  font-size: 0.875rem;
   font-variant-numeric: tabular-nums;
-  color: #7a8375;
+  color: #52525b;
 }
 .sidebar-bottom {
   margin-top: auto;
 }
 .sidebar-bottom > p {
-  font-size: 11px;
-  color: #899080;
+  font-size: 0.875rem;
+  color: #52525b;
   margin: 0 12px 10px;
 }
 .sidebar-bottom > a {
@@ -193,20 +172,20 @@ p {
   background: #fafbf4;
   border-radius: 8px;
   box-shadow: 0 0 0 1px #00000009;
-  font-size: 12px;
+  font-size: 0.875rem;
   font-weight: 600;
   text-decoration: none;
 }
 .sidebar-bottom > a > span {
   float: right;
-  color: #8b9784;
+  color: var(--muted);
 }
 .sidebar-bottom small {
   display: block;
   margin-top: 4px;
-  font-size: 11px;
+  font-size: 0.875rem;
   font-weight: 400;
-  color: #818977;
+  color: #52525b;
   line-height: 1.6;
 }
 .settings-button {
@@ -217,8 +196,8 @@ p {
   text-align: left;
   padding: 18px 10px 0;
   min-height: 44px;
-  font-size: 11px;
-  color: #77816e;
+  font-size: 1rem;
+  color: #52525b;
 }
 .settings-button > span {
   float: right;
@@ -233,10 +212,12 @@ p {
   align-items: center;
   justify-content: space-between;
   padding: 0 43px;
-  color: #858c80;
-  font-size: 12px;
+  color: #52525b;
+  font-size: 0.875rem;
 }
 .queue-status {
+  flex-wrap: wrap;
+  justify-content: flex-end;
   display: flex;
   gap: 9px;
   align-items: center;
@@ -253,10 +234,10 @@ p {
 .queue-status button {
   border: 0;
   background: none;
-  color: #6e7c67;
+  color: #52525b;
   min-height: 40px;
   margin-left: 11px;
-  font-size: 11px;
+  font-size: 0.875rem;
 }
 .queue-status button:hover {
   text-decoration: underline;
@@ -266,15 +247,9 @@ main {
   margin: 0 auto;
   padding: 62px 42px 30px;
 }
-.eyebrow {
-  font-size: 9px;
-  letter-spacing: 1.6px;
-  color: #818e73;
-  font-weight: 650;
-}
 .intro {
-  font-size: 14px;
-  color: #7c8478;
+  font-size: 1rem;
+  color: #52525b;
   max-width: 600px;
   margin-bottom: 27px;
   line-height: 1.8;
@@ -302,7 +277,7 @@ main {
   line-height: 1.7;
 }
 .capture-box > textarea::placeholder {
-  color: #a1a797;
+  color: var(--muted);
 }
 .capture-bottom {
   display: flex;
@@ -313,8 +288,8 @@ main {
   border-top: 1px solid #f0f1eb;
 }
 .capture-bottom > span {
-  font-size: 10px;
-  color: #9a9f92;
+  font-size: 0.875rem;
+  color: var(--muted);
 }
 .primary {
   display: inline-flex;
@@ -327,7 +302,7 @@ main {
   background: var(--green);
   border: 0;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 1rem;
   font-weight: 550;
   text-decoration: none;
 }
@@ -347,9 +322,9 @@ main {
   align-items: center;
   cursor: pointer;
   list-style: none;
-  color: #7c8773;
+  color: var(--muted);
   min-height: 28px;
-  font-size: 11px;
+  font-size: 0.875rem;
 }
 .capture-box > details > summary:before {
   content: "+";
@@ -359,25 +334,25 @@ main {
   content: "−";
 }
 .capture-box > details > summary > span {
-  color: #abb09f;
-  font-size: 10px;
+  color: var(--muted);
+  font-size: 0.875rem;
 }
 .context-fields {
   padding-top: 12px;
 }
 .context-fields label {
   display: block;
-  font-size: 11px;
+  font-size: 1rem;
   margin: 10px 0 6px;
-  color: #717c67;
+  color: var(--muted);
 }
 .context-fields label > span {
   display: block;
-  font-size: 10px;
-  color: #989f8e;
+  font-size: 0.875rem;
+  color: var(--muted);
 }
 .context-fields textarea {
-  font-size: 13px;
+  font-size: 1rem;
   min-height: 76px;
   background: #fafbf6;
 }
@@ -392,15 +367,15 @@ main {
   font-size: 17px;
 }
 .collection-heading p {
-  font-size: 11px;
-  color: #9a9f92;
+  font-size: 0.875rem;
+  color: var(--muted);
   margin: 5px 0 0;
 }
 .search {
   display: flex;
   align-items: center;
   gap: 7px;
-  color: #9a9f92;
+  color: var(--muted);
 }
 .search > span:first-child {
   font-size: 21px;
@@ -409,13 +384,13 @@ main {
 .search input {
   border: 0;
   background: transparent;
-  font-size: 11px;
+  font-size: 1rem;
   width: 106px;
   padding: 9px 1px;
   min-height: 40px;
 }
 .search input::placeholder {
-  color: #9a9f92;
+  color: var(--muted);
 }
 .filters {
   display: flex;
@@ -427,10 +402,10 @@ main {
 .filters button {
   border: 0;
   background: none;
-  font-size: 11px;
+  font-size: 0.875rem;
   min-height: 34px;
   padding: 6px 12px;
-  color: #969e8d;
+  color: var(--muted);
   border-radius: 6px;
   white-space: nowrap;
 }
@@ -466,7 +441,7 @@ main {
   height: 38px;
   background: #eef1e8;
   border-radius: 7px;
-  color: #8a977d;
+  color: var(--muted);
   font:
     italic 20px Georgia,
     serif;
@@ -477,7 +452,7 @@ main {
   flex: 1;
 }
 .item-title {
-  font-size: 13px;
+  font-size: 1rem;
   font-weight: 550;
   line-height: 1.6;
   margin: 0 0 4px;
@@ -485,12 +460,12 @@ main {
   letter-spacing: -0.1px;
 }
 .item-domain {
-  font-size: 10px;
-  color: #a2a798;
+  font-size: 0.875rem;
+  color: var(--muted);
 }
 .item-note {
-  font-size: 11px;
-  color: #8d9782;
+  font-size: 0.875rem;
+  color: var(--muted);
   margin: 6px 0 0;
   overflow: hidden;
   display: -webkit-box;
@@ -510,10 +485,10 @@ main {
   display: inline-flex;
   gap: 6px;
   align-items: center;
-  font-size: 9px;
+  font-size: 0.875rem;
   padding: 3px 8px;
   border-radius: 4px;
-  color: #91977f;
+  color: var(--muted);
   background: #eff0e9;
   white-space: nowrap;
 }
@@ -523,7 +498,7 @@ main {
 }
 .state.active {
   background: #edf0e4;
-  color: #7b8b55;
+  color: var(--muted);
 }
 .state.needs {
   background: #f7eedb;
@@ -534,16 +509,16 @@ main {
   color: #a17d60;
 }
 .state.cancelled {
-  color: #9b9e93;
+  color: var(--muted);
   background: #f0f0eb;
 }
 .row-link {
-  font-size: 10px;
-  color: #789165;
+  font-size: 0.875rem;
+  color: var(--muted);
 }
 .row-time {
-  font-size: 9px;
-  color: #b0b4a7;
+  font-size: 0.875rem;
+  color: var(--muted);
 }
 .state.active:before {
   content: "";
@@ -553,8 +528,8 @@ main {
   background: #9baa79;
 }
 .item-progress {
-  font-size: 10px;
-  color: #8b987d;
+  font-size: 0.875rem;
+  color: var(--muted);
   line-height: 1.7;
   margin: 7px 0 0;
 }
@@ -567,7 +542,7 @@ main {
   font:
     italic 35px Georgia,
     serif;
-  color: #b8c4aa;
+  color: var(--muted);
   display: block;
   margin-bottom: 10px;
 }
@@ -576,8 +551,8 @@ main {
   font-weight: 500;
 }
 .empty p {
-  font-size: 12px;
-  color: #959d8a;
+  font-size: 0.875rem;
+  color: var(--muted);
   max-width: 360px;
   margin: 9px auto 0;
   line-height: 1.9;
@@ -592,8 +567,8 @@ main {
   display: flex;
   justify-content: space-between;
   gap: 20px;
-  color: #b0b5a7;
-  font-size: 9px;
+  color: var(--muted);
+  font-size: 0.875rem;
   padding-top: 25px;
   line-height: 1.8;
 }
@@ -602,7 +577,7 @@ main {
 }
 .error {
   color: #956449;
-  font-size: 12px;
+  font-size: 0.875rem;
   line-height: 1.7;
   padding: 12px 16px;
   background: #f8f0e7;
@@ -615,8 +590,8 @@ main {
 .quiet {
   border: 0;
   background: none;
-  color: #7d8a70;
-  font-size: 12px;
+  color: var(--muted);
+  font-size: 0.875rem;
   min-height: 42px;
   padding: 8px;
 }
@@ -629,7 +604,7 @@ main {
   border: 0;
   background: transparent;
   font-size: 25px;
-  color: #a0a792;
+  color: var(--muted);
   width: 40px;
   height: 40px;
   flex-shrink: 0;
@@ -668,19 +643,19 @@ dialog::backdrop {
   letter-spacing: -0.5px;
 }
 dialog p {
-  font-size: 12px;
-  color: #87947b;
+  font-size: 0.875rem;
+  color: var(--muted);
   line-height: 1.9;
 }
 dialog label {
   display: block;
-  font-size: 12px;
+  font-size: 1rem;
   margin: 19px 0 8px;
-  color: #67775b;
+  color: var(--muted);
 }
 dialog label > span {
-  font-size: 10px;
-  color: #a2aa96;
+  font-size: 0.875rem;
+  color: var(--muted);
   margin-left: 6px;
 }
 input,
@@ -695,7 +670,7 @@ dialog input,
 dialog select,
 dialog textarea {
   width: 100%;
-  font-size: 13px;
+  font-size: 1rem;
 }
 textarea {
   resize: vertical;
@@ -704,12 +679,12 @@ textarea {
 }
 input::placeholder,
 textarea::placeholder {
-  color: #a6af9c;
+  color: var(--muted);
 }
 .form-help {
-  font-size: 10px;
+  font-size: 0.875rem;
   line-height: 1.9;
-  color: #a0a98f;
+  color: var(--muted);
   margin: 13px 0;
 }
 .dialog-actions {
@@ -720,12 +695,12 @@ textarea::placeholder {
   margin-top: 25px;
 }
 .detail-link {
-  font-size: 11px !important;
+  font-size: 0.875rem !important;
   overflow-wrap: anywhere;
   margin-top: -6px;
 }
 .detail-link a {
-  color: #879a76;
+  color: var(--muted);
 }
 .detail-status {
   border-radius: 8px;
@@ -734,22 +709,22 @@ textarea::placeholder {
   margin: 22px 0;
 }
 .detail-status p {
-  font-size: 12px;
+  font-size: 0.875rem;
   margin: 9px 0 0;
 }
 .detail-note {
   white-space: pre-wrap;
   max-height: 180px;
   overflow: auto;
-  font-size: 12px;
+  font-size: 0.875rem;
 }
 .detail-section {
   margin-top: 24px;
 }
 .detail-section h3 {
-  font-size: 12px;
+  font-size: 0.875rem;
   margin-bottom: 10px;
-  color: #748367;
+  color: var(--muted);
 }
 .event-list {
   list-style: none;
@@ -759,8 +734,8 @@ textarea::placeholder {
 }
 .event-list li {
   padding: 0 0 17px 17px;
-  font-size: 11px;
-  color: #8b967f;
+  font-size: 0.875rem;
+  color: var(--muted);
   position: relative;
 }
 .event-list li:before {
@@ -775,8 +750,8 @@ textarea::placeholder {
 }
 .event-list time {
   display: block;
-  color: #b4bcaa;
-  font-size: 9px;
+  color: var(--muted);
+  font-size: 0.875rem;
   margin-top: 2px;
 }
 .event-list li:last-child {
@@ -789,17 +764,17 @@ textarea::placeholder {
   flex-wrap: wrap;
 }
 .detail-actions > a {
-  font-size: 11px;
-  color: #799367;
+  font-size: 0.875rem;
+  color: var(--muted);
 }
 .source-box {
   min-height: 180px;
 }
 .source-box-label {
-  font-size: 12px !important;
+  font-size: 0.875rem !important;
 }
 .detail-explanation {
-  font-size: 11px !important;
+  font-size: 0.875rem !important;
 }
 .drop-active .capture-box {
   box-shadow: 0 0 0 2px #78985f;
@@ -812,7 +787,7 @@ textarea::placeholder {
   transform: translate(-50%, 10px);
   background: #2e4939;
   color: #f7faef;
-  font-size: 12px;
+  font-size: 0.875rem;
   padding: 12px 19px;
   border-radius: 8px;
   box-shadow: 0 5px 25px #2037251a;
@@ -846,7 +821,7 @@ textarea::placeholder {
     font-size: 23px;
   }
   .intro {
-    font-size: 13px;
+    font-size: 1rem;
   }
   h1 {
     font-size: 32px;
@@ -872,13 +847,6 @@ textarea::placeholder {
     margin: 0 0 15px;
     gap: 9px;
   }
-  .brand-mark {
-    width: 27px;
-    height: 30px;
-    font-size: 23px;
-    border-radius: 8px;
-  }
-  .workspace-label,
   .sidebar-bottom {
     display: none;
   }
@@ -892,34 +860,37 @@ textarea::placeholder {
     background: none !important;
     padding: 8px 0 13px;
     min-width: 97px;
-    font-size: 12px;
+    font-size: 1rem;
     border-bottom: 2px solid transparent;
     min-height: 44px;
   }
   .nav-item[aria-current="page"] {
-    border-bottom-color: #799b62;
+    border-bottom-color: #18181b;
   }
   .nav-item > span:first-child {
     display: none;
   }
   .count {
     margin-left: 12px;
-    font-size: 10px;
+    font-size: 0.875rem;
   }
   .workspace {
     margin-left: 0;
   }
   .topbar {
-    height: 53px;
-    padding: 0 21px;
-    font-size: 10px;
+    min-height: 64px;
+    height: auto;
+    padding: 10px 21px;
+    font-size: 0.875rem;
   }
   .queue-status {
+    flex-wrap: wrap;
+    justify-content: flex-end;
     gap: 7px;
-    font-size: 9px;
+    font-size: 0.875rem;
   }
   .queue-status button {
-    font-size: 10px;
+    font-size: 0.875rem;
     margin-left: 5px;
   }
   main {
@@ -931,11 +902,8 @@ textarea::placeholder {
     max-width: 330px;
     margin: 12px 0;
   }
-  .eyebrow {
-    font-size: 8px;
-  }
   .intro {
-    font-size: 12px;
+    font-size: 1rem;
     margin-bottom: 22px;
     max-width: 320px;
   }
@@ -952,20 +920,23 @@ textarea::placeholder {
     padding: 0 17px 12px;
   }
   .capture-box > details > summary {
-    font-size: 10px;
+    font-size: 0.875rem;
   }
   .capture-bottom {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
     padding: 12px 12px 12px 17px;
   }
   .capture-bottom > span {
-    font-size: 9px;
-    max-width: 120px;
+    font-size: 0.875rem;
+    max-width: none;
     line-height: 1.8;
   }
   .primary {
-    min-height: 42px;
+    min-height: 48px;
     padding: 10px 13px;
-    font-size: 11px;
+    font-size: 1rem;
     gap: 9px;
   }
   .collection-heading {
@@ -976,21 +947,22 @@ textarea::placeholder {
     font-size: 16px;
   }
   .collection-heading p {
-    font-size: 10px;
+    font-size: 0.875rem;
     max-width: 200px;
   }
   .search input {
-    width: 85px;
-    font-size: 10px;
+    width: 106px;
+    font-size: 1rem;
   }
   .filters {
-    gap: 0;
+    flex-wrap: wrap;
+    gap: 8px;
     padding-bottom: 12px;
-    justify-content: space-between;
+    justify-content: flex-start;
   }
   .filters button {
     padding: 6px 8px;
-    font-size: 10px;
+    font-size: 0.875rem;
     min-height: 40px;
   }
   .item-row {
@@ -1006,7 +978,7 @@ textarea::placeholder {
     border-radius: 6px;
   }
   .item-title {
-    font-size: 12px;
+    font-size: 1rem;
     line-height: 1.7;
   }
   .item-copy {
@@ -1021,27 +993,27 @@ textarea::placeholder {
     width: 100%;
   }
   .item-note {
-    font-size: 10px;
+    font-size: 0.875rem;
     -webkit-line-clamp: 2;
   }
   .item-domain {
-    font-size: 9px;
+    font-size: 0.875rem;
   }
   .item-progress {
-    font-size: 10px;
+    font-size: 0.875rem;
   }
   .row-time {
     margin-left: auto;
-    font-size: 9px;
+    font-size: 0.875rem;
   }
   .state {
-    font-size: 9px;
+    font-size: 0.875rem;
   }
   .row-link {
-    font-size: 10px;
+    font-size: 0.875rem;
   }
   .workspace-footer {
-    font-size: 9px;
+    font-size: 0.875rem;
     display: block;
     line-height: 2;
   }
@@ -1063,7 +1035,7 @@ textarea::placeholder {
   #toast {
     left: 50%;
     bottom: 20px;
-    font-size: 11px;
+    font-size: 0.875rem;
     white-space: normal;
     width: max-content;
   }
@@ -1089,8 +1061,8 @@ textarea::placeholder {
   min-height: 40px;
   padding-block: 8px;
   cursor: pointer;
-  font-size: 12px;
-  color: #748367;
+  font-size: 0.875rem;
+  color: var(--muted);
 }
 
 .item-entry {
@@ -1108,7 +1080,7 @@ textarea::placeholder {
   border: 0;
   background: transparent;
   font-size: 19px;
-  color: #9aa88b;
+  color: var(--muted);
   border-radius: 6px;
 }
 .item-more:hover {
@@ -1125,7 +1097,7 @@ textarea::placeholder {
 /* Shared Geist typography and neutral surfaces match the course reader. */
 :root {
   --ink: #18181b;
-  --muted: #71717a;
+  --muted: #52525b;
   --line: #e4e4e7;
   --green: #18181b;
   --paper: #fff;
@@ -1142,14 +1114,6 @@ body {
 .topbar {
   background: #fff;
 }
-.brand-mark {
-  font-family: inherit;
-  font-style: normal;
-  background: #18181b;
-  color: #fff;
-  font-size: 18px;
-  border-radius: 6px;
-}
 h1,
 h2,
 h3 {
@@ -1158,9 +1122,6 @@ h3 {
 h1 {
   font-size: 30px;
   font-weight: 600;
-}
-.eyebrow {
-  letter-spacing: 0.05em;
 }
 [data-ready-course] .ready-row,
 [data-ready-course] .sample-row {
@@ -1173,4 +1134,11 @@ h1 {
 [data-ready-course] h3 {
   margin: 0 0 8px;
   font-size: 16px;
+}
+
+.collection.learning .collection-heading h2 {
+  font-size: 1.75rem;
+  line-height: 1.3;
+  margin: 0;
+  letter-spacing: -0.5px;
 }

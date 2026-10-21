@@ -41,7 +41,7 @@ const ui = {
         <Accordion type="multiple" className="ui:w-full">
           {panels.map((panel, i) => (
             <AccordionItem value={"depth-" + i} key={i}>
-              <AccordionTrigger className="ui:py-4 ui:text-sm">{panel.label}</AccordionTrigger>
+              <AccordionTrigger className="ui:py-4 ui:text-base">{panel.label}</AccordionTrigger>
               <AccordionContent>
                 <div className="prose" dangerouslySetInnerHTML={{ __html: panel.html }} />
               </AccordionContent>
@@ -58,7 +58,7 @@ const ui = {
         element,
         <Card className="ui:gap-0 ui:rounded-lg ui:shadow-none">
           <CardContent>
-            <div className="ui:mb-5 ui:flex ui:items-center ui:justify-between ui:gap-4 ui:text-xs ui:text-muted-foreground">
+            <div className="ui:mb-5 ui:flex ui:items-center ui:justify-between ui:gap-4 ui:text-sm ui:text-muted-foreground">
               <span>
                 Step {step + 1} of {count}
               </span>

@@ -1,12 +1,12 @@
 /* Reader theme. Shared components and Geist are bundled from ui/. */
 :root {
   font-family: "Geist Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-size: 16px;
+  font-size: 100%;
   line-height: 1.7;
   color: #18181b;
   background: white;
   --ink: #18181b;
-  --muted: #71717a;
+  --muted: #52525b;
   --green: #18181b;
   --line: #e4e4e7;
   --soft: #f4f4f5;
@@ -32,7 +32,7 @@
 }
 .header-inner nav {
   gap: 24px;
-  font-size: 13px;
+  font-size: 1rem;
 }
 .header-inner nav > a[aria-current] {
   color: var(--ink);
@@ -49,7 +49,7 @@
 .course-overview .site-footer {
   max-width: 1160px;
   padding-inline: 28px;
-  font-size: 12px;
+  font-size: 0.875rem;
 }
 main h1 {
   font-size: 32px;
@@ -71,11 +71,6 @@ main h3 {
 .lede {
   font-size: 17px;
   color: var(--muted);
-}
-.eyebrow {
-  color: var(--muted);
-  font-weight: 500;
-  letter-spacing: 1px;
 }
 .primary,
 .button {
@@ -116,17 +111,17 @@ main h3 {
   margin-bottom: 34px;
 }
 .stepper button {
-  font-size: 13px;
+  font-size: 1rem;
   color: var(--muted);
 }
 .step-number {
   width: 28px;
   height: 28px;
-  font-size: 12px;
+  font-size: 0.875rem;
 }
 .prose {
-  max-width: 68ch;
-  font-size: 16px;
+  max-width: 65ch;
+  font-size: 1.125rem;
 }
 .example-scenario {
   font-size: 16px;
@@ -163,7 +158,7 @@ main h3 {
   color: var(--muted);
 }
 .example-history span {
-  font-size: 12px;
+  font-size: 0.875rem;
   font-variant-numeric: tabular-nums;
 }
 .example-history p {
@@ -187,8 +182,8 @@ main h3 {
     padding-inline: 20px;
   }
   .header-inner nav {
-    gap: 18px;
-    font-size: 12px;
+    gap: 14px;
+    font-size: 1rem;
   }
   main h1 {
     font-size: 28px;
@@ -202,20 +197,20 @@ main h3 {
   background: #fafafa;
   overflow: hidden;
 }
-.visual-label {
-  font-size: 10px;
+.cohort-stage {
+  font-size: 0.875rem;
   font-weight: 650;
-  letter-spacing: 1.3px;
   color: #536c59;
   display: block;
 }
 .teaching-visual h2 {
+  margin-top: 0;
   font-size: 23px;
   letter-spacing: -0.6px;
   margin: 8px 0 24px;
 }
 .visual-caption {
-  font-size: 13px;
+  font-size: 0.875rem;
   line-height: 1.8;
   color: #596a5d;
   margin: 22px 0 0;
@@ -243,7 +238,7 @@ main h3 {
   letter-spacing: -0.5px;
 }
 .visual-unit {
-  font-size: 12px;
+  font-size: 0.875rem;
   line-height: 1.7;
   color: #617067;
   text-align: right;
@@ -288,7 +283,7 @@ main h3 {
   background: #36745a;
 }
 .cohort-key {
-  font-size: 11px;
+  font-size: 0.875rem;
   line-height: 1.7;
   color: #617067;
   margin: 12px 0 24px;
@@ -304,7 +299,7 @@ main h3 {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 5px 18px;
-  font-size: 13px;
+  font-size: 0.875rem;
 }
 .funnel-stages li b {
   font-variant-numeric: tabular-nums;
@@ -351,7 +346,7 @@ main h3 {
 }
 .visual-equation p {
   margin: 10px 0 0;
-  font-size: 13px;
+  font-size: 0.875rem;
   color: #53645a;
 }
 .visual-experiment {
@@ -373,7 +368,7 @@ main h3 {
 }
 .visual-experiment p,
 .visual-experiment label {
-  font-size: 14px;
+  font-size: 1rem;
   line-height: 1.8;
 }
 .visual-experiment label {
@@ -391,7 +386,7 @@ main h3 {
   width: 100%;
   border-collapse: collapse;
   margin: 15px 0;
-  font-size: 12px;
+  font-size: 0.875rem;
   font-variant-numeric: tabular-nums;
 }
 .visual-experiment caption {
@@ -441,7 +436,7 @@ main h3 {
   height: 28px;
   border-radius: 50%;
   background: #e9efdf;
-  font-size: 12px;
+  font-size: 0.875rem;
 }
 .current .flow-node-number {
   background: #23634b;
@@ -452,7 +447,7 @@ main h3 {
   font-weight: 600;
 }
 .concept-flow p {
-  font-size: 14px;
+  font-size: 1rem;
   line-height: 1.75;
   color: #617067;
   margin: 5px 0 0;
@@ -467,7 +462,7 @@ main h3 {
     margin-bottom: 25px;
   }
   .stepper button {
-    font-size: 11px;
+    font-size: 1rem;
   }
   .example-scenario {
     font-size: 16px;
@@ -480,6 +475,7 @@ main h3 {
     margin: 25px 0;
   }
   .teaching-visual h2 {
+    margin-top: 0;
     font-size: 21px;
   }
   .cohort-dots {
@@ -506,7 +502,7 @@ main h3 {
     font-size: 36px;
   }
   .visual-unit {
-    font-size: 11px;
+    font-size: 0.875rem;
   }
   .visual-equation strong {
     font-size: 19px;
@@ -535,7 +531,7 @@ main h3 {
   gap: 12px;
   text-decoration: none;
   padding: 4px 0;
-  font-size: 14px;
+  font-size: 1rem;
   line-height: 1.7;
 }
 .reading-contents a:hover {
@@ -543,7 +539,7 @@ main h3 {
 }
 .reading-contents span {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 0.875rem;
   font-variant-numeric: tabular-nums;
 }
 .reading-topic {
@@ -565,7 +561,7 @@ main h3 {
 }
 .block-worked-example p,
 .block-example-steps {
-  font-size: 15px;
+  font-size: 1.125rem;
   line-height: 1.9;
 }
 .block-example-steps {
@@ -618,7 +614,7 @@ main h3 {
   margin-top: 0;
 }
 .block-question .choice {
-  font-size: 15px;
+  font-size: 1rem;
 }
 .block-done-topics {
   font-size: 16px;
@@ -637,5 +633,18 @@ main h3 {
   }
   .reading-contents {
     padding: 18px;
+  }
+}
+
+@media (max-width: 360px) {
+  .header-inner {
+    flex-wrap: wrap;
+    gap: 0;
+    padding-block: 14px;
+  }
+  .header-inner nav {
+    width: 100%;
+    justify-content: space-between;
+    margin-top: 12px;
   }
 }

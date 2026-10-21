@@ -12,7 +12,7 @@
   --color-secondary: #f4f4f5;
   --color-secondary-foreground: #18181b;
   --color-muted: #f4f4f5;
-  --color-muted-foreground: #71717a;
+  --color-muted-foreground: #52525b;
   --color-accent: #f4f4f5;
   --color-accent-foreground: #18181b;
   --color-destructive: #dc2626;
@@ -48,7 +48,7 @@
 }
 .shadcn {
   font-family: "Geist Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-size: 14px;
+  font-size: 1rem;
   line-height: 1.5;
   color: #18181b;
 }

@@ -129,8 +129,11 @@
     $("#capture").hidden = learning;
     $("#filters").hidden = learning;
     $("#breadcrumb").textContent = learning ? "Your learning" : "Your inbox";
-    $("#collection-title").textContent = learning ? "Ready when you are" : "Your links";
-    $("#collection-summary").textContent = learning ? "Your courses, with your place saved as you go." : active.length ? active.length + " preparing" + (queued.length ? " \xB7 " + queued.length + " queued" : "") : queued.length ? queued.length + " queued" + (inbox.settings.enabled ? "" : " \xB7 preparation paused") : needs.length ? needs.length + " " + (needs.length === 1 ? "item needs" : "items need") + " your attention" : inbox.items.length ? "A little more understood, one link at a time." : "Save something you\u2019d like to understand.";
+    $("#collection-title").textContent = learning ? "Your courses" : "Your links";
+    $("#collection-summary").hidden = learning;
+    $("#collection-title").setAttribute("aria-level", learning ? "1" : "2");
+    document.querySelector(".collection").classList.toggle("learning", learning);
+    $("#collection-summary").textContent = learning ? "Your courses, with your place saved as you go." : active.length ? active.length + " preparing" + (queued.length ? " \xB7 " + queued.length + " queued" : "") : queued.length ? queued.length + " queued" + (inbox.settings.enabled ? "" : " \xB7 preparation paused") : needs.length ? needs.length + " " + (needs.length === 1 ? "item needs" : "items need") + " your attention" : inbox.items.length ? "Saved links and courses." : "Save something you\u2019d like to understand.";
     const configured = inbox.settings.provider !== "none", running = inbox.settings.enabled;
     const controls = `<div class="queue-status ${running ? "running" : ""}"><span aria-hidden="true"></span><span>${running ? "Queue running" : configured ? "Queue paused" : "Preparation not connected"}</span>${configured ? `<button data-toggle-queue>${running ? "Pause" : "Resume"}</button>` : ""}<button data-settings>${configured ? "Settings" : "Connect a model"}</button></div>`;
     if (controls !== lastControls) {

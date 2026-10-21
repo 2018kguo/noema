@@ -1,14 +1,5 @@
 import { useState } from "react";
-import {
-  ArrowRight,
-  BookOpen,
-  Check,
-  ChevronRight,
-  Circle,
-  List,
-  Menu,
-  RotateCcw,
-} from "lucide-react";
+import { ArrowRight, Check, ChevronRight, Circle, Menu } from "lucide-react";
 import { Button } from "./components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./components/ui/card";
 import {
@@ -17,7 +8,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "./components/ui/accordion";
-import { Badge } from "./components/ui/badge";
 import { Progress } from "./components/ui/progress";
 import { cn } from "./lib/utils";
 
@@ -41,7 +31,6 @@ export type HomeProps = {
 };
 const phaseName = (phase: string) =>
   phase.includes(" · ") ? phase.split(" · ").slice(1).join(" · ") : phase;
-
 export function CourseHome({
   meta,
   lessons,
@@ -53,11 +42,11 @@ export function CourseHome({
   storageOK,
   navigate,
 }: HomeProps) {
-  const phases = [...new Set(lessons.map((l) => l.phase))];
-  const currentPhase = phases.indexOf(current.phase);
+  const phases = [...new Set(lessons.map((l) => l.phase))],
+    currentPhase = phases.indexOf(current.phase);
   const [open, setOpen] = useState([...new Set(["phase-0", "phase-" + currentPhase])]);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [selected, setSelected] = useState(-1);
+  const [mobileOpen, setMobileOpen] = useState(false),
+    [selected, setSelected] = useState(-1);
   const finished = lessons.filter((l) => completed[l.id]).length;
   function jump(index: number) {
     const id = "phase-" + index;
@@ -68,135 +57,106 @@ export function CourseHome({
   }
   return (
     <div
-      className="ui:grid ui:items-start ui:gap-8 ui:lg:grid-cols-[216px_minmax(0,1fr)] ui:lg:gap-14"
+      className="ui:grid ui:items-start ui:gap-8 ui:lg:grid-cols-[216px_minmax(0,1fr)] ui:lg:gap-12"
       data-course-home
     >
       <aside className="ui:min-w-0 ui:lg:sticky ui:lg:top-24" aria-label="Course navigation">
         <Button
           variant="outline"
-          className="ui:flex ui:w-full ui:justify-between ui:lg:hidden"
+          className="ui:flex ui:w-full ui:justify-between ui:text-base ui:lg:hidden"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-expanded={mobileOpen}
           aria-controls="course-sidebar"
         >
           <span className="ui:flex ui:items-center ui:gap-2">
-            <Menu size={16} /> Browse course
+            <Menu size={18} />
+            Browse course
           </span>
-          <ChevronRight size={16} />
+          <ChevronRight size={18} />
         </Button>
         <div
           id="course-sidebar"
           className={cn("ui:pt-4 ui:lg:block ui:lg:pt-0", !mobileOpen && "ui:hidden")}
         >
-          <div className="ui:mb-6 ui:flex ui:items-start ui:gap-3 ui:px-2">
-            <BookOpen className="ui:mt-0.5 ui:size-4 ui:shrink-0 ui:text-muted-foreground" />
-            <div>
-              <p className="ui:text-sm ui:font-medium">{meta.title}</p>
-              <p className="ui:mt-1 ui:text-xs ui:text-muted-foreground">
-                {lessons.length} lessons · self-paced
-              </p>
-            </div>
-          </div>
-          <nav aria-label="Jump to a course section" className="ui:space-y-1">
+          <nav aria-label="Jump to a course section" className="ui:space-y-2">
             <Button
               variant={selected === -1 ? "secondary" : "ghost"}
-              className="ui:w-full ui:justify-start ui:gap-2 ui:px-3 ui:text-[13px]"
+              className="ui:mb-4 ui:w-full ui:justify-start ui:px-3 ui:text-base"
               onClick={() => {
                 setSelected(-1);
                 window.scrollTo({ top: 0 });
               }}
             >
-              <List size={15} /> Overview
+              Overview
             </Button>
-            <p className="ui:px-3 ui:pb-2 ui:pt-6 ui:text-xs ui:font-medium ui:text-muted-foreground">
-              Course content
-            </p>
             {phases.map((phase, i) => (
               <Button
                 key={phase}
                 variant={selected === i ? "secondary" : "ghost"}
-                className="ui:h-auto ui:w-full ui:justify-start ui:gap-3 ui:whitespace-normal ui:px-3 ui:py-2.5 ui:text-left ui:text-[13px] ui:leading-5"
+                className="ui:h-auto ui:w-full ui:justify-start ui:whitespace-normal ui:px-3 ui:py-2.5 ui:text-left ui:text-base ui:leading-6"
                 onClick={() => jump(i)}
                 data-phase-jump={i}
               >
-                <span className="ui:w-4 ui:shrink-0 ui:text-xs ui:tabular-nums ui:text-muted-foreground">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
                 {phaseName(phase)}
               </Button>
             ))}
           </nav>
-          <div className="ui:mt-7 ui:border-t ui:border-border ui:px-3 ui:pt-5">
-            <p className="ui:mb-2 ui:text-xs ui:text-muted-foreground">
+          <div className="ui:mt-8 ui:border-t ui:border-border ui:px-3 ui:pt-6">
+            <p className="ui:mb-3 ui:text-sm ui:leading-6 ui:text-muted-foreground">
               {progress.read} of {lessons.length} topics read
+              <br />
+              {finished} practiced
             </p>
             <Progress
               value={(100 * progress.read) / lessons.length}
-              className="ui:h-1"
+              aria-valuenow={Math.round((100 * progress.read) / lessons.length)}
+              className="ui:h-1.5"
               aria-label="Topics marked read"
             />
-            <p className="ui:mt-2 ui:text-xs ui:text-muted-foreground">{finished} practiced</p>
-            <p className="ui:mt-3 ui:text-xs ui:leading-5 ui:text-muted-foreground">
-              Your place and answers are saved in this browser.
-            </p>
           </div>
         </div>
       </aside>
-
       <div className="ui:min-w-0">
-        <nav
-          aria-label="Breadcrumb"
-          className="ui:mb-7 ui:flex ui:items-center ui:gap-2 ui:text-xs ui:text-muted-foreground"
-        >
-          <span>Learning</span>
-          <ChevronRight size={13} />
-          <span className="ui:text-foreground">Course overview</span>
-        </nav>
         <header className="ui:mb-8">
-          <h1 className="ui:mb-4 ui:text-[30px] ui:font-semibold ui:leading-tight ui:tracking-tight ui:sm:text-4xl">
+          <h1 className="ui:mb-5 ui:text-3xl ui:font-semibold ui:leading-tight ui:tracking-tight ui:sm:text-4xl">
             {meta.title}
           </h1>
-          <p className="ui:max-w-[64ch] ui:text-[15px] ui:leading-7 ui:text-muted-foreground">
+          <p className="ui:max-w-[64ch] ui:text-lg ui:leading-8 ui:text-muted-foreground">
             {meta.introduction}
           </p>
-          <div className="ui:mt-5 ui:flex ui:flex-wrap ui:items-center ui:gap-2">
-            <Badge variant="secondary">{progress.blockCount} reading blocks</Badge>
-            <Badge variant="outline">{lessons.length} topics</Badge>
-            <span className="ui:text-xs ui:text-muted-foreground">
-              Grouped quizzes after each block
-            </span>
-          </div>
+          <p className="ui:mt-5 ui:text-base ui:leading-7 ui:text-muted-foreground">
+            {lessons.length} topics in {progress.blockCount} reading blocks. Quizzes follow each
+            block.
+          </p>
         </header>
-
         <Card className="ui:mb-10 ui:gap-5 ui:rounded-lg ui:shadow-none" data-course-resume>
-          <CardHeader className="ui:gap-2">
-            <div className="ui:mb-1 ui:flex ui:items-center ui:gap-2 ui:text-xs ui:font-medium ui:text-muted-foreground">
-              <RotateCcw size={13} />
-              {started ? "Continue learning" : "Start here"}
-            </div>
-            <CardTitle className="ui:text-lg ui:leading-7 ui:font-semibold">
+          <CardHeader className="ui:gap-3">
+            <CardTitle className="ui:text-xl ui:font-semibold ui:leading-7">
               {current.title}
             </CardTitle>
-            <CardDescription className="ui:leading-6">{current.goal}</CardDescription>
+            <CardDescription className="ui:text-base ui:leading-7">{current.goal}</CardDescription>
           </CardHeader>
           <CardContent className="ui:flex ui:flex-wrap ui:items-center ui:justify-between ui:gap-4">
-            <p className="ui:text-xs ui:text-muted-foreground">
-              Lesson {lessons.indexOf(current) + 1} of {lessons.length}
+            <p className="ui:text-sm ui:text-muted-foreground">
+              Topic {lessons.indexOf(current) + 1} of {lessons.length}
             </p>
-            <Button onClick={() => navigate(progress.resumeRoute)} data-course-continue>
+            <Button
+              className="ui:text-base"
+              onClick={() => navigate(progress.resumeRoute)}
+              data-course-continue
+            >
               {started ? "Resume learning" : "Begin reading"}
-              <ArrowRight size={16} />
+              <ArrowRight size={18} />
             </Button>
           </CardContent>
         </Card>
-
         <section aria-labelledby="curriculum-title" data-course-outline>
-          <div className="ui:mb-3 ui:flex ui:items-baseline ui:justify-between ui:gap-4">
-            <h2 id="curriculum-title" className="ui:text-lg ui:font-semibold ui:tracking-tight">
-              Course content
-            </h2>
-            <span className="ui:text-xs ui:text-muted-foreground">{phases.length} sections</span>
-          </div>
+          <h2
+            id="curriculum-title"
+            className="ui:mb-4 ui:text-xl ui:font-semibold ui:tracking-tight"
+          >
+            Course content
+          </h2>
           <Accordion
             type="multiple"
             value={open}
@@ -211,16 +171,13 @@ export function CourseHome({
                 className="ui:scroll-mt-6"
               >
                 <AccordionTrigger
-                  className="ui:items-center ui:gap-3 ui:py-5 ui:hover:no-underline"
+                  className="ui:items-center ui:gap-3 ui:py-5 ui:text-base ui:hover:no-underline"
                   data-course-section={i}
                 >
-                  <span className="ui:flex ui:min-w-0 ui:flex-1 ui:items-center ui:gap-3">
-                    <span className="ui:text-xs ui:font-normal ui:tabular-nums ui:text-muted-foreground">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <span className="ui:text-sm ui:font-medium">{phaseName(phase)}</span>
-                    <span className="ui:ml-auto ui:shrink-0 ui:text-xs ui:font-normal ui:text-muted-foreground">
-                      {lessons.filter((l) => l.phase === phase).length} lessons
+                  <span className="ui:flex ui:min-w-0 ui:flex-1 ui:flex-wrap ui:items-center ui:gap-x-4 ui:gap-y-1">
+                    <span className="ui:text-base ui:font-medium">{phaseName(phase)}</span>
+                    <span className="ui:ml-auto ui:shrink-0 ui:text-sm ui:font-normal ui:text-muted-foreground">
+                      {lessons.filter((l) => l.phase === phase).length} topics
                     </span>
                   </span>
                 </AccordionTrigger>
@@ -232,26 +189,26 @@ export function CourseHome({
                         type="button"
                         data-course-lesson={l.id}
                         onClick={() => navigate(routes[l.id])}
-                        className="ui:group ui:grid ui:w-full ui:grid-cols-[24px_minmax(0,1fr)_20px] ui:items-start ui:gap-3 ui:rounded-md ui:px-1 ui:py-4 ui:text-left ui:transition-colors ui:hover:bg-muted ui:sm:px-2"
+                        className="ui:grid ui:w-full ui:grid-cols-[minmax(0,1fr)_20px] ui:sm:grid-cols-[24px_minmax(0,1fr)_20px] ui:items-start ui:gap-3 ui:rounded-md ui:px-1 ui:py-4 ui:text-left ui:transition-colors ui:hover:bg-muted ui:sm:px-2"
                       >
-                        <span className="ui:pt-0.5 ui:text-xs ui:tabular-nums ui:text-muted-foreground">
-                          {String(j + 1).padStart(2, "0")}
+                        <span className="ui:hidden ui:pt-0.5 ui:text-sm ui:tabular-nums ui:sm:block ui:text-muted-foreground">
+                          {j + 1}
                         </span>
                         <span className="ui:min-w-0">
-                          <span className="ui:block ui:text-sm ui:font-medium ui:leading-6">
+                          <span className="ui:block ui:text-base ui:font-medium ui:leading-7">
                             {l.title}
                           </span>
-                          <span className="ui:mt-1 ui:block ui:text-[13px] ui:leading-6 ui:text-muted-foreground">
+                          <span className="ui:mt-1 ui:block ui:text-base ui:leading-7 ui:text-muted-foreground">
                             {l.goal}
                           </span>
                         </span>
                         <span className="ui:pt-1 ui:text-muted-foreground">
                           {completed[l.id] ? (
-                            <Check size={16} aria-label="Practiced" />
+                            <Check size={18} aria-label="Practiced" />
                           ) : current.id === l.id && started ? (
-                            <Circle size={14} fill="currentColor" aria-label="In progress" />
+                            <Circle size={16} fill="currentColor" aria-label="In progress" />
                           ) : (
-                            <ArrowRight size={15} aria-hidden="true" />
+                            <ArrowRight size={18} aria-hidden="true" />
                           )}
                         </span>
                       </button>
@@ -262,11 +219,11 @@ export function CourseHome({
             ))}
           </Accordion>
         </section>
-        <p className="ui:mt-7 ui:text-xs ui:leading-6 ui:text-muted-foreground">{meta.footnote}</p>
+        <p className="ui:mt-7 ui:text-sm ui:leading-7 ui:text-muted-foreground">{meta.footnote}</p>
         {!storageOK && (
           <p
             role="alert"
-            className="ui:mt-4 ui:rounded-md ui:border ui:border-border ui:p-4 ui:text-sm"
+            className="ui:mt-4 ui:rounded-md ui:border ui:border-border ui:p-4 ui:text-base"
           >
             Your browser cannot save progress. Use Reference → Export progress before leaving.
           </p>

@@ -160,7 +160,10 @@ function renderList() {
   $("#capture").hidden = learning;
   $("#filters").hidden = learning;
   $("#breadcrumb").textContent = learning ? "Your learning" : "Your inbox";
-  $("#collection-title").textContent = learning ? "Ready when you are" : "Your links";
+  $("#collection-title").textContent = learning ? "Your courses" : "Your links";
+  $("#collection-summary").hidden = learning;
+  $("#collection-title").setAttribute("aria-level", learning ? "1" : "2");
+  document.querySelector(".collection").classList.toggle("learning", learning);
   $("#collection-summary").textContent = learning
     ? "Your courses, with your place saved as you go."
     : active.length
@@ -173,7 +176,7 @@ function renderList() {
             (needs.length === 1 ? "item needs" : "items need") +
             " your attention"
           : inbox.items.length
-            ? "A little more understood, one link at a time."
+            ? "Saved links and courses."
             : "Save something you’d like to understand.";
   const configured = inbox.settings.provider !== "none",
     running = inbox.settings.enabled;

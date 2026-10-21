@@ -2,7 +2,7 @@
   font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: #20352e;
   background: #fafaf6;
-  font-size: 17px;
+  font-size: 100%;
   line-height: 1.7;
   font-synthesis: none;
   -webkit-font-smoothing: antialiased;
@@ -106,22 +106,15 @@ h3 {
   margin: 28px 0 14px;
 }
 small {
-  font-size: 13px;
+  font-size: 0.875rem;
 }
 .small {
-  font-size: 13px;
+  font-size: 0.875rem;
   line-height: 1.7;
   color: var(--muted);
 }
 .muted {
   color: var(--muted);
-}
-.eyebrow {
-  font-size: 11px;
-  font-weight: 650;
-  letter-spacing: 1.5px;
-  color: var(--green);
-  line-height: 1.5;
 }
 .lead,
 .lede {
@@ -145,7 +138,7 @@ small {
   gap: 12px;
   border-radius: 7px;
   padding: 11px 20px;
-  font-size: 15px;
+  font-size: 1rem;
   font-weight: 580;
   text-decoration: none;
   border: 1px solid transparent;
@@ -212,7 +205,7 @@ button:active {
   border: 1px solid #c8d3c5;
   border-radius: 7px;
   margin-bottom: 28px;
-  font-size: 15px;
+  font-size: 1rem;
   color: var(--ink);
 }
 textarea {
@@ -279,7 +272,7 @@ textarea::placeholder {
   display: flex;
   align-items: center;
   gap: 26px;
-  font-size: 13px;
+  font-size: 0.875rem;
 }
 .header-inner nav > a {
   text-decoration: none;
@@ -309,7 +302,7 @@ textarea::placeholder {
 }
 .reference-menu > summary::after {
   content: "⌄";
-  font-size: 13px;
+  font-size: 0.875rem;
   margin-left: 2px;
 }
 .reference-menu > div {
@@ -330,7 +323,7 @@ textarea::placeholder {
   border: 0;
   background: transparent;
   color: var(--ink);
-  font-size: 13px;
+  font-size: 0.875rem;
   padding: 10px 12px;
   text-decoration: none;
   width: 100%;
@@ -356,7 +349,7 @@ main {
   display: flex;
   justify-content: space-between;
   gap: 20px;
-  font-size: 11px;
+  font-size: 0.875rem;
   color: var(--muted);
 }
 .in-lesson main {
@@ -371,7 +364,7 @@ main {
   justify-content: space-between;
   gap: 14px;
   margin-bottom: 17px;
-  font-size: 12px;
+  font-size: 0.875rem;
   color: var(--muted);
 }
 .lesson-topline a {
@@ -409,7 +402,7 @@ main {
   background: transparent;
   padding: 8px 0;
   min-height: 44px;
-  font-size: 12px;
+  font-size: 1rem;
   color: #7d8b7c;
 }
 .step-number {
@@ -420,7 +413,7 @@ main {
   border-radius: 50%;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: 0.875rem;
 }
 .stepper button[aria-current] {
   color: var(--green);
@@ -474,7 +467,7 @@ main {
 .prose code,
 code {
   font-family: "SFMono-Regular", Consolas, monospace;
-  font-size: 0.82em;
+  font-size: max(0.875rem, 0.875em);
   background: #eaf0e3;
   border-radius: 3px;
   padding: 2px 5px;
@@ -529,7 +522,7 @@ code {
   flex-direction: column;
   gap: 9px;
   margin: 12px 0 20px;
-  font-size: 13px;
+  font-size: 0.875rem;
   line-height: 1.6;
 }
 .example-scenario {
@@ -553,7 +546,7 @@ code {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 0.875rem;
   color: #73816d;
 }
 .example-progress > div {
@@ -596,7 +589,7 @@ code {
   gap: 15px;
 }
 .flow-footer-inner > div > a {
-  font-size: 13px;
+  font-size: 0.875rem;
   text-decoration: none;
 }
 .footer-actions {
@@ -608,7 +601,7 @@ code {
   min-width: 190px;
 }
 .save-later {
-  font-size: 12px;
+  font-size: 0.875rem;
 }
 .question {
   margin: 30px 0;
@@ -754,7 +747,7 @@ code {
   font-weight: 550;
 }
 .verdict {
-  font-size: 10px;
+  font-size: 0.875rem;
   min-width: 104px;
   padding: 4px 8px;
   text-align: center;
@@ -784,7 +777,7 @@ code {
 }
 .feedback-evidence {
   margin-top: 18px;
-  font-size: 12px;
+  font-size: 0.875rem;
   color: var(--muted);
 }
 .feedback-evidence summary {
@@ -797,7 +790,7 @@ code {
   padding-left: 15px;
   margin: 13px 0;
   font-style: italic;
-  font-size: 13px;
+  font-size: 0.875rem;
 }
 .feedback-wait {
   padding: 22px;
@@ -839,7 +832,7 @@ code {
 }
 .option-row small {
   display: block;
-  font-size: 13px;
+  font-size: 0.875rem;
   color: var(--muted);
   line-height: 1.65;
   margin-top: 5px;
@@ -873,7 +866,7 @@ code {
   margin: 25px 0;
 }
 .connection-status p {
-  font-size: 13px;
+  font-size: 0.875rem;
   margin: 3px 0 0;
   color: var(--muted);
 }
@@ -909,7 +902,7 @@ code {
   border-top: 1px solid var(--line);
 }
 .source-item p {
-  font-size: 13px;
+  font-size: 0.875rem;
   color: var(--muted);
   margin: 7px 0 0;
 }
@@ -950,7 +943,7 @@ pre {
   border-radius: 9px;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  font-size: 13px;
+  font-size: 0.875rem;
   line-height: 1.9;
   margin: 25px 0;
 }
@@ -981,7 +974,7 @@ pre code {
   margin: 23px 0;
 }
 .lab-controls label {
-  font-size: 13px;
+  font-size: 0.875rem;
   line-height: 1.7;
 }
 .lab-controls output {
@@ -1004,7 +997,7 @@ input[type="range"] {
   background: var(--white);
   border: 1px solid var(--line);
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 0.875rem;
 }
 .lab-results {
   background: #edf4e5;
@@ -1024,7 +1017,7 @@ input[type="range"] {
   grid-template-columns: 65px 1fr 55px;
   gap: 12px;
   align-items: center;
-  font-size: 12px;
+  font-size: 0.875rem;
 }
 .bar-track {
   background: #dbe7d1;
@@ -1039,7 +1032,7 @@ input[type="range"] {
 }
 .lab table {
   width: 100%;
-  font-size: 12px;
+  font-size: 0.875rem;
   border-collapse: collapse;
   margin: 15px 0;
 }
@@ -1061,7 +1054,7 @@ input[type="range"] {
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 10px;
+  font-size: 0.875rem;
   min-width: 10px;
 }
 .timeline .cpu {
@@ -1087,7 +1080,7 @@ input[type="range"] {
   background: #253e31;
   color: white;
   padding: 12px 21px;
-  font-size: 13px;
+  font-size: 0.875rem;
   z-index: 40;
   opacity: 0;
   pointer-events: none;
@@ -1136,7 +1129,7 @@ input[type="range"] {
   line-height: 1.85;
 }
 .feedback-next .text-button {
-  font-size: 13px;
+  font-size: 1rem;
   padding-bottom: 0;
 }
 .feedback-breakdown {
@@ -1151,7 +1144,7 @@ input[type="range"] {
   color: var(--green);
 }
 .activity-progress {
-  font-size: 12px;
+  font-size: 0.875rem;
   color: var(--muted);
   margin: 24px 0 12px;
 }
@@ -1211,7 +1204,7 @@ input[type="range"] {
 .activity-table table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 0.875rem;
   font-variant-numeric: tabular-nums;
 }
 .activity-table th,
@@ -1259,7 +1252,7 @@ input[type="range"] {
   margin-bottom: 12px;
 }
 .reference-result .background p {
-  font-size: 13px;
+  font-size: 0.875rem;
 }
 .reference-checks .activity-table th,
 .reference-checks .activity-table td {
@@ -1269,7 +1262,7 @@ input[type="range"] {
   margin-bottom: 10px;
 }
 .engine-source pre {
-  font-size: 12px;
+  font-size: 0.875rem;
   line-height: 1.85;
 }
 .engine-source pre code {
@@ -1293,7 +1286,7 @@ input[type="range"] {
   justify-content: space-between;
   gap: 15px;
   padding: 12px 18px;
-  font-size: 11px;
+  font-size: 0.875rem;
   color: var(--muted);
   background: #f0f4e9;
 }
@@ -1324,7 +1317,7 @@ input[type="range"] {
   display: inline-block;
   width: 23px;
   color: #a8bca7;
-  font-size: 11px;
+  font-size: 0.875rem;
   user-select: none;
 }
 .cache-code mark {
@@ -1362,7 +1355,7 @@ input[type="range"] {
 .cache-code-panel p.code-caption {
   padding: 0 22px 18px;
   margin: 0;
-  font-size: 11px;
+  font-size: 0.875rem;
   line-height: 1.8;
   color: var(--muted);
 }
@@ -1396,12 +1389,12 @@ input[type="range"] {
 }
 .cache-entry > span {
   display: block;
-  font-size: 12px;
+  font-size: 0.875rem;
   margin: 4px 0 10px;
 }
 .cache-entry > small {
   display: block;
-  font-size: 12px;
+  font-size: 0.875rem;
   color: var(--green);
   line-height: 1.7;
 }
@@ -1451,7 +1444,7 @@ input[type="range"] {
 }
 .score-pair small {
   display: block;
-  font-size: 12px;
+  font-size: 0.875rem;
   line-height: 1.7;
 }
 .score-pair b {
@@ -1510,7 +1503,7 @@ input[type="range"] {
   }
   .header-inner nav {
     gap: 15px;
-    font-size: 12px;
+    font-size: 0.875rem;
   }
   main {
     padding: 30px 22px 50px;
@@ -1554,7 +1547,7 @@ input[type="range"] {
     text-align: center;
     line-height: 1.4;
     width: 100%;
-    font-size: 10px;
+    font-size: 1rem;
     padding: 7px 0;
   }
   .step-line {
@@ -1565,7 +1558,7 @@ input[type="range"] {
     height: 25px;
   }
   .lesson-context {
-    font-size: 12px;
+    font-size: 0.875rem;
     margin-bottom: 14px;
   }
   .prose {
@@ -1598,7 +1591,7 @@ input[type="range"] {
     font-size: 20px;
   }
   .choice {
-    font-size: 15px;
+    font-size: 1rem;
     padding: 15px;
   }
   .flow-footer-inner {
@@ -1607,20 +1600,21 @@ input[type="range"] {
     gap: 10px;
   }
   .footer-actions {
+    min-width: 0;
     gap: 10px;
     flex-wrap: wrap;
     justify-content: flex-end;
   }
   .footer-actions > .primary {
     min-width: 0;
-    max-width: 245px;
+    max-width: min(245px, 100%);
     font-size: 14px;
     padding: 11px 15px;
     gap: 8px;
   }
   .flow-footer-inner .text-button,
   .flow-footer-inner a {
-    font-size: 12px;
+    font-size: 0.875rem;
   }
   .save-later {
     order: 2;
@@ -1638,7 +1632,7 @@ input[type="range"] {
     flex-direction: column;
   }
   .explain-options button {
-    font-size: 13px;
+    font-size: 0.875rem;
   }
   .feedback-point {
     flex-direction: column;
@@ -1662,16 +1656,16 @@ input[type="range"] {
     gap: 11px;
   }
   .chapter-count {
-    font-size: 11px;
+    font-size: 0.875rem;
   }
   .lesson-row {
     gap: 13px;
   }
   .lesson-row small {
-    font-size: 12px;
+    font-size: 0.875rem;
   }
   .section-heading > span {
-    font-size: 11px;
+    font-size: 0.875rem;
   }
   .site-footer {
     padding: 20px 22px 28px;
@@ -1692,29 +1686,29 @@ input[type="range"] {
   }
   .lab-results {
     padding: 16px;
-    font-size: 13px;
+    font-size: 0.875rem;
   }
   .bar-row {
     grid-template-columns: 55px 1fr 48px;
     gap: 9px;
   }
   .page-select {
-    font-size: 14px;
+    font-size: 1rem;
   }
   textarea {
     font-size: 16px;
     min-height: 210px;
   }
   .source-links {
-    font-size: 12px;
+    font-size: 0.875rem;
   }
   pre {
     padding: 18px;
-    font-size: 12px;
+    font-size: 0.875rem;
   }
   .background > summary,
   .optional-reading summary {
-    font-size: 13px;
+    font-size: 0.875rem;
   }
   #toast {
     bottom: 115px;
@@ -1737,7 +1731,7 @@ input[type="range"] {
     min-height: 33px;
   }
   .stepper button {
-    font-size: 9px;
+    font-size: 1rem;
   }
   .footer-actions > .primary {
     max-width: 205px;
@@ -1777,24 +1771,24 @@ input[type="range"] {
 
 @media (max-width: 680px) {
   .cache-code-heading {
-    font-size: 10px;
+    font-size: 0.875rem;
     flex-wrap: wrap;
     gap: 4px 15px;
     padding: 10px 13px;
   }
   .cache-code-panel pre.cache-code {
-    font-size: 12px;
+    font-size: 0.875rem;
     padding: 14px 7px;
   }
   .line-number {
     width: 18px;
-    font-size: 10px;
+    font-size: 0.875rem;
   }
   .code-explanation {
     padding: 17px 17px 0;
   }
   .code-explanation p {
-    font-size: 13px;
+    font-size: 0.875rem;
   }
   .cache-code-panel p.code-caption {
     padding-inline: 17px;
@@ -1807,7 +1801,7 @@ input[type="range"] {
   }
   .cache-entry > span,
   .cache-entry > small {
-    font-size: 11px;
+    font-size: 0.875rem;
   }
   .cache-entries {
     gap: 9px;
@@ -1819,7 +1813,7 @@ input[type="range"] {
     padding: 14px;
   }
   .score-pair small {
-    font-size: 11px;
+    font-size: 0.875rem;
   }
   .score-pair b {
     font-size: 23px;
@@ -1831,6 +1825,6 @@ input[type="range"] {
     font-size: 18px;
   }
   .calculation {
-    font-size: 13px !important;
+    font-size: 0.875rem !important;
   }
 }

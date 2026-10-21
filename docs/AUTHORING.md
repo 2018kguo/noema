@@ -191,3 +191,7 @@ the material are separate from the fact that the app can package it.
 The default reader combines topics and worked examples until their estimated time reaches about 30 minutes. The estimate includes reading at 170 words per minute and at least three minutes per example; each topic gets at least five minutes. `reading_minutes` can override a topic estimate after editorial review. Optional deeper layers are not counted. A final lone topic joins the previous block. Questions are collected at the end, with one check action for the whole block, followed by an explanation. No timer gates access.
 
 The dashboard reads the same browser progress key as the course. Marking a block read increases reading progress; completing its quiz and comparing the current explanation records practice. Existing completed lessons remain counted.
+
+## Readable presentation
+
+The shared reader uses 18px lesson prose, 16px controls and ordinary interface text, and a 14px floor for secondary information at the default browser size. These sizes stay readable on phones; layouts wrap rather than shrinking text. Use meaningful headings and connected prose. Do not add all-caps kickers, duplicate headings, decorative badges or labels such as “LET’S MAKE IT CONCRETE.” Sources, field labels and actual status remain visible in sentence case. The browser provides navigation and progress.

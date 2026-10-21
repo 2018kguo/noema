@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpen, MoreHorizontal } from "lucide-react";
+import { ArrowRight, MoreHorizontal } from "lucide-react";
 import { Card, CardContent } from "./components/ui/card";
 import { Progress } from "./components/ui/progress";
 import { Button } from "./components/ui/button";
@@ -27,22 +27,21 @@ export function ReadyCourse({ id, title, domain, url, sample, progress }: ReadyC
   const available = progress?.kind === "available" ? progress : null;
   const href = available?.started && !available.complete ? url + "#" + available.resumeRoute : url;
   return (
-    <Card className="ui:mb-3 ui:gap-0 ui:rounded-lg ui:shadow-none" data-learning-card={id}>
-      <CardContent className="ui:relative ui:pt-5 ui:pb-5">
+    <Card className="ui:mb-3 ui:gap-0 ui:py-0 ui:rounded-lg ui:shadow-none" data-learning-card={id}>
+      <CardContent className="ui:relative ui:p-6">
         <a
           href={href}
           className={(sample ? "sample-row" : "ready-row") + " ui:block ui:pr-8 ui:no-underline"}
         >
-          <div className="ui:mb-3 ui:flex ui:items-center ui:gap-2 ui:text-xs ui:text-muted-foreground">
-            <BookOpen size={14} />
-            {domain}
-          </div>
-          <h3 className="ui:mb-2 ui:text-base ui:font-medium ui:leading-6 ui:text-foreground">
+          <h3 className="ui:mb-2 ui:text-xl ui:font-medium ui:leading-7 ui:text-foreground">
             {title}
           </h3>
+          <div className="ui:mb-4 ui:flex ui:items-center ui:gap-2 ui:text-sm ui:text-muted-foreground">
+            {domain}
+          </div>
           {available ? (
             <>
-              <div className="ui:mt-4 ui:flex ui:items-center ui:justify-between ui:gap-3 ui:text-xs ui:text-muted-foreground">
+              <div className="ui:mt-4 ui:flex ui:flex-wrap ui:items-center ui:justify-between ui:gap-x-3 ui:gap-y-1 ui:text-base ui:text-muted-foreground">
                 <span>
                   {available.read} of {available.total} topics read · {available.practiced}{" "}
                   practiced
@@ -55,20 +54,20 @@ export function ReadyCourse({ id, title, domain, url, sample, progress }: ReadyC
                 aria-valuenow={available.percent}
                 className="ui:mt-2 ui:h-1.5"
               />
-              <p className="ui:mt-3 ui:truncate ui:text-xs ui:text-muted-foreground">
-                {available.complete
-                  ? "All blocks practiced"
-                  : available.started
-                    ? "Continue: " + available.currentTitle
-                    : "Not started"}
-              </p>
+              {(available.started || available.complete) && (
+                <p className="ui:mt-3 ui:text-base ui:leading-7 ui:text-muted-foreground">
+                  {available.complete
+                    ? "All blocks practiced"
+                    : "Continue: " + available.currentTitle}
+                </p>
+              )}
             </>
           ) : (
-            <p className="ui:my-3 ui:text-xs ui:text-muted-foreground">
+            <p className="ui:my-3 ui:text-sm ui:text-muted-foreground">
               {progress ? "Progress unavailable in this browser" : "Loading saved progress…"}
             </p>
           )}
-          <span className="ui:mt-4 ui:flex ui:items-center ui:gap-2 ui:text-sm ui:font-medium ui:text-foreground">
+          <span className="ui:mt-4 ui:flex ui:items-center ui:gap-2 ui:text-base ui:font-medium ui:text-foreground">
             {available?.started ? "Continue learning" : "Open course"}
             <ArrowRight size={14} />
           </span>

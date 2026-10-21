@@ -24,7 +24,7 @@
     const stage = visual.stages[reached - 1];
     const countLabel = `${number(active)} ${visual.unit}`;
     return `<div data-funnel="${escape(id)}" data-share="${share}" data-value="${active}">
-      <div class="cohort-layout"><div class="cohort-picture"><div class="cohort-head"><div><span class="visual-label">${escape(stage.label)}</span><strong>${number(active)}<small> / ${number(visual.initial)}</small></strong></div><span class="visual-unit">${escape(visual.unit)}<br>from the starting group</span></div>
+      <div class="cohort-layout"><div class="cohort-picture"><div class="cohort-head"><div><span class="cohort-stage">${escape(stage.label)}</span><strong>${number(active)}<small> / ${number(visual.initial)}</small></strong></div><span class="visual-unit">${escape(visual.unit)}<br>from the starting group</span></div>
       <div class="cohort-dots" aria-hidden="true">${Array.from({ length: 100 }, (_, i) => `<span><i style="width:${Math.max(0, Math.min(1, share * 100 - i)) * 100}%"></i></span>`).join("")}</div>
       <p class="cohort-key">100 dots represent the starting ${number(visual.initial)} ${escape(visual.unit)}. A partial dot shows an expected fraction.</p>
       </div><div><ol class="funnel-stages">
@@ -38,7 +38,7 @@
   function render(visual, part, id) {
     if (!visual) return "";
     const body = visual.kind === "funnel" ? funnel(visual, part, id) : `<ol class="concept-flow">${visual.nodes.map((node) => `<li class="${node.step === part ? "current" : node.step > part ? "upcoming" : ""}" ${node.step === part ? 'aria-current="step"' : ""}><span class="flow-node-number">${node.step + 1}</span><div><b>${escape(node.label)}</b><p>${escape(node.detail)}</p></div></li>`).join("")}</ol>`;
-    return `<figure class="teaching-visual" data-visual="${escape(id)}"><figcaption><span class="visual-label">${visual.kind === "funnel" ? "FOLLOW THE GROUP" : "FOLLOW THE CONNECTION"}</span><h2>${escape(visual.title)}</h2></figcaption>${body}<p class="visual-caption">${escape(visual.caption)}</p></figure>`;
+    return `<figure class="teaching-visual" data-visual="${escape(id)}"><figcaption><h2>${escape(visual.title)}</h2></figcaption>${body}<p class="visual-caption">${escape(visual.caption)}</p></figure>`;
   }
   function updateExperiment(lesson, rate) {
     const visual = lesson.visual;

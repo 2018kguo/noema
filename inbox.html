@@ -16,8 +16,26 @@
   <body>
     <a class="skip" href="#main">Skip to inbox</a>
     <aside class="sidebar">
-      <a class="brand" href="#inbox"><span class="brand-mark" aria-hidden="true">n</span>Noema</a>
-      <p class="workspace-label">YOUR SPACE</p>
+      <a class="brand" href="#inbox"
+        ><svg
+          class="brand-icon"
+          xmlns="http://www.w3.org/2000/svg"
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 7v14" />
+          <path
+            d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"
+          /></svg
+        >Noema</a
+      >
       <nav aria-label="Workspace">
         <a href="#inbox" id="nav-inbox" class="nav-item"
           ><span>↳</span> Inbox <span class="count" id="inbox-count">0</span></a
@@ -27,12 +45,9 @@
         >
       </nav>
       <div class="sidebar-bottom">
-        <p>Something to start with</p>
         <a href="/learn/deepinfer/"
           >Inside Inference <span>↗</span><small>From first principles to a tiny engine.</small></a
-        ><button id="settings-button" class="settings-button">
-          Preparation settings <span>⌘</span>
-        </button>
+        ><button id="settings-button" class="settings-button">Preparation settings</button>
       </div>
     </aside>
     <div class="workspace">
@@ -42,10 +57,9 @@
       </header>
       <main id="main" tabindex="-1">
         <section id="capture">
-          <span class="eyebrow">A PLACE FOR YOUR CURIOSITY</span>
-          <h1>What caught your attention?</h1>
+          <h1>What do you want to understand?</h1>
           <p class="intro">
-            Drop in a post, article, or repo. Noema turns it into lessons you can work through.
+            Save a link and add what you want to learn. You can follow its progress here.
           </p>
           <form id="capture-form" class="capture-box">
             <label for="links" class="sr-only">Links to explore, one per line</label>

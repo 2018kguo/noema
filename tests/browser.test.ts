@@ -826,3 +826,61 @@ test("multiple cohort experiments keep independent labels, inputs and calculatio
   ).toBe("50%");
   expect(await js('document.querySelector("[data-funnel=numbers]").dataset.value')).toBe("30");
 }, 20000);
+
+test("course typography stays readable and wraps at narrow phone widths", async () => {
+  for (const width of [1280, 390, 320]) {
+    await command("set", "viewport", String(width), "900");
+    await command("open", origin + "/#home");
+    await wait('!!document.querySelector("[data-course-outline]")');
+    const overview = await js(
+      '({root:parseFloat(getComputedStyle(document.documentElement).fontSize),title:parseFloat(getComputedStyle(document.querySelector("[data-course-lesson] > span:nth-child(2) > span")).fontSize),overflow:document.documentElement.scrollWidth>innerWidth,pills:document.querySelectorAll("[data-course-home] [data-slot=badge]").length})',
+    );
+    expect(overview.root).toBe(16);
+    expect(overview.title).toBeGreaterThanOrEqual(16);
+    expect(overview.overflow).toBe(false);
+    expect(overview.pills).toBe(0);
+    await click("[data-course-continue]");
+    await wait('!!document.querySelector(".reading-topic .prose")');
+    expect(
+      await js(
+        'parseFloat(getComputedStyle(document.querySelector(".reading-topic .prose")).fontSize)',
+      ),
+    ).toBeGreaterThanOrEqual(18);
+    expect(await js("document.documentElement.scrollWidth>innerWidth")).toBe(false);
+    expect(await js('document.querySelectorAll(".eyebrow").length')).toBe(0);
+  }
+}, 40000);
+
+test("dashboard metadata and capture controls stay readable on desktop and phones", async () => {
+  const { InboxStore } = await import("../src/inbox-store");
+  const data = mkdtempSync(join(tmpdir(), "noema-readable-")),
+    store = new InboxStore(data),
+    inboxServer = makeServer({ course: sample.path, port: 0, inbox: store }),
+    url = "http://127.0.0.1:" + inboxServer.port;
+  try {
+    for (const width of [1280, 390, 320]) {
+      await command("set", "viewport", String(width), "900");
+      await command("open", url + "/#learning");
+      await wait(
+        'document.querySelector("[data-learning-card]")?.textContent.includes("topics read")',
+      );
+      const sizes = await js(
+        '({title:parseFloat(getComputedStyle(document.querySelector("[data-learning-card] h3")).fontSize),metadata:parseFloat(getComputedStyle(document.querySelector("[data-learning-card] a > div")).fontSize),nav:parseFloat(getComputedStyle(document.querySelector(".nav-item")).fontSize),overflow:document.documentElement.scrollWidth>innerWidth})',
+      );
+      expect(sizes.title).toBeGreaterThanOrEqual(20);
+      expect(sizes.metadata).toBeGreaterThanOrEqual(14);
+      expect(sizes.nav).toBeGreaterThanOrEqual(16);
+      expect(sizes.overflow).toBe(false);
+      await command("open", url + "/#inbox");
+      await wait('document.querySelector("#capture").checkVisibility()');
+      expect(
+        await js('parseFloat(getComputedStyle(document.querySelector("#links")).fontSize)'),
+      ).toBeGreaterThanOrEqual(16);
+      expect(await js("document.documentElement.scrollWidth>innerWidth")).toBe(false);
+    }
+  } finally {
+    await inboxServer.stop(true);
+    store.close();
+    rmSync(data, { recursive: true, force: true });
+  }
+}, 40000);
