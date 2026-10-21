@@ -89,6 +89,8 @@ test("generation validates model output and reuses checkpointed steps without ne
     expect(b.course.LESSONS).toHaveLength(5);
     expect(Object.keys(b.challenges)).toHaveLength(3);
     expect(b.course.LESSONS[1].needs).toEqual(["idea-1"]);
+    // The fixture's illustration lists its steps out of order; it is dropped, not fatal.
+    expect(b.course.LESSONS.every((l) => !l.illustrations?.length)).toBe(true);
     const second = await generate(
       item,
       reading,

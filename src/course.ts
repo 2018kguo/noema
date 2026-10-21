@@ -139,6 +139,49 @@ export const lessonSchema = z.object({
     .passthrough()
     .optional(),
 });
+type Visual = NonNullable<z.infer<typeof lessonSchema>["visual"]>;
+const has = (values: string[], set: Set<string>, label: string) => {
+  if (values.some((v) => !set.has(v))) throw Error("Unknown " + label);
+};
+// Rules zod can't express: steps and gates must match the example, and the model must be drawable.
+// Generation uses this to drop one bad figure instead of failing a whole course.
+export function checkVisual(
+  v: Visual,
+  l: Pick<z.infer<typeof lessonSchema>, "sources" | "example">,
+  inExample: boolean,
+) {
+  has(v.source_ids, new Set(l.sources), "visual source");
+  if (
+    v.kind === "funnel" &&
+    ((inExample && v.stages.length !== l.example[1].length) ||
+      v.adjustable_stage >= v.stages.length)
+  )
+    throw Error("Invalid funnel gate");
+  if (
+    v.kind === "flow" &&
+    v.nodes.some(
+      (n, i) =>
+        n.step >= (inExample ? l.example[1].length : v.nodes.length) ||
+        (i > 0 && n.step < v.nodes[i - 1].step),
+    )
+  )
+    throw Error("Invalid flow order");
+  if (v.kind === "binding" && (v.ligand_nm > v.max_nm || v.kd_nm > v.max_nm))
+    throw Error("Binding plot must include the initial concentration and Kd");
+  if (v.kind === "schedule") {
+    unique(
+      v.tasks.map((t) => t.id),
+      "schedule task",
+    );
+    const seen = new Set<string>();
+    for (const task of v.tasks) {
+      has(task.after, seen, "earlier schedule dependency");
+      seen.add(task.id);
+    }
+    const task = v.tasks.find((t) => t.id === v.adjustable_task);
+    if (!task || task.duration > v.max_duration) throw Error("Invalid adjustable schedule task");
+  }
+}
 export const criterionSchema = z.object({ id: text, label: text, rule: text, feedback: text });
 export const assessmentSchema = z.object({
   id: text,
@@ -294,43 +337,8 @@ export function validateCourse(raw: unknown, rawChallenges: unknown) {
     for (const illustration of l.illustrations || [])
       if (illustration.after_paragraph > paragraphCount(l.levels[illustration.level] || ""))
         throw Error("Illustration placement exceeds that level's paragraphs: " + l.id);
-    for (const { visual: v, inExample } of [
-      ...(l.visual ? [{ visual: l.visual, inExample: true }] : []),
-      ...(l.illustrations || []).map((v) => ({ visual: v.visual, inExample: false })),
-    ]) {
-      contains(v.source_ids, new Set(l.sources), "visual source");
-      if (
-        v.kind === "funnel" &&
-        ((inExample && v.stages.length !== l.example[1].length) ||
-          v.adjustable_stage >= v.stages.length)
-      )
-        throw Error("Invalid funnel gate");
-      if (
-        v.kind === "flow" &&
-        v.nodes.some(
-          (n, i) =>
-            n.step >= (inExample ? l.example[1].length : v.nodes.length) ||
-            (i > 0 && n.step < v.nodes[i - 1].step),
-        )
-      )
-        throw Error("Invalid flow order");
-      if (v.kind === "binding" && (v.ligand_nm > v.max_nm || v.kd_nm > v.max_nm))
-        throw Error("Binding plot must include the initial concentration and Kd");
-      if (v.kind === "schedule") {
-        unique(
-          v.tasks.map((t) => t.id),
-          "schedule task",
-        );
-        const seen = new Set<string>();
-        for (const task of v.tasks) {
-          contains(task.after, seen, "earlier schedule dependency");
-          seen.add(task.id);
-        }
-        const task = v.tasks.find((t) => t.id === v.adjustable_task);
-        if (!task || task.duration > v.max_duration)
-          throw Error("Invalid adjustable schedule task");
-      }
-    }
+    for (const visual of [l.visual, ...(l.illustrations || []).map((i) => i.visual)])
+      if (visual) checkVisual(visual, l, visual === l.visual);
     if (
       l.activity?.kind === "workshop" &&
       (l.id !== "workshop" || !course.LABS.includes("tiny-engine"))

@@ -8,12 +8,13 @@ import {
   visualSchema,
   illustrationSchema,
   levelSchema,
+  checkVisual,
   type Lesson,
 } from "./course";
 import { type Item, type Settings } from "./inbox-store";
 import { type Reading } from "./source-reader";
 import { runStructured, Cancelled } from "./structured-cli";
-import { cleanHTML, escapeHTML } from "./html";
+import { cleanHTML, escapeHTML, paragraphCount } from "./html";
 import schemas from "./generation-schemas.json";
 const t = z.string(),
   arr = (min: number, max: number) => z.array(t).min(min).max(max);
@@ -285,7 +286,7 @@ export async function generate(
       base,
     );
     stage("writing", `Wrote ${++written} of ${plan.lessons.length} topics`, plan.title);
-    return {
+    const lesson: Lesson = {
       id,
       title: outline.title,
       phase: outline.phase,
@@ -311,6 +312,21 @@ export async function generate(
       sources: outline.sources,
       takeaway: result.takeaway,
     };
+    // A figure that breaks the course rules is dropped; the topic still ships.
+    const fits = (v: NonNullable<Lesson["visual"]>, inExample: boolean) => {
+      try {
+        checkVisual(v, lesson, inExample);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+    if (lesson.visual && !fits(lesson.visual, true)) lesson.visual = null;
+    lesson.illustrations = (lesson.illustrations || []).filter(
+      (i) =>
+        fits(i.visual, false) && i.after_paragraph <= paragraphCount(lesson.levels[i.level] || ""),
+    );
+    return lesson;
   });
   stage("checking", "Preparing guided reviews.", plan.title);
   const reviewData = JSON.stringify({
