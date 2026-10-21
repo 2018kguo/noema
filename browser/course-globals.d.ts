@@ -11,6 +11,7 @@ declare global {
     unmount(): void;
     home(element: Element, props: HomeProps): void;
     lesson(): void;
+    contents(element: Element, props: import("../ui/reading-contents").ContentsProps): void;
     readyCourse(element: Element, props: import("../ui/ready-course").ReadyCourseProps): void;
   };
   interface Window {

@@ -446,7 +446,7 @@ function blockPage(id, step = "read") {
   if (step === "read")
     return (
       header +
-      `<header class="reading-block-header"><h1>${topics}</h1><p class="lead">About ${block.minutes} minutes of reading. A topic counts as read when you reach its end; the questions come together after the last one.</p><nav class="reading-contents" aria-label="In this reading block">${block.lessons.map((l, i) => `<a href="#block/${id}/read/${l.id}" data-read-jump="${l.id}" class="${state.read[l.id] ? "is-read" : ""}"><span>${block.start + i + 1}</span>${e(l.title)}${state.read[l.id] ? `<span class="read-mark" title="Read">${icon("check", 14)}</span>` : ""}</a>`).join("")}</nav></header>${block.lessons.map((l, i) => `<section class="reading-topic" id="read-${l.id}"><div class="reading-topic-heading" data-read-topic="${l.id}"><span class="small">Topic ${block.start + i + 1}${state.read[l.id] ? ` · <span class="read-mark">${icon("check", 13)} Read</span>` : ""}</span><h2>${e(l.title)}</h2><p class="lesson-goal">${e(l.goal)}</p></div><article class="prose">${readingHTML(l)}</article>${exampleShown(l) ? `<section data-block-card class="block-worked-example"><h3>${e(l.example_title || "Example")}</h3><p>${e(l.example[0])}</p><ol class="block-example-steps">${l.example[1].map((text) => `<li>${e(text)}</li>`).join("")}</ol>${NoemaVisuals.render(l.visual, l.example[1].length - 1, l.id)}</section>` : ""}${l.activity ? `<p class="block-activity-link"><a href="#lesson/${l.id}">Open the hands-on work for this topic →</a><span class="small">You can also return to it after the block.</span></p>` : ""}${background(l)}<div class="topic-end" data-read-end="${l.id}" aria-hidden="true"></div></section>`).join("")}<div class="block-reading-actions"><div><h2>Ready to try the questions?</h2><p class="small">Your answers for all ${block.lessons.length} topics will be checked together.</p></div><button class="primary" data-finish-reading="${id}">Go to the questions →</button><a href="#home">Save and return to the course</a></div>`
+      `<header class="reading-block-header"><h1>${topics}</h1><p class="lead">About ${block.minutes} minutes of reading. A topic counts as read when you reach its end; the questions come together after the last one.</p><nav aria-label="In this reading block" data-reading-contents></nav></header>${block.lessons.map((l, i) => `<section class="reading-topic" id="read-${l.id}"><div class="reading-topic-heading" data-read-topic="${l.id}"><span class="small">Topic ${block.start + i + 1}${state.read[l.id] ? ` · <span class="read-mark">${icon("check", 13)} Read</span>` : ""}</span><h2>${e(l.title)}</h2><p class="lesson-goal">${e(l.goal)}</p></div><article class="prose">${readingHTML(l)}</article>${exampleShown(l) ? `<section data-block-card class="block-worked-example"><h3>${e(l.example_title || "Example")}</h3><p>${e(l.example[0])}</p><ol class="block-example-steps">${l.example[1].map((text) => `<li>${e(text)}</li>`).join("")}</ol>${NoemaVisuals.render(l.visual, l.example[1].length - 1, l.id)}</section>` : ""}${l.activity ? `<p class="block-activity-link"><a href="#lesson/${l.id}">Open the hands-on work for this topic →</a><span class="small">You can also return to it after the block.</span></p>` : ""}${background(l)}<div class="topic-end" data-read-end="${l.id}" aria-hidden="true"></div></section>`).join("")}<div class="block-reading-actions"><div><h2>Ready to try the questions?</h2><p class="small">Your answers for all ${block.lessons.length} topics will be checked together.</p></div><button class="primary" data-finish-reading="${id}">Go to the questions →</button><a href="#home">Save and return to the course</a></div>`
     );
   if (step === "practice")
     return (
@@ -467,10 +467,24 @@ function blockPage(id, step = "read") {
       .join("")}`
   );
 }
+function readingContents(block) {
+  const nav = document.querySelector("[data-reading-contents]");
+  if (nav)
+    NoemaUI.contents(nav, {
+      items: block.lessons.map((l, i) => ({
+        id: l.id,
+        n: block.start + i + 1,
+        title: l.title,
+        href: `#block/${block.id}/read/${l.id}`,
+        read: !!state.read[l.id],
+      })),
+    });
+}
 function observeReading() {
   const block = activeBlock(),
     parts = location.hash.slice(1).split("/");
   if (!block || parts[2] !== "read") return;
+  readingContents(block);
   if (parts[3] && block.lessons.some((l) => l.id === parts[3])) {
     state.lastLesson = parts[3];
     save();
@@ -505,12 +519,7 @@ function observeReading() {
       state.read[id] = { at: Date.now() };
       save();
       endObserver.unobserve(entry.target);
-      const jump = document.querySelector(`[data-read-jump="${id}"]`);
-      jump?.classList.add("is-read");
-      jump?.insertAdjacentHTML(
-        "beforeend",
-        `<span class="read-mark" title="Read">${icon("check", 14)}</span>`,
-      );
+      readingContents(block);
     }
   });
   document.querySelectorAll("[data-read-end]").forEach((end) => endObserver.observe(end));
@@ -2012,7 +2021,7 @@ function glossary(filter = "") {
   const entries = Object.entries(GLOSSARY).filter(([k, v]) =>
     (k + " " + v).toLowerCase().includes(filter.toLowerCase()),
   );
-  return `<h1>Acronyms into ideas.</h1><input class="glossary-search" id="glossary-filter" type="search" aria-label="Search the glossary" placeholder="Try: cache, adapter, bandwidth…" value="${e(filter)}"><dl id="glossary-entries">${entries.map(([k, v]) => `<div class="glossary-item"><dt>${e(k)}</dt><dd>${e(v)}</dd></div>`).join("")}</dl>`;
+  return `<h1>Glossary</h1><input class="glossary-search" id="glossary-filter" type="search" aria-label="Search the glossary" placeholder="Search ${Object.keys(GLOSSARY).length} terms" value="${e(filter)}"><dl id="glossary-entries">${entries.map(([k, v]) => `<div class="glossary-item"><dt>${e(k)}</dt><dd>${e(v)}</dd></div>`).join("")}</dl>`;
 }
 
 function sources() {

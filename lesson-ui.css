@@ -505,31 +505,6 @@ main h3 {
 .reading-block-header {
   margin-bottom: 48px;
 }
-.reading-contents {
-  display: grid;
-  gap: 8px;
-  margin: 28px 0;
-  padding: 20px 22px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-}
-.reading-contents a {
-  display: grid;
-  grid-template-columns: 22px 1fr;
-  gap: 12px;
-  text-decoration: none;
-  padding: 4px 0;
-  font-size: 1rem;
-  line-height: 1.7;
-}
-.reading-contents a:hover {
-  text-decoration: underline;
-}
-.reading-contents span {
-  color: var(--muted);
-  font-size: 0.875rem;
-  font-variant-numeric: tabular-nums;
-}
 .reading-topic {
   border-top: 1px solid var(--line);
   padding-top: 40px;
@@ -618,9 +593,6 @@ main h3 {
   }
   .block-worked-example [data-slot="card-content"] {
     padding-inline: 18px;
-  }
-  .reading-contents {
-    padding: 18px;
   }
 }
 
@@ -1159,13 +1131,7 @@ dfn[data-term]:hover {
 
 /* Read marks: a quiet check on read topics in the block contents and topic headings. */
 .read-mark {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
   color: var(--muted);
-}
-.reading-contents a .read-mark {
-  margin-left: auto;
 }
 .topic-end {
   height: 1px;

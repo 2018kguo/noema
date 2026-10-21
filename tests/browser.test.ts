@@ -974,7 +974,7 @@ test("reaching the end of a topic marks it read with a visible check", async () 
   await js(
     `document.querySelector('[data-read-end="${topic}"]').scrollIntoView({block: 'center'}); true`,
   );
-  await wait(`document.querySelector('[data-read-jump="${topic}"]').classList.contains('is-read')`);
+  await wait(`document.querySelector('[data-read-jump="${topic}"]').hasAttribute('data-read')`);
   expect(
     await js(
       `!!JSON.parse(localStorage.getItem(META.progress_key || "noema:" + META.id)).read["${topic}"]`,

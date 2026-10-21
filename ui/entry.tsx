@@ -2,6 +2,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { flushSync } from "react-dom";
 import { ReadyCourse, type ReadyCourseProps } from "./ready-course";
 import { CourseHome, type HomeProps } from "./course-home";
+import { ReadingContents, type ContentsProps } from "./reading-contents";
 import { Card, CardContent } from "./components/ui/card";
 import { Progress } from "./components/ui/progress";
 
@@ -19,6 +20,9 @@ const ui = {
   },
   home(element: Element, props: HomeProps) {
     mount(element, <CourseHome {...props} />);
+  },
+  contents(element: Element, props: ContentsProps) {
+    mount(element, <ReadingContents {...props} />);
   },
   readyCourse(element: Element, props: ReadyCourseProps) {
     mount(element, <ReadyCourse {...props} />);

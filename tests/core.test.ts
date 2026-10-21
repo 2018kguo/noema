@@ -559,7 +559,11 @@ test("tell detector names the sentences an editor must rewrite", () => {
   expect(found.map((f) => f.kind).sort()).toEqual([
     "announced count",
     "antithesis",
+    "flashcard opener",
     "signature word",
   ]);
+  expect(tells("The comparison group is built by randomization.")[0]?.kind).toBe(
+    "flashcard opener",
+  );
   expect(found.every((f) => !f.sentence.includes("Prefill"))).toBe(true);
 });

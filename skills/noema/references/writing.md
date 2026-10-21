@@ -26,6 +26,12 @@ material that is easy to grade.
   system, a decision someone made, a failure that taught the field something.
   Invent a scenario only when no real one shows the idea, and keep it qualitative
   unless the numbers are the point.
+- A level is optional. Write High level or Depth only when the sources give it
+  something to say: how the thing works in the cases they discuss, the evidence
+  behind their claims, where people disagree. Textbook material the sources never
+  use (sample-size formulas, binding kinetics, derivations) is not depth, however
+  rigorous it looks. If a topic has nothing like that at a level, leave the level
+  out; that pass skips the topic.
 - Questions check whether the idea landed: which explanation fits, what would
   happen if something changed, what a claim does and doesn't show, how two ideas
   relate. Avoid questions whose difficulty is the arithmetic.
@@ -70,6 +76,14 @@ Find them on the second pass and rewrite the sentence as a person would say it.
 - **Teaser fragments.** "Three changes. Which part owns each one?" "Not a detail. A
   design decision." "The harder question is…" "Several problems remain open." Write
   the full sentence that carries the point.
+- **Flashcard openers.** "A protocol is the study's plan, written before enrollment."
+  "The comparison group is built by randomization." A clipped X-is-Y line at the top
+  of paragraph after paragraph reads like a glossary. Lead in from what the reader
+  just learned and fold the definition into the sentence that uses it: "Each of those
+  studies follows a protocol, a plan written before anyone enrolls that fixes who
+  qualifies, the dose and how the results will be analyzed."
+- **Staccato rhythm.** Runs of short declarative sentences. Join the ones that belong
+  together and let sentence length vary the way speech does.
 - **Colon and semicolon pivots** that stand in for "because", "but" or "so": "X exists
   in theory; in practice, Y." Use the conjunction.
 - **Aphorisms and morals.** A closing line that restates the paragraph as a maxim

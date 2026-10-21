@@ -8,6 +8,11 @@ const TELLS: [string, RegExp][] = [
     /\b(?:is|are|was|were)(?:n['’]t| not) (?:just |only |merely )?(?:a |an |the )?[^.;,]{1,40}(?:, but (?:a|an|the|it)\b|[,;] it['’]s)|\bnot (?:just|only|merely) [^.;,]{1,40}, but\b/i,
   ],
   ["rather than", /\brather than\b/i],
+  // A clipped X-is-Y definition used as a topic sentence ("The comparison group is built by randomization.").
+  [
+    "flashcard opener",
+    /^(?:An?|The) (?:[\w'’-]+ ){0,3}(?:is|are) (?:the|an?|built|made|set|what|its|their) [^,;:]{0,40}(?:, [^,;:]{0,30})?\.$/,
+  ],
   // A count that announces what follows ("Three changes." / "There are two problems:").
   [
     "announced count",
