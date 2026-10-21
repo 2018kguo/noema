@@ -163,8 +163,8 @@ export function CourseHome({
             </a>
           )}
           <p className="ui:mt-5 ui:text-base ui:leading-7 ui:text-muted-foreground">
-            {lessons.length} topics in {progress.blockCount} reading blocks. Quizzes follow each
-            block.
+            {lessons.length} topics in {progress.blockCount} reading blocks, each ending with a few
+            questions.
           </p>
         </header>
         {placement && !placement.placed && (

@@ -4,8 +4,31 @@ Treat the learner as intelligent and unfamiliar with the subject. Explain the
 missing knowledge rather than simplifying away the mechanism.
 
 Start with a concrete situation. Introduce the new idea when it solves a problem
-the learner can see. Define a term before using it in a question. Give units and
-denominators with numbers. Explain what would change if an assumption changed.
+the learner can see. Define a term before using it in a question. When a number
+matters, give its units and say what it is a share of. Explain what would change
+if an assumption changed.
+
+## Teach the topic, not the test
+
+The goal is that the reader understands what the source is about and can think
+with it: what problem it addresses, how the thing works, what the author claims,
+what the evidence shows, and where people disagree. It is not to produce
+material that is easy to grade.
+
+- Spend the words where the source spends them. If an article is about how AI
+  agents change drug R&D, the course is mostly about agents, drug R&D and the
+  argument, not about the statistics you could attach to them.
+- A formula or calculation earns a place only when the topic is quantitative or
+  the source's argument rests on it. Then explain it once, in words first, at
+  the level that needs it (usually Mechanism or Frontier). Never invent arithmetic
+  to make an idea checkable.
+- Prefer real cases to invented ones: an event the source reports, a named
+  system, a decision someone made, a failure that taught the field something.
+  Invent a scenario only when no real one shows the idea, and keep it qualitative
+  unless the numbers are the point.
+- Questions check whether the idea landed: which explanation fits, what would
+  happen if something changed, what a claim does and doesn't show, how two ideas
+  relate. Avoid questions whose difficulty is the arithmetic.
 
 Develop one idea per paragraph. Prefer connected sentences over dense noun
 phrases, slogan headings, or lists of keywords. A diagram or table should answer
@@ -87,14 +110,13 @@ Read several paragraphs aloud. Rewrite anything that sounds like a pitch deck,
 an evaluation report, or a compressed research abstract. Check the whole course
 for repeated filler. Do not satisfy a word target by restating the same point.
 
-## Worked examples and visuals
+## Examples and visuals
 
-Give the example a title that names the question being answered. Keep the setup
-short. Introduce each new assumption when the reader needs it, and show the
-earlier results beside the current step. Do not make the learner reopen a
-disclosure to find the denominator for the calculation in front of them.
+Each topic has one example: a concrete case walked through in two to four steps,
+real when possible. Give it a title that names what it shows. Keep the setup
+short and introduce each detail when the reader needs it.
 
-For percentages, say which group the percentage describes. “33% of the 70
+When an example does involve numbers, say which group a percentage describes. “33% of the 70
 remaining” explains more than “multiply the rates.” Name the endpoint of every
 gate. Passing a test, preparing an application, receiving approval and improving
 an outcome are different events. A decimal count is an expected value across

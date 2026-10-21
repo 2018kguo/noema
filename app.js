@@ -351,7 +351,7 @@
       step,
       [
         { id: "read", label: "Read" },
-        { id: "practice", label: "Grouped quiz" },
+        { id: "practice", label: "Questions" },
         { id: "explain", label: "Explain" }
       ],
       "block-step",
@@ -360,7 +360,7 @@
     if (step === "read")
       return header + `<header class="reading-block-header"><h1>${topics}</h1><p class="lead">About ${block.minutes} minutes of reading and examples. Read these ${block.lessons.length} topics at your own pace. The questions come together at the end of this block.</p><nav class="reading-contents" aria-label="In this reading block">${block.lessons.map((l, i) => `<a href="#block/${id}/read/${l.id}" data-read-jump="${l.id}"><span>${block.start + i + 1}</span>${e(l.title)}</a>`).join("")}</nav></header>${block.lessons.map((l, i) => `<section class="reading-topic" id="read-${l.id}"><div class="reading-topic-heading" data-read-topic="${l.id}"><span class="small">Topic ${block.start + i + 1}</span><h2>${e(l.title)}</h2><p class="lesson-goal">${e(l.goal)}</p>${levelBar(l)}</div><article class="prose">${readingHTML(l)}</article><section data-block-card class="block-worked-example"><h3>${e(l.example_title || "Worked example")}</h3><p>${e(l.example[0])}</p><ol class="block-example-steps">${l.example[1].map((text) => `<li>${e(text)}</li>`).join("")}</ol>${NoemaVisuals.render(l.visual, l.example[1].length - 1, l.id)}</section>${depthHTML(l)}${l.activity ? `<p class="block-activity-link"><a href="#lesson/${l.id}">Open the hands-on work for this topic \u2192</a><span class="small">You can also return to it after the block.</span></p>` : ""}${background(l)}</section>`).join("")}<div class="block-reading-actions"><div><h2>Ready to try the questions?</h2><p class="small">Your answers for all ${block.lessons.length} topics will be checked together.</p></div><button class="primary" data-finish-reading="${id}">Mark this block read & start the quiz \u2192</button><a href="#home">Save and return to the course</a></div>`;
     if (step === "practice")
-      return header + `<h1>Put the ideas to work.</h1><p class="lead compact">Answer these ${block.lessons.length} questions, then check them together. Each asks you to use an idea from the reading.</p>${blockQuizSummary(block)}${block.lessons.map((l, i) => `<section class="block-question"><p class="small">${i + 1} \xB7 ${e(l.title)}</p>${question(levelQuestion(l), { guided: true, batch: true })}<a class="quiz-reading-link" href="#block/${id}/read/${l.id}">Revisit this explanation \u2192</a></section>`).join("")}${flowFooter({ back: `<button class="text-button" data-block-step="read" data-block="${id}">\u2190 Back to reading</button>`, primary: blockChecked(block) ? "block-explain" : "check-block", value: id, primaryText: blockChecked(block) ? "Next: explain an idea" : "Check all answers" })}`;
+      return header + `<h1>Questions</h1><p class="lead compact">One question per topic, checked together at the end. Each answer comes with an explanation.</p>${blockQuizSummary(block)}${block.lessons.map((l, i) => `<section class="block-question"><p class="small">${i + 1} \xB7 ${e(l.title)}</p>${question(levelQuestion(l), { guided: true, batch: true })}<a class="quiz-reading-link" href="#block/${id}/read/${l.id}">Revisit this explanation \u2192</a></section>`).join("")}${flowFooter({ back: `<button class="text-button" data-block-step="read" data-block="${id}">\u2190 Back to reading</button>`, primary: blockChecked(block) ? "block-explain" : "check-block", value: id, primaryText: blockChecked(block) ? "Next: explain an idea" : "Check all answers" })}`;
     if (step === "explain") return header + explainStep(block.lessons[block.lessons.length - 1]);
     const next = readingBlocks()[block.index + 1];
     return header + `<h1>Block finished.</h1><p class="lead">You have read and practiced these topics. Your answers are saved, including anything you want to revisit.</p><ul class="block-done-topics">${block.lessons.map((l) => `<li>${e(l.title)}</li>`).join("")}</ul><div class="actions">${next ? `<button class="primary" data-go="block/${next.id}/read">Start the next reading block \u2192</button>` : '<a class="primary" href="#home">Return to the course</a>'}<a href="#home">Take a break</a></div>${block.lessons.filter((l) => l.activity).map(
@@ -810,7 +810,7 @@
     if (block) {
       const checked = blockChecked(block), primary = reviewed ? checked ? "finish-block" : "block-quiz" : feedbackConnected() ? "grade-lesson" : "self-check";
       return flowFooter({
-        back: `<button class="text-button" data-block-step="practice" data-block="${block.id}">\u2190 Grouped quiz</button>`,
+        back: `<button class="text-button" data-block-step="practice" data-block="${block.id}">\u2190 Questions</button>`,
         primary,
         value: reviewed ? block.id : l.id,
         primaryText: busy ? "Reading your explanation\u2026" : reviewed ? checked ? "Finish this block" : "Finish the grouped quiz" : feedbackConnected() ? "Get feedback" : "Compare my explanation",

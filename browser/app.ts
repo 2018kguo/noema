@@ -355,7 +355,7 @@ function blockPage(id, step = "read") {
           step,
           [
             { id: "read", label: "Read" },
-            { id: "practice", label: "Grouped quiz" },
+            { id: "practice", label: "Questions" },
             { id: "explain", label: "Explain" },
           ],
           "block-step",
@@ -371,7 +371,7 @@ function blockPage(id, step = "read") {
   if (step === "practice")
     return (
       header +
-      `<h1>Put the ideas to work.</h1><p class="lead compact">Answer these ${block.lessons.length} questions, then check them together. Each asks you to use an idea from the reading.</p>${blockQuizSummary(block)}${block.lessons.map((l, i) => `<section class="block-question"><p class="small">${i + 1} · ${e(l.title)}</p>${question(levelQuestion(l), { guided: true, batch: true })}<a class="quiz-reading-link" href="#block/${id}/read/${l.id}">Revisit this explanation →</a></section>`).join("")}${flowFooter({ back: `<button class="text-button" data-block-step="read" data-block="${id}">← Back to reading</button>`, primary: blockChecked(block) ? "block-explain" : "check-block", value: id, primaryText: blockChecked(block) ? "Next: explain an idea" : "Check all answers" })}`
+      `<h1>Questions</h1><p class="lead compact">One question per topic, checked together at the end. Each answer comes with an explanation.</p>${blockQuizSummary(block)}${block.lessons.map((l, i) => `<section class="block-question"><p class="small">${i + 1} · ${e(l.title)}</p>${question(levelQuestion(l), { guided: true, batch: true })}<a class="quiz-reading-link" href="#block/${id}/read/${l.id}">Revisit this explanation →</a></section>`).join("")}${flowFooter({ back: `<button class="text-button" data-block-step="read" data-block="${id}">← Back to reading</button>`, primary: blockChecked(block) ? "block-explain" : "check-block", value: id, primaryText: blockChecked(block) ? "Next: explain an idea" : "Check all answers" })}`
     );
   if (step === "explain") return header + explainStep(block.lessons[block.lessons.length - 1]);
   const next = readingBlocks()[block.index + 1];
@@ -979,7 +979,7 @@ function explanationFooter(l) {
           ? "grade-lesson"
           : "self-check";
     return flowFooter({
-      back: `<button class="text-button" data-block-step="practice" data-block="${block.id}">← Grouped quiz</button>`,
+      back: `<button class="text-button" data-block-step="practice" data-block="${block.id}">← Questions</button>`,
       primary,
       value: reviewed ? block.id : l.id,
       primaryText: busy
