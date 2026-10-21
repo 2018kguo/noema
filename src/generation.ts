@@ -131,6 +131,7 @@ export async function generate(
   stage: Stage,
   cancelled: () => boolean,
   caller = runStructured,
+  retryDelay = 10_000,
 ) {
   await mkdir(directory, { recursive: true });
   const writing = await readFile(join(ROOT, "skills/noema/references/writing.md"), "utf8"),
@@ -172,17 +173,26 @@ export async function generate(
     } catch (e) {
       if ((e as NodeJS.ErrnoException).code !== "ENOENT" && !(e instanceof z.ZodError)) throw e;
     }
-    const ask = (extra = "") => {
-      if (cancelled()) throw new Cancelled("Preparation stopped.");
-      return caller(
-        settings.provider,
-        settings.model,
-        data + "\n\n" + instruction + extra,
-        jsonSchema,
-        900,
-        cancelled,
-        system,
-      );
+    // One retry after a short pause covers transient CLI failures (rate limits, dropped
+    // connections) without failing an item whose other steps are already saved.
+    const ask = async (extra = ""): Promise<unknown> => {
+      for (let attempt = 0; ; attempt++) {
+        if (cancelled()) throw new Cancelled("Preparation stopped.");
+        try {
+          return await caller(
+            settings.provider,
+            settings.model,
+            data + "\n\n" + instruction + extra,
+            jsonSchema,
+            900,
+            cancelled,
+            system,
+          );
+        } catch (e) {
+          if (e instanceof Cancelled || attempt >= 1) throw e;
+          await new Promise((r) => setTimeout(r, retryDelay));
+        }
+      }
     };
     let parsed = schema.safeParse(await ask());
     if (!parsed.success)

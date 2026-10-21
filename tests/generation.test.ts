@@ -26,7 +26,8 @@ test("generation validates model output and reuses checkpointed steps without ne
   const dir = mkdtempSync(join(tmpdir(), "noema-generation-")),
     s = new InboxStore(join(dir, "inbox")),
     item = s.add("https://example.org/source").item;
-  let calls = 0;
+  let calls = 0,
+    failedOnce = false;
   const shared = new Set<string>(),
     prompts: string[] = [];
   const caller = async (
@@ -49,6 +50,16 @@ test("generation validates model output and reuses checkpointed steps without ne
         ...fixtures.plan,
         lessons: fixtures.plan.lessons.map((l) => ({ ...l, sources: ["Fixture source"] })),
       };
+    // A review call fails once like a dropped CLI connection; the retry must absorb it.
+    if (
+      !keys.includes("glossary") &&
+      !keys.includes("questions") &&
+      !keys.includes("example_setup") &&
+      !failedOnce
+    ) {
+      failedOnce = true;
+      throw Error("claude exited with status 1");
+    }
     return keys.includes("glossary")
       ? fixtures.plan
       : keys.includes("questions")
@@ -66,8 +77,9 @@ test("generation validates model output and reuses checkpointed steps without ne
       () => {},
       () => false,
       caller,
+      0,
     );
-    expect(calls).toBe(15);
+    expect(calls).toBe(16);
     // One cached prefix: every call that needs the sources gets the same system prompt, and
     // no user prompt re-sends the source text.
     expect(shared.size).toBe(1);

@@ -137,7 +137,10 @@ export async function runStructured(
             let reason = errors.trim();
             try {
               const parsed = JSON.parse(output);
-              reason = String(parsed.result || parsed.error || reason);
+              reason =
+                [parsed.subtype, parsed.result, parsed.error].filter(Boolean).join(": ") ||
+                reason ||
+                output.trim().slice(-500);
             } catch {
               reason ||= output.trim().slice(-500);
             }
