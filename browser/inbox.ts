@@ -166,6 +166,9 @@ function renderList() {
   $("#search").placeholder = learning ? "Find a course" : "Find a link";
 
   $("#collection-title").setAttribute("aria-level", learning ? "1" : "2");
+  // The tab says how many links are being prepared, so a background tab shows progress.
+  document.title =
+    (active.length ? `(${active.length}) ` : "") + (learning ? "Your courses · Noema" : "Noema");
   document.querySelector(".collection").classList.toggle("learning", learning);
   $("#collection-summary").textContent = learning
     ? "Your courses, with your place saved as you go."

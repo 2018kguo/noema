@@ -503,6 +503,7 @@ function observeReading() {
           visible[visible.length - 1].target instanceof HTMLElement
             ? visible[visible.length - 1].target.getAttribute("data-read-topic")
             : state.lastLesson;
+        document.title = [lookup(state.lastLesson)?.title, META.title].filter(Boolean).join(" · ");
         save();
       }
     },
@@ -1330,6 +1331,18 @@ async function requestFeedback(id, answer) {
     refreshAssessmentView();
   }
 }
+// The tab names what is on screen: the topic being read, the lesson, or the reference page.
+function pageTitle(parts: string[]) {
+  if (parts[0] === "block") {
+    const block = blockById(parts[1]);
+    return (lookup(parts[3]) || block?.lessons[0])?.title;
+  }
+  if (parts[0] === "lesson") return lookup(parts[1])?.title;
+  if (parts[0] === "challenges") return challengeFor(parts[1])?.title;
+  return { glossary: "Glossary", sources: "About this course", placement: "Where to start" }[
+    parts[0]
+  ];
+}
 function render() {
   readingObserver?.disconnect();
   readingObserver = null;
@@ -1375,6 +1388,7 @@ function render() {
   }
   NoemaUI.unmount();
   $("#track-slot").innerHTML = trackSwitch();
+  document.title = [pageTitle(parts), META.title].filter(Boolean).join(" · ");
   document.body.classList.toggle("course-overview", parts[0] === "home");
   $("#main").innerHTML = (views[parts[0]] || home)();
   if (parts[0] === "home") {

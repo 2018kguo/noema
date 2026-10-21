@@ -161,6 +161,7 @@
     $("#collection-title").textContent = learning ? "Your courses" : "Your links";
     $("#search").placeholder = learning ? "Find a course" : "Find a link";
     $("#collection-title").setAttribute("aria-level", learning ? "1" : "2");
+    document.title = (active.length ? `(${active.length}) ` : "") + (learning ? "Your courses \xB7 Noema" : "Noema");
     document.querySelector(".collection").classList.toggle("learning", learning);
     $("#collection-summary").textContent = learning ? "Your courses, with your place saved as you go." : active.length ? active.length + " preparing" + (queued.length ? " \xB7 " + queued.length + " queued" : "") : queued.length ? queued.length + " queued" + (inbox.settings.enabled ? "" : " \xB7 preparation paused") : needs.length ? needs.length + " " + (needs.length === 1 ? "item needs" : "items need") + " your attention" : inbox.items.length ? "" : "Save something you\u2019d like to understand.";
     $("#collection-summary").hidden = learning || !$("#collection-summary").textContent;
