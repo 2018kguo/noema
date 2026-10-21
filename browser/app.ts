@@ -7,7 +7,18 @@ import type {
   ActivityState,
   CacheLab,
 } from "./state";
-import { available, view, place, LEVEL_NAMES, type Level } from "./levels";
+import {
+  available,
+  levelFor,
+  levelOf,
+  passes,
+  place,
+  switchTrack,
+  trackState,
+  LEVEL_BLURBS,
+  LEVEL_NAMES,
+  type Level,
+} from "./levels";
 import { icon } from "./icons";
 import { sourceHref } from "./links";
 
@@ -37,6 +48,12 @@ try {
   storageOK = false;
 }
 delete state.depth;
+// Depth used to be chosen per section and per topic; it is now one level for the whole course.
+if (state.level === undefined && state.levels)
+  state.level = Math.min(...Object.values(state.levels));
+delete state.levels;
+delete state.lessonLevels;
+if (!passes(LESSONS).includes(levelOf(state))) state.level = passes(LESSONS)[0];
 const previousBrief = state.notes["project-brief"];
 if (previousBrief) {
   state.activities.bench = { ...state.activities.bench, earlierNotes: previousBrief };
@@ -160,7 +177,7 @@ function go(route) {
   } else location.hash = route;
 }
 // An example belongs to the depth it was written for (the lowest written level unless set), so
-// a Mechanism reader never gets an Intuition walkthrough. A workshop's example is its lab, so it
+// a High-level reader never gets an Intro walkthrough. A workshop's example is its lab, so it
 // always shows. Topics may have no example at all.
 function exampleShown(l) {
   if (!l.example) return false;
@@ -192,7 +209,13 @@ function setStep(id, step, part = 0) {
     });
 }
 function resumeLesson() {
-  return lookup(state.lastLesson) || LESSONS.find((l) => !state.completed[l.id]) || LESSONS[0];
+  const inPass = NoemaProgress.path(LESSONS, state);
+  return (
+    lookup(state.lastLesson) ||
+    inPass.find((l) => !state.completed[l.id]) ||
+    inPass[0] ||
+    LESSONS[0]
+  );
 }
 function home() {
   return '<div id="course-home"></div>';
@@ -207,22 +230,24 @@ function toHome() {
 const phaseLabel = (phase: string) =>
   phase.includes(" · ") ? phase.split(" · ").slice(1).join(" · ") : phase;
 const sections = () => [...new Set(LESSONS.map((l) => l.phase))];
-// Placement: a few probes per section set the starting depth; the result stays editable.
+// Placement: a few probes per section pick the pass to start with; any pass stays a click away.
 function placementPage() {
   const probes = META.placement || [];
   if (!probes.length) return toHome();
   if (state.placed) {
-    const inPath = NoemaProgress.path(LESSONS, state).length;
-    return `<div class="lesson-topline"><a href="#home">← Course</a></div><h1>Where you’ll start</h1><p class="lead">Each section is shown at the depth below. Change any of them; you can also switch depth on a single topic while reading. ${inPath} of ${LESSONS.length} topics are in your path.</p><div class="placement-results">${sections()
-      .map((phase) => {
-        const level = state.levels?.[phase] || 1;
-        return `<label class="placement-row"><span>${e(phaseLabel(phase))}</span><select data-section-level="${e(phase)}">${([1, 2, 3] as const).map((n) => `<option value="${n}" ${n === level ? "selected" : ""}>${LEVEL_NAMES[n]}</option>`).join("")}</select></label>`;
-      })
+    const current = levelOf(state);
+    return `<div class="lesson-topline"><a href="#home">← Course</a></div><h1>You’ll start at ${LEVEL_NAMES[current]}</h1><p class="lead">The course runs in ${passes(LESSONS).length} passes over the same topics, each with its own reading and questions. Start wherever you like; you can switch from the top of any page.</p><div class="track-choices">${passes(
+      LESSONS,
+    )
+      .map(
+        (n) =>
+          `<button type="button" class="track-choice" data-track="${n}" aria-pressed="${n === current}">${icon(LEVEL_ICONS[n], 20)}<span><b>${LEVEL_NAMES[n]}</b><small>${LEVEL_BLURBS[n]}</small></span>${n === current ? `<span class="track-choice-mark">Your start</span>` : ""}</button>`,
+      )
       .join(
         "",
-      )}</div><dl class="level-key">${([1, 2, 3] as const).map((n) => `<div><dt>${LEVEL_NAMES[n]}</dt><dd>${["The situation, the core idea and why it matters.", "The moving parts, numbers and trade-offs, for someone who will build or run it.", "The evidence, where it breaks and what’s still open."][n - 1]}</dd></div>`).join("")}</dl><div class="actions"><button class="primary" data-go="home">Go to the course</button><button class="text-button" data-retake-placement>Retake the placement questions</button></div>`;
+      )}</div><div class="actions"><button class="primary" data-go="home">Go to the course</button><button class="text-button" data-retake-placement>Retake the placement questions</button></div>`;
   }
-  return `<div class="lesson-topline"><a href="#home">← Course</a></div><h1>Find your starting depth</h1><p class="lead">Answer what you can. These questions are meant to be hard, so choose “I’m not sure” rather than guessing. Each section starts at the deepest level you show you already know.</p><form id="placement-form">${sections()
+  return `<div class="lesson-topline"><a href="#home">← Course</a></div><h1>Where should you start?</h1><p class="lead">Answer what you can. These questions are meant to be hard, so choose “I’m not sure” rather than guessing. You’ll start at the deepest pass you already know.</p><form id="placement-form">${sections()
     .filter((phase) => probes.some((q) => q.phase === phase))
     .map(
       (phase) =>
@@ -240,7 +265,7 @@ function placementPage() {
 }
 const readingBlocks = () =>
   NoemaProgress.blocks(NoemaProgress.path(LESSONS, state), META.reading_block_size);
-const shownLevel = (l) => view(l, state).level;
+const shownLevel = (l) => levelFor(l, state);
 // The question written for the level this learner reads the topic at.
 const levelQuestion = (l) => l.questions.find((q) => q.level === shownLevel(l)) || l.questions[0];
 const blockById = (id) => readingBlocks().find((block) => block.id === id);
@@ -310,40 +335,82 @@ function readingHTML(l, level: Level = shownLevel(l), folded = false) {
   }
   return container.innerHTML;
 }
-// Other written levels: the one below folds in as background, the ones above as depth.
-function depthHTML(l) {
-  const shown = shownLevel(l),
-    others = available(l).filter((n) => n !== shown);
-  if (!others.length) return "";
-  return `<section class="optional-reading"><div data-depths>${others
-    .map(
-      (n) =>
-        `<details data-level-section="${n}"><summary>${n < shown ? "Need the basics?" : "Go deeper"} · ${LEVEL_NAMES[n]}</summary><div class="prose">${readingHTML(l, n, true)}</div></details>`,
-    )
-    .join("")}</div></section>`;
-}
 const LEVEL_ICONS = { 1: "lightbulb", 2: "cog", 3: "telescope" } as const;
-const LEVEL_HINTS = {
-  1: "The situation, the core idea and why it matters",
-  2: "The moving parts, numbers and trade-offs",
-  3: "The evidence, where it breaks and what’s still open",
-};
-// Which levels this topic is written at, and a note when it differs from the learner's level.
-function levelBar(l) {
-  const v = view(l, state),
-    have = available(l);
-  const note =
-    v.status === "above"
-      ? `<p class="level-note">Written only at ${have.map((n) => LEVEL_NAMES[n]).join(" and ")} depth, deeper than your level here. Treat it as a stretch.</p>`
-      : v.status === "below"
-        ? `<p class="level-note">Your placement skips this topic. It’s here if you want a refresher.</p>`
-        : "";
-  return `<div class="level-bar" role="group" aria-label="Depth for this topic">${have
+// The end of a pass points to the next one: the same subject again, one level deeper.
+function passFinished() {
+  const level = levelOf(state),
+    next = passes(LESSONS).find((n) => n > level),
+    open = NoemaProgress.path(LESSONS, state).filter((l) => !state.completed[l.id]);
+  return `<p class="lesson-context">${LEVEL_NAMES[level]} · last block</p><h1>${open.length ? "Last block finished." : `You finished ${LEVEL_NAMES[level]}.`}</h1><p class="lead">${open.length ? `${open.length} topic${open.length === 1 ? " still has" : "s still have"} unanswered questions in this pass.` : "Your answers and notes are saved."}${next ? ` ${LEVEL_NAMES[next]} goes over the same subject again with new reading and new questions: ${LEVEL_BLURBS[next].charAt(0).toLowerCase() + LEVEL_BLURBS[next].slice(1)}` : ""}</p><div class="actions">${next ? `<button class="primary" data-track="${next}" data-track-start>${icon(LEVEL_ICONS[next], 16)} Start ${LEVEL_NAMES[next]} →</button>` : ""}<a ${next ? "" : 'class="primary" '}href="#home">Return to the course</a></div>`;
+}
+const passDone = (n: Level) =>
+  NoemaProgress.snapshot({ META, LESSONS }, trackState(state, n)).complete;
+// The course-wide level switch in the header. Each pass keeps its own progress.
+function trackSwitch() {
+  const levels = passes(LESSONS);
+  if (levels.length < 2) return "";
+  return `<div class="track-switch" role="group" aria-label="Course level">${levels
     .map(
       (n) =>
-        `<button type="button" data-topic-level="${l.id}:${n}" aria-pressed="${n === v.level}" title="${LEVEL_HINTS[n]}">${icon(LEVEL_ICONS[n], 15)}${LEVEL_NAMES[n]}</button>`,
+        `<button type="button" data-track="${n}" aria-pressed="${n === levelOf(state)}" title="${LEVEL_BLURBS[n]}">${icon(LEVEL_ICONS[n], 15)}<span>${LEVEL_NAMES[n]}</span>${passDone(n) ? `<span class="track-done" title="Finished">${icon("check", 13)}</span>` : ""}</button>`,
     )
-    .join("")}</div>${note}`;
+    .join("")}</div>`;
+}
+// Switch passes in place: the reader stays on the same topic (or the next one the new pass
+// covers), at the same share of the way through it.
+function changeTrack(n: Level) {
+  const parts = location.hash.slice(1).split("/"),
+    reading = parts[0] === "block" && (parts[2] || "read") === "read";
+  let topicId = parts[0] === "lesson" ? parts[1] : state.lastLesson,
+    through = 0,
+    y = 0;
+  if (reading) {
+    const line = innerHeight * 0.3,
+      sections = [...document.querySelectorAll<HTMLElement>(".reading-topic")],
+      // A topic heading on screen is the steadiest landmark; otherwise the topic being read.
+      on =
+        sections.find((el) => {
+          const top = el.getBoundingClientRect().top;
+          return top >= 0 && top <= innerHeight * 0.6;
+        }) ||
+        sections.filter((el) => el.getBoundingClientRect().top <= line).at(-1) ||
+        sections[0];
+    if (on) {
+      const r = on.getBoundingClientRect();
+      topicId = on.id.slice("read-".length);
+      y = Math.max(r.top, 0);
+      through = r.height ? (y - r.top) / r.height : 0;
+    }
+  }
+  state = switchTrack(state, n);
+  const order = LESSONS.map((l) => l.id),
+    inPass = NoemaProgress.path(LESSONS, state),
+    target =
+      inPass.find((l) => l.id === topicId) ||
+      inPass.find((l) => order.indexOf(l.id) > order.indexOf(topicId)) ||
+      inPass.at(-1);
+  if (parts[0] === "block") {
+    const block = readingBlocks().find((b) => b.lessons.some((l) => l.id === target.id));
+    state.lastLesson = target.id;
+    history.replaceState(
+      null,
+      "",
+      `#block/${block.id}/${reading ? "read/" + target.id : parts[2]}`,
+    );
+    keepScroll = reading;
+  }
+  save();
+  const update = () => {
+    render();
+    const now = reading && document.getElementById("read-" + target.id);
+    if (!now) return;
+    const r = now.getBoundingClientRect();
+    if (target.id === topicId) window.scrollBy(0, r.top + through * r.height - y);
+    else now.scrollIntoView({ block: "start" });
+  };
+  if (document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches)
+    document.startViewTransition(update);
+  else update();
 }
 function blockPage(id, step = "read") {
   let block = blockById(id);
@@ -361,7 +428,7 @@ function blockPage(id, step = "read") {
   if (!block.lessons.some((l) => l.id === state.lastLesson)) state.lastLesson = block.lessons[0].id;
   save();
   const topics = `Topics ${block.start + 1}–${block.start + block.lessons.length}`;
-  const header = `<div class="lesson-topline"><a href="#home">← Course</a><span>Block ${block.index + 1} of ${readingBlocks().length} · ${topics}</span></div>${
+  const header = `<div class="lesson-topline"><a href="#home">← Course</a><span>${passes(LESSONS).length > 1 ? LEVEL_NAMES[levelOf(state)] + " · " : ""}Block ${block.index + 1} of ${readingBlocks().length} · ${topics}</span></div>${
     step !== "done"
       ? stepper(
           block,
@@ -379,7 +446,7 @@ function blockPage(id, step = "read") {
   if (step === "read")
     return (
       header +
-      `<header class="reading-block-header"><h1>${topics}</h1><p class="lead">About ${block.minutes} minutes of reading. A topic counts as read when you reach its end; the questions come together after the last one.</p><nav class="reading-contents" aria-label="In this reading block">${block.lessons.map((l, i) => `<a href="#block/${id}/read/${l.id}" data-read-jump="${l.id}" class="${state.read[l.id] ? "is-read" : ""}"><span>${block.start + i + 1}</span>${e(l.title)}${state.read[l.id] ? `<span class="read-mark" title="Read">${icon("check", 14)}</span>` : ""}</a>`).join("")}</nav></header>${block.lessons.map((l, i) => `<section class="reading-topic" id="read-${l.id}"><div class="reading-topic-heading" data-read-topic="${l.id}"><span class="small">Topic ${block.start + i + 1}${state.read[l.id] ? ` · <span class="read-mark">${icon("check", 13)} Read</span>` : ""}</span><h2>${e(l.title)}</h2><p class="lesson-goal">${e(l.goal)}</p>${levelBar(l)}</div><article class="prose">${readingHTML(l)}</article>${exampleShown(l) ? `<section data-block-card class="block-worked-example"><h3>${e(l.example_title || "Example")}</h3><p>${e(l.example[0])}</p><ol class="block-example-steps">${l.example[1].map((text) => `<li>${e(text)}</li>`).join("")}</ol>${NoemaVisuals.render(l.visual, l.example[1].length - 1, l.id)}</section>` : ""}${depthHTML(l)}${l.activity ? `<p class="block-activity-link"><a href="#lesson/${l.id}">Open the hands-on work for this topic →</a><span class="small">You can also return to it after the block.</span></p>` : ""}${background(l)}<div class="topic-end" data-read-end="${l.id}" aria-hidden="true"></div></section>`).join("")}<div class="block-reading-actions"><div><h2>Ready to try the questions?</h2><p class="small">Your answers for all ${block.lessons.length} topics will be checked together.</p></div><button class="primary" data-finish-reading="${id}">Go to the questions →</button><a href="#home">Save and return to the course</a></div>`
+      `<header class="reading-block-header"><h1>${topics}</h1><p class="lead">About ${block.minutes} minutes of reading. A topic counts as read when you reach its end; the questions come together after the last one.</p><nav class="reading-contents" aria-label="In this reading block">${block.lessons.map((l, i) => `<a href="#block/${id}/read/${l.id}" data-read-jump="${l.id}" class="${state.read[l.id] ? "is-read" : ""}"><span>${block.start + i + 1}</span>${e(l.title)}${state.read[l.id] ? `<span class="read-mark" title="Read">${icon("check", 14)}</span>` : ""}</a>`).join("")}</nav></header>${block.lessons.map((l, i) => `<section class="reading-topic" id="read-${l.id}"><div class="reading-topic-heading" data-read-topic="${l.id}"><span class="small">Topic ${block.start + i + 1}${state.read[l.id] ? ` · <span class="read-mark">${icon("check", 13)} Read</span>` : ""}</span><h2>${e(l.title)}</h2><p class="lesson-goal">${e(l.goal)}</p></div><article class="prose">${readingHTML(l)}</article>${exampleShown(l) ? `<section data-block-card class="block-worked-example"><h3>${e(l.example_title || "Example")}</h3><p>${e(l.example[0])}</p><ol class="block-example-steps">${l.example[1].map((text) => `<li>${e(text)}</li>`).join("")}</ol>${NoemaVisuals.render(l.visual, l.example[1].length - 1, l.id)}</section>` : ""}${l.activity ? `<p class="block-activity-link"><a href="#lesson/${l.id}">Open the hands-on work for this topic →</a><span class="small">You can also return to it after the block.</span></p>` : ""}${background(l)}<div class="topic-end" data-read-end="${l.id}" aria-hidden="true"></div></section>`).join("")}<div class="block-reading-actions"><div><h2>Ready to try the questions?</h2><p class="small">Your answers for all ${block.lessons.length} topics will be checked together.</p></div><button class="primary" data-finish-reading="${id}">Go to the questions →</button><a href="#home">Save and return to the course</a></div>`
     );
   if (step === "practice")
     return (
@@ -388,6 +455,7 @@ function blockPage(id, step = "read") {
     );
   if (step === "explain") return header + explainStep(block.lessons[block.lessons.length - 1]);
   const next = readingBlocks()[block.index + 1];
+  if (!next) return header + passFinished();
   return (
     header +
     `<h1>Block finished.</h1><p class="lead">You have read and practiced these topics. Your answers are saved, including anything you want to revisit.</p><ul class="block-done-topics">${block.lessons.map((l) => `<li>${e(l.title)}</li>`).join("")}</ul><div class="actions">${next ? `<button class="primary" data-go="block/${next.id}/read">Start the next reading block →</button>` : '<a class="primary" href="#home">Return to the course</a>'}<a href="#home">Take a break</a></div>${block.lessons
@@ -501,7 +569,7 @@ function question(q, { guided = false, batch = false } = {}) {
 }
 function readStep(l) {
   const reading = readingHTML(l);
-  return `<h1>${e(l.title)}</h1><p class="lesson-goal">${e(l.goal)}</p>${levelBar(l)}<article class="prose">${reading}</article>${depthHTML(l)}${background(l)}${footer(l, exampleShown(l) ? { primary: "next-example", primaryText: "Next: see an example" } : { primary: "next-check", primaryText: "Next: try one question" })}`;
+  return `<h1>${e(l.title)}</h1><p class="lesson-goal">${e(l.goal)}</p><article class="prose">${reading}</article>${background(l)}${footer(l, exampleShown(l) ? { primary: "next-example", primaryText: "Next: see an example" } : { primary: "next-check", primaryText: "Next: try one question" })}`;
 }
 function cacheCode(start, editable) {
   return `<section class="cache-code-panel"><div class="cache-code-heading"><span>Cache read · two saved positions</span><span>${editable ? "Change the highlighted value" : "Follow the highlighted value"}</span></div><pre class="cache-code" aria-label="Cache read code"><code><span class="code-line active"><span class="line-number">1</span>start = ${editable ? `<select id="cache-start" aria-label="First saved position to read"><option value="0" ${start === 0 ? "selected" : ""}>0</option><option value="1" ${start === 1 ? "selected" : ""}>1</option></select>` : `<mark>${start}</mark>`}</span><span class="code-line"><span class="line-number">2</span>keys = cache.keys[start:]</span><span class="code-line"><span class="line-number">3</span>values = cache.values[start:]</span><span class="code-line"><span class="line-number">4</span>attended = self.attention(q, keys, values)</span></code></pre><div class="code-explanation"><p><b>1 · Choose where the read begins.</b> Position 0 is the first saved entry. Position 1 is the second.</p><p><b>2–3 · Select matching keys and values.</b> <code>[start:]</code> means “from start to the end.” It does not delete anything from the original cache.</p><p><b>4 · Calculate attention.</b> The current query, <code>q</code>, determines how the visible values are mixed.</p></div><p class="small code-caption">This expands the cache-read lines of <code>cached_step</code> for the two-entry case. The exercise selects the corresponding branch of that function.</p></section>`;
@@ -1055,8 +1123,9 @@ function explainStep(l) {
   return `<h1>Explain it back.</h1><p class="explain-prompt">${e(l.transfer[0])}</p><p class="small">A few clear sentences are enough. You can reopen the explanation if you need it.</p>${l.activity ? `<details class="background"><summary>Use your saved work from this lesson</summary>${activityNotes(l)}</details>` : ""}<label class="field-label" for="teach-answer">Your explanation</label><textarea id="teach-answer" data-note="teach-${l.id}" placeholder="Explain what happens and why. Use a small example if it helps.">${e(answer)}</textarea><div class="explain-options"><button class="text-button" ${activeBlock() ? `data-block-step="read" data-block="${activeBlock().id}"` : `data-step="learn" data-lesson="${l.id}"`}>Reopen the explanation</button><button class="text-button" data-self-check="${l.id}">Compare without AI feedback</button></div><div id="teach-grade-result">${assessmentMessage(task.id)}${record ? renderGrade(record, task, answer) : ""}${state.selfChecks[l.id] ? selfCheck(l) : ""}</div>${explanationFooter(l)}`;
 }
 function doneStep(l) {
-  const index = LESSONS.indexOf(l),
-    next = LESSONS[index + 1];
+  const inPass = NoemaProgress.path(LESSONS, state),
+    index = inPass.findIndex((x) => x.id === l.id),
+    next = index < 0 ? undefined : inPass[index + 1];
   const related = challenges
     .filter((c) => c.lesson === l.id)
     .map(
@@ -1064,7 +1133,7 @@ function doneStep(l) {
         `<button class="option-row" data-go="challenges/${c.id}"><span>Use this idea in a review<small>${e(c.title)} Start with background, then judge the proposal.</small></span><span>→</span></button>`,
     )
     .join("");
-  return `<p class="lesson-context">Lesson ${index + 1} · Your place is saved</p><h1>Lesson complete</h1><p class="lead compact">${next ? `Next: ${e(next.title)}.` : "That was the last lesson. Your notes from the activities are saved."}</p><div class="completion-actions"><button class="primary" ${next ? `data-go="lesson/${next.id}"` : `data-open-activity="${l.id}"`}>${next ? "Start the next lesson" : "Revisit your experiment"} →</button><a href="#home">Take a break</a></div><div class="optional-next"><h2>Want to spend more time here?</h2>${l.activity ? `<button class="option-row" data-open-activity="${l.id}"><span>Return to the hands-on activity<small>${e(l.activity.title)} Your notes and results are saved here.</small></span><span>→</span></button>` : ""}${related}<button class="option-row" data-step="learn" data-lesson="${l.id}"><span>Read the explanation again<small>Including the optional calculations and engineering detail.</small></span><span>→</span></button></div>${background(l)}`;
+  return `<p class="lesson-context">Lesson ${index + 1} · Your place is saved</p><h1>Lesson complete</h1><p class="lead compact">${next ? `Next: ${e(next.title)}.` : "That was the last lesson. Your notes from the activities are saved."}</p><div class="completion-actions"><button class="primary" ${next ? `data-go="lesson/${next.id}"` : `data-open-activity="${l.id}"`}>${next ? "Start the next lesson" : "Revisit your experiment"} →</button><a href="#home">Take a break</a></div><div class="optional-next"><h2>Want to spend more time here?</h2>${l.activity ? `<button class="option-row" data-open-activity="${l.id}"><span>Return to the hands-on activity<small>${e(l.activity.title)} Your notes and results are saved here.</small></span><span>→</span></button>` : ""}${related}<button class="option-row" data-step="learn" data-lesson="${l.id}"><span>Read the explanation again</span><span>→</span></button></div>${background(l)}`;
 }
 function lesson(id) {
   const l = lookup(id);
@@ -1301,6 +1370,7 @@ function render() {
     return;
   }
   NoemaUI.unmount();
+  $("#track-slot").innerHTML = trackSwitch();
   document.body.classList.toggle("course-overview", parts[0] === "home");
   $("#main").innerHTML = (views[parts[0]] || home)();
   if (parts[0] === "home") {
@@ -1312,16 +1382,25 @@ function render() {
       );
     NoemaUI.home($("#course-home"), {
       meta: META,
-      lessons: LESSONS.map((l) => ({ ...l, skipped: view(l, state).status === "below" })),
-      placement: META.placement?.length
-        ? {
-            placed: !!state.placed,
-            levels: sections().map((phase) => ({
-              section: phaseLabel(phase),
-              level: LEVEL_NAMES[(state.levels?.[phase] || 1) as Level],
-            })),
-          }
-        : null,
+      lessons: NoemaProgress.path(LESSONS, state),
+      passes: passes(LESSONS).map((n) => {
+        const p = NoemaProgress.snapshot({ META, LESSONS }, trackState(state, n));
+        return {
+          level: n,
+          name: LEVEL_NAMES[n],
+          blurb: LEVEL_BLURBS[n],
+          total: p.total,
+          read: p.read,
+          practiced: p.practiced,
+          complete: p.complete,
+          current: n === levelOf(state),
+        };
+      }),
+      switchPass: (n: Level, start?: boolean) => {
+        changeTrack(n);
+        if (start) go(NoemaProgress.snapshot({ META, LESSONS }, state).resumeRoute);
+      },
+      placement: META.placement?.length ? { placed: !!state.placed } : null,
       current: lookup(progress.currentId) || resumeLesson(),
       started: progress.started,
       completed: state.completed,
@@ -1362,7 +1441,7 @@ document.addEventListener("submit", (event) => {
       [...new FormData(event.target)].map(([id, value]) => [id, Number(value)]),
     );
     state.placement = choices;
-    state.levels = place(META.placement || [], choices);
+    state = switchTrack(state, place(META.placement || [], choices));
     state.placed = true;
     save();
     render();
@@ -1456,12 +1535,6 @@ document.addEventListener("input", (event) => {
 });
 document.addEventListener("change", (event) => {
   const el = event.target;
-  if (el instanceof HTMLSelectElement && el.dataset.sectionLevel) {
-    state.levels = { ...state.levels, [el.dataset.sectionLevel]: Number(el.value) };
-    save();
-    render();
-    return;
-  }
   if (
     !(
       el instanceof HTMLInputElement ||
@@ -1513,29 +1586,12 @@ document.addEventListener("click", async (event) => {
     render();
     return;
   }
-  const topicLevel = event.target.closest<HTMLElement>("[data-topic-level]");
-  if (topicLevel) {
-    const [id, n] = topicLevel.dataset.topicLevel.split(":");
-    state.lessonLevels = { ...state.lessonLevels, [id]: Number(n) };
-    // Keep this topic's depth switch where it was on screen. The block URL names the topic the
-    // reader restores to after a render, so point it here first, then correct for text above that
-    // changed length once that restore has run.
-    const bar = () => document.querySelector(`[data-topic-level^="${id}:"]`)?.closest(".level-bar");
-    const before = bar()?.getBoundingClientRect().top ?? 0;
-    const parts = location.hash.slice(1).split("/");
-    if (parts[0] === "block") {
-      state.lastLesson = id;
-      history.replaceState(null, "", `#block/${parts[1]}/${parts[2] || "read"}/${id}`);
-    }
-    save();
-    keepScroll = parts[0] === "block";
-    render();
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => {
-        const now = bar()?.getBoundingClientRect().top;
-        if (now !== undefined) window.scrollBy(0, now - before);
-      }),
-    );
+  const track = event.target.closest<HTMLElement>("[data-track]");
+  if (track) {
+    const n = Number(track.dataset.track) as Level;
+    if (n !== levelOf(state)) changeTrack(n);
+    if (track.hasAttribute("data-track-start"))
+      go(NoemaProgress.snapshot({ META, LESSONS }, state).resumeRoute);
     return;
   }
   const jump = event.target.closest<HTMLAnchorElement>("[data-read-jump]");

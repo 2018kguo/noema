@@ -58,9 +58,9 @@
     "tailwindcss": "4.3.3"
   },
   "sha256": {
-    "reader-ui.js": "805c790f09221ca9758207f4437477af0ad900d8ed9c2f37e40196a026744850",
-    "reader-ui.js.LEGAL.txt": "2da6aeab1d3eda1be8fbf1cb6e99c67418b68811d57c6f07046c1620cd248b17",
-    "reader-ui.css": "55fa5c065d9a60290d65415cf227be250f88cc492d3eca6113a904a7f0015ed7",
+    "reader-ui.js": "7cde2313c1116679fb78b2775b347c51d06b2c5a1c934449953d37bd6d324c5f",
+    "reader-ui.js.LEGAL.txt": "9a84f992d48f6646e796f8b36a12973d815e64650bfe77897c3e9a6465ff852a",
+    "reader-ui.css": "b962c2a4f0d18b03668031003bd0ccb9714d060d099c2043a6d2faad680a85b9",
     "geist-latin-wght-normal.woff2": "19f9c92546aa300c312235e3125af1b81394d8db9a4bc4a425cd5b641d2d54e1",
     "THIRD-PARTY-LICENSES.txt": "a4b6b6cb5a21a441a9893922a1f7ffb9b716641a63dcfd44cc12f02fbfcbd15e"
   }

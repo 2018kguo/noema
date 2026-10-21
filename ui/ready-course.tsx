@@ -24,6 +24,8 @@ export type ReadyCourseProps = {
         complete: boolean;
         currentTitle: string;
         resumeRoute: string;
+        levelName: string;
+        passes: number;
       };
 };
 const host = (url: string) => {
@@ -84,6 +86,7 @@ export function ReadyCourse({
             <>
               <div className="ui:mt-4 ui:flex ui:flex-wrap ui:items-center ui:justify-between ui:gap-x-3 ui:gap-y-1 ui:text-base ui:text-muted-foreground">
                 <span>
+                  {available.passes > 1 && available.levelName + " · "}
                   {available.read} of {available.total} topics read · {available.practiced}{" "}
                   questions answered
                 </span>

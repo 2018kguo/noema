@@ -20,7 +20,7 @@ material that is easy to grade.
   argument, not about the statistics you could attach to them.
 - A formula or calculation earns a place only when the topic is quantitative or
   the source's argument rests on it. Then explain it once, in words first, at
-  the level that needs it (usually Mechanism or Frontier). Never invent arithmetic
+  the level that needs it (usually High level or Depth). Never invent arithmetic
   to make an idea checkable.
 - Prefer real cases to invented ones: an event the source reports, a named
   system, a decision someone made, a failure that taught the field something.

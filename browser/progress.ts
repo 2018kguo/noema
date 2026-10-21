@@ -1,5 +1,5 @@
 import type { Course } from "../src/course";
-import { inPath, view, type LevelState } from "./levels";
+import { inPath, levelOf, LEVEL_NAMES, passes, type LevelState } from "./levels";
 type Topic = {
   id: string;
   title?: string;
@@ -80,15 +80,13 @@ function summary(course: CourseInfo): Summary {
     })),
   };
 }
-// The topics this learner reads, in order, timed at the level each is shown at.
+// The topics in the learner's current pass, in order, timed at that pass's level.
 function path<T extends Topic>(lessons: T[], state: LevelState = {}): T[] {
+  const level = levelOf(state);
   return lessons
     .filter((l) => inPath(l, state))
     .map((l) => {
-      // Time topics at their section's level, not a one-topic override, so switching depth on
-      // one topic never regroups the blocks (block ids come from their topics).
-      const level = view(l, { ...state, lessonLevels: {} }).level,
-        stored = l.levels?.[level];
+      const stored = l.levels?.[level];
       return {
         ...l,
         reading_minutes:
@@ -119,6 +117,9 @@ function snapshot(course: CourseInfo | Summary, state: ProgressState = {}) {
     started = !!state.lastLesson || read > 0 || practiced > 0;
   return {
     kind: "available" as const,
+    level: levelOf(state),
+    levelName: LEVEL_NAMES[levelOf(state)],
+    passes: passes(info.lessons).length,
     total: lessons.length,
     read,
     practiced,

@@ -18,7 +18,7 @@ import { scheduleTimes } from "../src/visual-models";
 import { connections } from "../src/connections";
 import { runStructured } from "../src/structured-cli";
 import { z } from "zod";
-import { view, place } from "../browser/levels";
+import { levelFor, place, switchTrack, trackState } from "../browser/levels";
 import { sourceHref } from "../browser/links";
 import { tells } from "../src/tells";
 const cleanups: (() => void)[] = [];
@@ -420,31 +420,47 @@ test("connections report sign-in state without account details", async () => {
   expect(JSON.stringify(c)).not.toContain("a@b.c");
   await connections(true);
 });
-test("levels pick the shown depth, skip easier-only topics and place per section", () => {
-  const topic = (id: string, phase: string, ...have: number[]) => ({
+test("a pass reads the topics written at its level and keeps its own progress", () => {
+  const topic = (id: string, ...have: number[]) => ({
     id,
-    phase,
+    phase: "A",
     levels: Object.fromEntries(have.map((n) => [n, "<p>text</p>"])),
   });
-  const basics = topic("basics", "A", 1),
-    core = topic("core", "A", 1, 2, 3),
-    deep = topic("deep", "B", 3);
-  const placed = { levels: { A: 2, B: 1 } };
-  expect(view(core, placed)).toMatchObject({ level: 2, status: "fit" });
-  expect(view(basics, placed)).toMatchObject({ level: 1, status: "below" });
-  expect(view(deep, placed)).toMatchObject({ level: 3, status: "above" });
-  expect(progress.path([basics, core, deep], placed).map((l) => l.id)).toEqual(["core", "deep"]);
-  // Choosing a level on a skipped topic puts it back in the path.
-  expect(
-    progress.path([basics, core], { ...placed, lessonLevels: { basics: 1 } }).map((l) => l.id),
-  ).toEqual(["basics", "core"]);
+  const basics = topic("basics", 1),
+    core = topic("core", 1, 2, 3),
+    deep = topic("deep", 3);
+  expect(progress.path([basics, core, deep], {}).map((l) => l.id)).toEqual(["basics", "core"]);
+  expect(progress.path([basics, core, deep], { level: 3 }).map((l) => l.id)).toEqual([
+    "core",
+    "deep",
+  ]);
+  // A topic opened outside its pass shows its nearest written level.
+  expect(levelFor(deep, { level: 2 })).toBe(3);
+  expect(levelFor(basics, { level: 3 })).toBe(1);
+  // Switching parks the current pass's progress and restores it on the way back.
+  const intro = {
+    level: 1,
+    read: { basics: 1 },
+    completed: {},
+    blocks: {},
+    flow: {},
+    lastLesson: "basics",
+    answers: { q: 1 },
+  };
+  const high = switchTrack(intro, 2);
+  expect(high).toMatchObject({ level: 2, read: {}, lastLesson: null, answers: { q: 1 } });
+  expect(trackState(high, 1).read).toEqual({ basics: 1 });
+  const back = switchTrack({ ...high, read: { core: 1 } }, 1);
+  expect(back).toMatchObject({ level: 1, read: { basics: 1 }, lastLesson: "basics" });
+  expect(trackState(back, 2).read).toEqual({ core: 1 });
   const probes = [
     { id: "a2", phase: "A", level: 2, correct: 0 },
-    { id: "a3", phase: "A", level: 3, correct: 1 },
     { id: "b2", phase: "B", level: 2, correct: 2 },
+    { id: "a3", phase: "A", level: 3, correct: 1 },
   ];
-  expect(place(probes, { a2: 0, a3: 1, b2: -1 })).toEqual({ A: 3, B: 1 });
-  expect(place(probes, { a2: 0, a3: 0, b2: 2 })).toEqual({ A: 2, B: 2 });
+  expect(place(probes, { a2: 0, b2: 2, a3: 1 })).toBe(3);
+  expect(place(probes, { a2: 0, b2: 2, a3: -1 })).toBe(2);
+  expect(place(probes, { a2: 0, b2: -1, a3: 1 })).toBe(1);
 });
 test("course validation requires one question per written level", () => {
   const challenges = Object.values(sample.challenges);

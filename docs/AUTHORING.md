@@ -45,9 +45,9 @@ Each `LESSONS` entry uses:
   "recall": "What outcome do we eventually care about?",
   "predict": "Would doubling the number of measurements settle this question?",
   "levels": {
-    "1": "<p>Intuition: the situation, the idea, why it matters...</p>",
-    "2": "<p>Mechanism: moving parts, numbers, code paths, trade-offs...</p>",
-    "3": "<p>Frontier: evidence, where it breaks, open problems...</p>"
+    "1": "<p>Intro: the situation, the idea, why it matters...</p>",
+    "2": "<p>High level: moving parts, numbers, code paths, trade-offs...</p>",
+    "3": "<p>Depth: evidence, where it breaks, open problems...</p>"
   },
   "example": [
     "A concrete setup with all needed facts.",
@@ -174,23 +174,26 @@ sentence per option.
 Each topic is written at one or more of three levels, every one a complete
 explanation for its own reader, never the previous level made longer:
 
-- **1 · Intuition**: a smart outsider. The situation, the core idea, why it matters.
-- **2 · Mechanism**: someone who will build or run it. Quantities, code paths,
+- **1 · Intro**: a smart outsider. The situation, the core idea, why it matters.
+- **2 · High level**: someone who will build or run it. Quantities, code paths,
   failure modes, trade-offs.
-- **3 · Frontier**: a researcher. Evidence and how it was measured, where it breaks,
+- **3 · Depth**: a researcher. Evidence and how it was measured, where it breaks,
   competing approaches, open problems.
 
 Write only the levels that add something: a prerequisite may be level 1 only, a
 specialist topic level 3 only. Each written level needs exactly the questions
 tagged with that `level`; the reader quizzes the level being read.
 
+The reader teaches a course in passes, one per written level: Intro, then High level,
+then Depth. A pass reads the topics written at its level, with that level's text and
+questions, and keeps its own progress; the end of one pass offers the next. A topic
+with no text at a level is not part of that pass. The level switch in the header
+changes pass anywhere, keeping the reader on the same topic.
+
 `META.placement` holds probes, one level-2 and one level-3 multiple-choice question
-per section (`phase`). Getting every level-2 probe right in a section starts it at
-Mechanism; every level-3 probe as well starts it at Frontier. The reader adds an "I'm
-not sure" option. Learners can change a section's level later or switch depth on
-one topic. A topic whose levels are all below the learner's leaves their path (the
-course outline marks it skipped); a topic whose levels are all above stays as a
-stretch. Reading time and blocks follow the level actually shown.
+per section (`phase`). Getting at least three in four level-2 probes right starts the
+learner at High level; doing the same with the level-3 probes as well starts them at
+Depth. The reader adds an "I'm not sure" option.
 
 Cards, disclosures and progress indicators use the MIT-licensed shadcn/ui and Radix
 components. Their pinned assets ship locally and inside exported ZIPs. Add new

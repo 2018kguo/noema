@@ -1,5 +1,15 @@
 import { useState } from "react";
-import { ArrowRight, Check, ChevronRight, Circle, ExternalLink, Menu } from "lucide-react";
+import {
+  ArrowRight,
+  Check,
+  ChevronRight,
+  Circle,
+  Cog,
+  ExternalLink,
+  Lightbulb,
+  Menu,
+  Telescope,
+} from "lucide-react";
 import { Button } from "./components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./components/ui/card";
 import {
@@ -16,8 +26,18 @@ export type LessonSummary = {
   title: string;
   goal: string;
   phase: string;
-  skipped?: boolean;
 };
+export type Pass = {
+  level: 1 | 2 | 3;
+  name: string;
+  blurb: string;
+  total: number;
+  read: number;
+  practiced: number;
+  complete: boolean;
+  current: boolean;
+};
+const PASS_ICONS = { 1: Lightbulb, 2: Cog, 3: Telescope };
 export type HomeProps = {
   meta: {
     title: string;
@@ -37,10 +57,13 @@ export type HomeProps = {
     total: number;
     blockCount: number;
     resumeRoute: string;
+    complete: boolean;
   };
+  passes: Pass[];
+  switchPass: (level: Pass["level"], start?: boolean) => void;
   routes: Record<string, string>;
   navigate: (route: string) => void;
-  placement: null | { placed: boolean; levels: { section: string; level: string }[] };
+  placement: null | { placed: boolean };
 };
 const phaseName = (phase: string) =>
   phase.includes(" · ") ? phase.split(" · ").slice(1).join(" · ") : phase;
@@ -56,7 +79,11 @@ export function CourseHome({
   storageOK,
   navigate,
   placement,
+  passes,
+  switchPass,
 }: HomeProps) {
+  const pass = passes.find((p) => p.current),
+    nextPass = passes.find((p) => pass && p.level > pass.level);
   const phases = [...new Set(lessons.map((l) => l.phase))],
     currentPhase = phases.indexOf(current.phase);
   const [open, setOpen] = useState([...new Set(["phase-0", "phase-" + currentPhase])]);
@@ -118,6 +145,9 @@ export function CourseHome({
           </nav>
           <div className="ui:mt-8 ui:border-t ui:border-border ui:px-3 ui:pt-6">
             <p className="ui:mb-3 ui:text-sm ui:leading-6 ui:text-muted-foreground">
+              {pass && passes.length > 1 && (
+                <span className="ui:block ui:font-medium ui:text-foreground">{pass.name}</span>
+              )}
               {progress.read} of {lessons.length} topics read
               <br />
               {finished} questions answered
@@ -169,58 +199,125 @@ export function CourseHome({
             questions.
           </p>
         </header>
-        {placement && !placement.placed && (
-          <Card className="ui:mb-6 ui:gap-4 ui:rounded-lg ui:shadow-none" data-course-placement>
+        {passes.length > 1 && (
+          <section aria-labelledby="passes-title" className="ui:mb-8" data-course-passes>
+            <h2 id="passes-title" className="ui:mb-1 ui:text-xl ui:font-semibold ui:tracking-tight">
+              {passes.length === 3 ? "Three" : "Two"} passes over the same subject
+            </h2>
+            <p className="ui:mb-4 ui:text-base ui:leading-7 ui:text-muted-foreground">
+              Each pass has its own reading and questions, and keeps its own progress. Switch any
+              time from the top of the page.
+            </p>
+            <div className="ui:grid ui:gap-3 ui:sm:grid-cols-3">
+              {passes.map((p) => {
+                const Icon = PASS_ICONS[p.level];
+                return (
+                  <button
+                    key={p.level}
+                    type="button"
+                    aria-pressed={p.current}
+                    data-pass={p.level}
+                    onClick={() => !p.current && switchPass(p.level)}
+                    className={cn(
+                      "ui:flex ui:flex-col ui:gap-2 ui:rounded-lg ui:border ui:p-4 ui:text-left ui:transition-colors",
+                      p.current
+                        ? "ui:border-foreground ui:bg-muted"
+                        : "ui:border-border ui:hover:bg-muted",
+                    )}
+                  >
+                    <span className="ui:flex ui:items-center ui:gap-2 ui:text-base ui:font-semibold">
+                      <Icon size={18} aria-hidden="true" />
+                      {p.name}
+                      {p.complete && (
+                        <Check size={16} className="ui:ml-auto" aria-label="Finished" />
+                      )}
+                      {p.current && !p.complete && (
+                        <span className="ui:ml-auto ui:text-xs ui:font-normal ui:text-muted-foreground">
+                          You’re here
+                        </span>
+                      )}
+                    </span>
+                    <span className="ui:text-sm ui:leading-6 ui:text-muted-foreground">
+                      {p.blurb}
+                    </span>
+                    <Progress
+                      value={(100 * p.read) / p.total}
+                      className="ui:mt-auto ui:h-1"
+                      aria-label={p.name + " reading progress"}
+                    />
+                    <span className="ui:text-xs ui:tabular-nums ui:text-muted-foreground">
+                      {p.complete
+                        ? `Finished · ${p.total} topics`
+                        : p.read || p.practiced
+                          ? `${p.read} of ${p.total} read · ${p.practiced} answered`
+                          : `${p.total} topics · not started`}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            {placement && !placement.placed && (
+              <p className="ui:mt-3 ui:text-base ui:leading-7 ui:text-muted-foreground">
+                Know some of this already?{" "}
+                <button
+                  type="button"
+                  className="ui:underline ui:underline-offset-4"
+                  onClick={() => navigate("placement")}
+                  data-course-placement
+                >
+                  Answer a few questions to find where to start
+                </button>
+              </p>
+            )}
+          </section>
+        )}
+        {progress.complete && nextPass ? (
+          <Card className="ui:mb-10 ui:gap-5 ui:rounded-lg ui:shadow-none" data-course-resume>
             <CardHeader className="ui:gap-3">
               <CardTitle className="ui:text-xl ui:font-semibold ui:leading-7">
-                Start at the right depth
+                You finished {pass?.name}
               </CardTitle>
               <CardDescription className="ui:text-base ui:leading-7">
-                Each topic is written at up to three depths: Intuition, Mechanism and Frontier. A
-                few questions per section show what you already know, so you skip what’s too easy.
-                {started && " Your progress so far is kept."}
+                {nextPass.name} goes over the same subject again with new reading and new questions.{" "}
+                {nextPass.blurb}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="ui:text-base" onClick={() => navigate("placement")}>
-                Find my starting depth
+              <Button
+                className="ui:text-base"
+                onClick={() => switchPass(nextPass.level, true)}
+                data-course-continue
+              >
+                Start {nextPass.name}
                 <ArrowRight size={18} />
               </Button>
             </CardContent>
           </Card>
-        )}
-        <Card className="ui:mb-10 ui:gap-5 ui:rounded-lg ui:shadow-none" data-course-resume>
-          <CardHeader className="ui:gap-3">
-            <CardTitle className="ui:text-xl ui:font-semibold ui:leading-7">
-              {current.title}
-            </CardTitle>
-            <CardDescription className="ui:text-base ui:leading-7">{current.goal}</CardDescription>
-          </CardHeader>
-          <CardContent className="ui:flex ui:flex-wrap ui:items-center ui:justify-between ui:gap-4">
-            <p className="ui:text-sm ui:text-muted-foreground">
-              Topic {lessons.findIndex((l) => l.id === current.id) + 1} of {lessons.length}
-            </p>
-            <Button
-              className="ui:text-base"
-              onClick={() => navigate(progress.resumeRoute)}
-              data-course-continue
-            >
-              {started ? "Resume learning" : "Begin reading"}
-              <ArrowRight size={18} />
-            </Button>
-          </CardContent>
-        </Card>
-        {placement?.placed && (
-          <p className="ui:-mt-6 ui:mb-10 ui:text-base ui:leading-7 ui:text-muted-foreground">
-            Your depth: {placement.levels.map((l) => `${l.section} · ${l.level}`).join(", ")}.{" "}
-            <button
-              type="button"
-              className="ui:underline ui:underline-offset-4"
-              onClick={() => navigate("placement")}
-            >
-              Change
-            </button>
-          </p>
+        ) : (
+          <Card className="ui:mb-10 ui:gap-5 ui:rounded-lg ui:shadow-none" data-course-resume>
+            <CardHeader className="ui:gap-3">
+              <CardTitle className="ui:text-xl ui:font-semibold ui:leading-7">
+                {current.title}
+              </CardTitle>
+              <CardDescription className="ui:text-base ui:leading-7">
+                {current.goal}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="ui:flex ui:flex-wrap ui:items-center ui:justify-between ui:gap-4">
+              <p className="ui:text-sm ui:text-muted-foreground">
+                {pass && passes.length > 1 ? pass.name + " · " : ""}Topic{" "}
+                {lessons.findIndex((l) => l.id === current.id) + 1} of {lessons.length}
+              </p>
+              <Button
+                className="ui:text-base"
+                onClick={() => navigate(progress.resumeRoute)}
+                data-course-continue
+              >
+                {started ? "Resume learning" : "Begin reading"}
+                <ArrowRight size={18} />
+              </Button>
+            </CardContent>
+          </Card>
         )}
         <section aria-labelledby="curriculum-title" data-course-outline>
           <h2
@@ -267,19 +364,9 @@ export function CourseHome({
                           {j + 1}
                         </span>
                         <span className="ui:min-w-0">
-                          <span
-                            className={cn(
-                              "ui:block ui:text-base ui:font-medium ui:leading-7",
-                              l.skipped && "ui:text-muted-foreground",
-                            )}
-                          >
+                          <span className="ui:block ui:text-base ui:font-medium ui:leading-7">
                             {l.title}
                           </span>
-                          {l.skipped && (
-                            <span className="ui:block ui:text-sm ui:text-muted-foreground">
-                              Skipped by your placement
-                            </span>
-                          )}
                           <span className="ui:mt-1 ui:block ui:text-base ui:leading-7 ui:text-muted-foreground">
                             {l.goal}
                           </span>

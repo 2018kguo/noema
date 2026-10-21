@@ -2,12 +2,6 @@ import { createRoot, type Root } from "react-dom/client";
 import { flushSync } from "react-dom";
 import { ReadyCourse, type ReadyCourseProps } from "./ready-course";
 import { CourseHome, type HomeProps } from "./course-home";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "./components/ui/accordion";
 import { Card, CardContent } from "./components/ui/card";
 import { Progress } from "./components/ui/progress";
 
@@ -30,26 +24,6 @@ const ui = {
     mount(element, <ReadyCourse {...props} />);
   },
   lesson() {
-    document.querySelectorAll<HTMLElement>("[data-depths]").forEach((element) => {
-      // Teaching HTML has already been sanitized by the generator or locally authored.
-      const panels = [...element.querySelectorAll<HTMLElement>("details")].map((detail) => ({
-        label: detail.querySelector("summary")!.textContent!,
-        html: detail.querySelector(".prose")!.innerHTML,
-      }));
-      mount(
-        element,
-        <Accordion type="multiple" className="ui:w-full">
-          {panels.map((panel, i) => (
-            <AccordionItem value={"depth-" + i} key={i}>
-              <AccordionTrigger className="ui:py-4 ui:text-base">{panel.label}</AccordionTrigger>
-              <AccordionContent>
-                <div className="prose" dangerouslySetInnerHTML={{ __html: panel.html }} />
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>,
-      );
-    });
     document.querySelectorAll<HTMLElement>("[data-example-card]").forEach((element) => {
       const step = Number(element.dataset.exampleStep),
         count = Number(element.dataset.exampleCount);

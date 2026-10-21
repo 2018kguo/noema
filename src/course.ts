@@ -145,7 +145,7 @@ export const lessonSchema = z.object({
   takeaway: text,
   needs: z.array(text),
   sources: z.array(text),
-  // HTML for each depth this topic is written at: 1 Intuition, 2 Mechanism, 3 Frontier.
+  // HTML for each depth this topic is written at: 1 Intro, 2 High level, 3 Depth.
   levels: z
     .object({ 1: text.optional(), 2: text.optional(), 3: text.optional() })
     .strict()

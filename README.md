@@ -33,7 +33,7 @@ its result was saved may need to run again.
 
 - **Inbox:** capture, search, filter, inspect progress, retry, and add missing text.
 - **Reading aids:** specialist terms show their definition on hover, and citations show a source card. A quoted citation opens the source in a new tab, scrolled to and highlighting the passage. Lessons embed images and YouTube videos where they show something better than words, and each course card shows the link that started it.
-- **Depth levels:** every topic is written at up to three depths: Intuition, Mechanism and Frontier. A short placement quiz sets where each section of a course starts, so you skip what you already know. You can change depth per section or per topic at any time.
+- **Three passes:** a course runs as Intro, High level and Depth, each a separate pass over the same subject with its own reading, questions and progress. A short placement quiz picks where to start, and a switch at the top of every page changes pass without losing your place.
 - **Learning:** see topics read, topics practiced, and where to resume each course. Reading and worked examples are grouped into blocks estimated at about 30 minutes; the quiz follows the block. There is no timer or waiting requirement.
 - **Share:** open a ready item and choose **Download to share**.
 

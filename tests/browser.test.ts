@@ -882,24 +882,30 @@ test("dashboard metadata and capture controls stay readable on desktop and phone
     rmSync(data, { recursive: true, force: true });
   }
 }, 40000);
-test("switching one topic's depth or following a stale block link never blanks the page", async () => {
-  // A saved state like a real learner's: overrides that make one switch change reading times.
-  await js(
-    `localStorage.setItem(META.progress_key || "noema:" + META.id, JSON.stringify({lessonLevels: {workshop: 1, deploy: 2, map: 3}, lastLesson: "map"}));true`,
-  );
+// Clear saved progress and reload, so no in-memory state from an earlier test is saved back.
+async function resetProgress() {
+  await command("open", origin + "/#home");
+  await js(`localStorage.removeItem(META.progress_key || "noema:" + META.id); true`);
+  await command("open", origin + "/?fresh=" + Date.now() + "#home");
+  await wait("document.querySelector('[data-course-outline]') !== null");
+}
+test("switching the course level or following a stale block link never blanks the page", async () => {
+  await resetProgress();
   const first = await js(
-    "NoemaProgress.blocks(NoemaProgress.path(LESSONS, JSON.parse(localStorage.getItem(META.progress_key || 'noema:' + META.id))), META.reading_block_size)[0].id",
+    "NoemaProgress.blocks(NoemaProgress.path(LESSONS, {}), META.reading_block_size)[0]",
   );
-  await command("open", origin + "/#block/" + first + "/read/numbers");
-  await wait("document.querySelector('[data-topic-level=\"numbers:2\"]') !== null");
-  await click('[data-topic-level="numbers:2"]');
+  const topic = first.lessons[0].id;
+  await command("open", origin + "/#block/" + first.id + "/read/" + topic);
+  await wait("document.querySelector('[data-track=\"2\"]') !== null");
+  await click('[data-track="2"]');
   await wait(
-    "document.querySelector('#read-numbers [aria-pressed=true]')?.textContent.includes('Mechanism')",
+    "document.querySelector('[data-track=\"2\"]').getAttribute('aria-pressed') === 'true'",
   );
-  expect(await js("location.hash")).toBe("#block/" + first + "/read/numbers");
+  await wait(`document.getElementById('read-${topic}') !== null`);
+  expect(await js("location.hash")).toContain("/read/" + topic);
   // A block id that no longer exists follows its topic; an unknown lesson goes home.
-  await command("open", origin + "/#block/block-gone/read/tokens");
-  await wait("document.getElementById('read-tokens') !== null");
+  await command("open", origin + "/#block/block-gone/read/" + topic);
+  await wait(`document.getElementById('read-${topic}') !== null`);
   expect(
     await js(
       "NoemaProgress.blocks(NoemaProgress.path(LESSONS, JSON.parse(localStorage.getItem(META.progress_key || 'noema:' + META.id))), META.reading_block_size).some((b) => b.id === location.hash.split('/')[1])",
@@ -909,31 +915,34 @@ test("switching one topic's depth or following a stale block link never blanks t
   await wait("document.querySelector('[data-course-outline]') !== null");
   expect(await js("location.hash")).toBe("#home");
 });
-test("switching depth keeps the reader at that topic instead of jumping to the block's first topic", async () => {
+test("switching level keeps the reader at the same place in the same topic", async () => {
+  await resetProgress();
   const first = await js(
     "NoemaProgress.blocks(NoemaProgress.path(LESSONS, {}), META.reading_block_size)[0]",
   );
   const second = first.lessons[1].id;
   await command("open", origin + "/#block/" + first.id + "/read/" + first.lessons[0].id);
-  await wait(`document.querySelector('[data-topic-level="${second}:2"]') !== null`);
-  await js(
-    `document.querySelector('[data-topic-level="${second}:2"]').closest('.level-bar').scrollIntoView({block: 'center'}); true`,
-  );
-  const before = await js(
-    `document.querySelector('[data-topic-level="${second}:2"]').closest('.level-bar').getBoundingClientRect().top`,
-  );
-  await command("click", `[data-topic-level="${second}:2"]`);
+  await wait(`document.getElementById('read-${second}') !== null`);
+  await js(`document.querySelector('#read-${second} h2').scrollIntoView({block: 'center'}); true`);
+  await Bun.sleep(100);
+  const before = await js(`document.getElementById('read-${second}').getBoundingClientRect().top`);
+  await command("click", '[data-track="2"]');
   await wait(
-    `document.querySelector('#read-${second} [aria-pressed=true]')?.textContent.includes('Mechanism')`,
+    "document.querySelector('[data-track=\"2\"]').getAttribute('aria-pressed') === 'true'",
   );
-  await Bun.sleep(300);
-  const after = await js(
-    `document.querySelector('[data-topic-level="${second}:2"]').closest('.level-bar').getBoundingClientRect().top`,
-  );
+  await Bun.sleep(400);
+  const after = await js(`document.getElementById('read-${second}').getBoundingClientRect().top`);
   expect(Math.abs(after - before)).toBeLessThan(4);
-  expect(await js("location.hash")).toBe("#block/" + first.id + "/read/" + second);
+  expect(await js("location.hash")).toContain("/read/" + second);
+  // Each pass keeps its own reading progress.
+  expect(
+    await js(
+      `NoemaProgress.snapshot({META, LESSONS}, JSON.parse(localStorage.getItem(META.progress_key || 'noema:' + META.id))).level`,
+    ),
+  ).toBe(2);
 });
-test("an example shows only at its own depth, and the lesson skips the example step elsewhere", async () => {
+test("an example shows only at its own level, and the lesson skips the example step elsewhere", async () => {
+  await resetProgress();
   const l = sample.course.LESSONS.find(
     (x) => x.example && !x.activity && x.levels[1] && x.levels[2],
   )!;
@@ -943,11 +952,12 @@ test("an example shows only at its own depth, and the lesson skips the example s
       "[...document.querySelectorAll('.stepper button')].map((b) => b.textContent).join('|')",
     ),
   ).toContain("See an example");
-  await click(`[data-topic-level="${l.id}:2"]`);
+  await click('[data-track="2"]');
   await wait("!document.querySelector('.stepper').textContent.includes('See an example')");
   expect(await js("document.querySelector('.flow-footer .primary')?.textContent")).toContain(
     "try one question",
   );
+  await click('[data-track="1"]');
 });
 test("reaching the end of a topic marks it read with a visible check", async () => {
   const first = await js(

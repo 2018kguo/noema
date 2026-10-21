@@ -100,7 +100,10 @@ export type SavedState = {
     }
   >;
   lastLesson: string | null;
-  // Level per course section, per-topic overrides, and placement answers.
+  // The course level (pass) being read; other passes' progress waits in `tracks`.
+  level?: number;
+  tracks?: Record<string, object>;
+  // Older saves chose depth per section and per topic; read once to migrate.
   levels?: Record<string, number>;
   lessonLevels?: Record<string, number>;
   placed?: boolean;

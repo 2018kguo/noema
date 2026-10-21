@@ -2,20 +2,12 @@
 (() => {
   // browser/levels.ts
   var LEVELS = [1, 2, 3];
+  var LEVEL_NAMES = { 1: "Intro", 2: "High level", 3: "Depth" };
   var valid = (n) => n === 1 || n === 2 || n === 3;
   var available = (lesson) => LEVELS.filter((n) => lesson.levels?.[n] !== void 0 && lesson.levels?.[n] !== null);
-  function chosen(lesson, state) {
-    const own = state.lessonLevels?.[lesson.id], section = lesson.phase ? state.levels?.[lesson.phase] : void 0;
-    return valid(own) ? own : valid(section) ? section : 1;
-  }
-  function view(lesson, state) {
-    const want = chosen(lesson, state), have = available(lesson);
-    if (!have.length) throw Error("Topic has no levels: " + lesson.id);
-    if (have.includes(want)) return { level: want, status: "fit", want };
-    if (have.at(-1) < want) return { level: have.at(-1), status: "below", want };
-    return { level: have.find((n) => n > want), status: "above", want };
-  }
-  var inPath = (lesson, state) => view(lesson, state).status !== "below" || valid(state.lessonLevels?.[lesson.id]);
+  var levelOf = (state) => valid(state.level) ? state.level : 1;
+  var passes = (lessons) => LEVELS.filter((n) => lessons.some((l) => available(l).includes(n)));
+  var inPath = (lesson, state) => available(lesson).includes(levelOf(state));
 
   // browser/progress.ts
   function minutes(lesson, level = 1) {
@@ -70,8 +62,9 @@
     };
   }
   function path(lessons, state = {}) {
+    const level = levelOf(state);
     return lessons.filter((l) => inPath(l, state)).map((l) => {
-      const level = view(l, { ...state, lessonLevels: {} }).level, stored = l.levels?.[level];
+      const stored = l.levels?.[level];
       return {
         ...l,
         reading_minutes: l.reading_minutes || (typeof stored === "number" ? stored : minutes(l, level))
@@ -92,6 +85,9 @@
     const complete = practiced === lessons.length, started = !!state.lastLesson || read2 > 0 || practiced > 0;
     return {
       kind: "available",
+      level: levelOf(state),
+      levelName: LEVEL_NAMES[levelOf(state)],
+      passes: passes(info.lessons).length,
       total: lessons.length,
       read: read2,
       practiced,

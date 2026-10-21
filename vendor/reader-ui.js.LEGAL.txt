@@ -72,9 +72,12 @@ lucide-react/dist/esm/icons/check.mjs:
 lucide-react/dist/esm/icons/chevron-down.mjs:
 lucide-react/dist/esm/icons/chevron-right.mjs:
 lucide-react/dist/esm/icons/circle.mjs:
+lucide-react/dist/esm/icons/cog.mjs:
 lucide-react/dist/esm/icons/ellipsis.mjs:
 lucide-react/dist/esm/icons/external-link.mjs:
+lucide-react/dist/esm/icons/lightbulb.mjs:
 lucide-react/dist/esm/icons/menu.mjs:
+lucide-react/dist/esm/icons/telescope.mjs:
 lucide-react/dist/esm/lucide-react.mjs:
   /**
    * @license lucide-react v1.60.0 - ISC
