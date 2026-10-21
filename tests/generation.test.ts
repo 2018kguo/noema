@@ -67,7 +67,9 @@ test("generation validates model output and reuses checkpointed steps without ne
       critiques++;
       return {
         problems:
-          critiques === 1 ? [{ where: "level 1", problem: "says nothing", fix: "add the case" }] : [],
+          critiques === 1
+            ? [{ where: "level 1", problem: "says nothing", fix: "add the case" }]
+            : [],
       };
     }
     return keys.includes("glossary")
