@@ -165,7 +165,7 @@ export function CourseHome({
           </CardHeader>
           <CardContent className="ui:flex ui:flex-wrap ui:items-center ui:justify-between ui:gap-4">
             <p className="ui:text-sm ui:text-muted-foreground">
-              Topic {lessons.indexOf(current) + 1} of {lessons.length}
+              Topic {lessons.findIndex((l) => l.id === current.id) + 1} of {lessons.length}
             </p>
             <Button
               className="ui:text-base"

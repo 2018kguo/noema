@@ -2,8 +2,8 @@ import { randomUUID } from "node:crypto";
 import { join } from "node:path";
 import { InboxStore } from "./inbox-store";
 import { generate, type Stage } from "./generation";
-import { collect, NeedsInput } from "./source-reader";
-import { Cancelled } from "./structured-cli";
+import { collect, research, NeedsInput } from "./source-reader";
+import { Cancelled, runStructured } from "./structured-cli";
 export class InboxWorker {
   private stopped = false;
   private running: Promise<void> | undefined;
@@ -12,6 +12,7 @@ export class InboxWorker {
     readonly store: InboxStore,
     readonly prepare = generate,
     readonly reader = collect,
+    readonly researcher = research,
   ) {}
   start() {
     this.running = this.loop();
@@ -36,7 +37,11 @@ export class InboxWorker {
     };
     const directory = join(this.store.root, "items", item.id, "revision-" + item.revision);
     try {
-      const reading = await this.reader(item, join(directory, "sources"));
+      let reading = await this.reader(item, join(directory, "sources"));
+      stage("researching", "Finding background reading the source assumes.");
+      reading = await this.researcher(item, reading, join(directory, "sources"), (prompt, schema) =>
+        runStructured(settings.provider, settings.model, prompt, schema, 300, cancelled),
+      );
       if (cancelled()) throw new Cancelled("Preparation stopped.");
       const { output, title } = await this.prepare(
         item,

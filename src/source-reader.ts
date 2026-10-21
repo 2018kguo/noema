@@ -318,3 +318,80 @@ export async function collect(item: Item, output: string, fetcher = fetchText): 
   await writeFile(saved, JSON.stringify(value, null, 2) + "\n");
   return value;
 }
+const researchSchema = z
+  .object({
+    links: z.array(z.string()).max(6),
+    background: z.array(z.string()).max(6),
+  })
+  .strict();
+export type Ask = (prompt: string, schema: Record<string, unknown>) => Promise<unknown>;
+// Widen a bounded read: the model picks from links the sources actually contain and names
+// background topics; Noema fetches them. The model never browses or invents URLs.
+export async function research(
+  item: Item,
+  reading: Reading,
+  output: string,
+  ask: Ask,
+  fetcher = fetchText,
+): Promise<Reading> {
+  const saved = join(output, "research.json");
+  try {
+    return readingSchema.parse(JSON.parse(await readFile(saved, "utf8")));
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== "ENOENT") throw e;
+  }
+  if (item.source_dir) return reading;
+  const read = new Set(reading.documents.map((d) => unwrap(d.url))),
+    candidates = [...new Set(reading.documents.flatMap((d) => d.links))]
+      .filter((l) => !read.has(unwrap(l)) && !socials.includes(new URL(l).hostname))
+      .slice(0, 150);
+  const pick = researchSchema.parse(
+    await ask(
+      "You are choosing extra reading for a course built from the sources below. The learner's goal: " +
+        (item.note || "understand this deeply, judge its claims and apply it") +
+        "\nPick up to 6 URLs from CANDIDATE_LINKS (copy them exactly) that a learner needs: primary papers, documentation or posts the sources rely on. Skip navigation, sign-up, social and product pages. Then name up to 6 English Wikipedia article titles for prerequisite concepts the sources assume but do not explain. Prefer fewer, better choices.\n" +
+        JSON.stringify({
+          sources: reading.documents.map((d) => ({
+            title: d.title,
+            url: d.url,
+            text: d.text.slice(0, 6000),
+          })),
+          candidate_links: candidates,
+        }),
+      z.toJSONSchema(researchSchema),
+    ),
+  );
+  const documents = [...reading.documents],
+    gaps = [...reading.gaps],
+    add = async (url: string, label = url) => {
+      try {
+        const [raw, final] = await fetcher(url);
+        documents.push(document(final, raw));
+      } catch (e) {
+        gaps.push(label + ": " + String(e));
+      }
+    };
+  await Promise.all([
+    ...pick.links.filter((l) => candidates.includes(l)).map((l) => add(l)),
+    ...pick.background.map((title) =>
+      add(
+        "https://en.wikipedia.org/api/rest_v1/page/html/" +
+          encodeURIComponent(title.trim().replaceAll(" ", "_")),
+        "Wikipedia: " + title,
+      ),
+    ),
+  ]);
+  const added = documents.length - reading.documents.length;
+  const value = readingSchema.parse({
+    ...reading,
+    documents: documents.map((d, i) => ({ ...d, id: "source" + (i + 1) })),
+    gaps,
+    scope:
+      reading.scope +
+      (added
+        ? ` Background research added ${added} linked or reference page${added === 1 ? "" : "s"} chosen for this goal.`
+        : ""),
+  });
+  await writeFile(saved, JSON.stringify(value, null, 2) + "\n");
+  return value;
+}

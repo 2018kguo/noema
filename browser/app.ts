@@ -206,7 +206,7 @@ function placementPage() {
           .filter((q) => q.phase === phase)
           .map(
             (q) =>
-              `<fieldset class="question" data-place-q="${e(q.id)}"><legend>${e(q.prompt)}</legend>${[...q.options, "I’m not sure"].map((option, i) => `<label class="choice"><input type="radio" name="${e(q.id)}" value="${i < q.options.length ? i : -1}" required><span>${e(option)}</span></label>`).join("")}</fieldset>`,
+              `<div class="question" data-place-q="${e(q.id)}"><fieldset><legend>${e(q.prompt)}</legend>${[...q.options, "I’m not sure"].map((option, i) => `<label class="choice"><input type="radio" name="${e(q.id)}" value="${i < q.options.length ? i : -1}" required><span>${e(option)}</span></label>`).join("")}</fieldset></div>`,
           )
           .join("")}</section>`,
     )

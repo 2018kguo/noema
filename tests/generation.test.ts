@@ -35,11 +35,18 @@ test("generation validates model output and reuses checkpointed steps without ne
   ) => {
     calls++;
     const keys = Object.keys(schema.properties as object);
+    // The first plan answer cites a source by title, as a real model did; validation must
+    // send it back once with the problem named.
+    if (keys.includes("glossary") && calls === 1)
+      return {
+        ...fixtures.plan,
+        lessons: fixtures.plan.lessons.map((l) => ({ ...l, sources: ["Fixture source"] })),
+      };
     return keys.includes("glossary")
       ? fixtures.plan
-      : keys.includes("intuition_html")
+      : keys.includes("questions")
         ? fixtures.lesson
-        : keys.length === 1 && keys[0] === "lessons"
+        : keys.includes("example_setup")
           ? fixtures.editor
           : fixtures.review;
   };
@@ -53,7 +60,7 @@ test("generation validates model output and reuses checkpointed steps without ne
       () => false,
       caller,
     );
-    expect(calls).toBe(10);
+    expect(calls).toBe(15);
     const b = loadBundle(result.output);
     expect(b.course.LESSONS).toHaveLength(5);
     expect(Object.keys(b.challenges)).toHaveLength(3);

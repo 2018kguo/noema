@@ -11,7 +11,11 @@ export async function runStructured(
   schema: Record<string, unknown>,
   timeout = 150,
   cancelled = () => false,
+  // Stable instructions. Claude gets them as its system prompt (replacing the coding-agent
+  // default, which this task never uses) so every call shares one cached prefix.
+  system = "",
 ): Promise<unknown> {
+  if (system && provider !== "claude") prompt = system + "\n\n" + prompt;
   // The Claude CLI rejects a `$schema` draft URI it can't resolve; the schema itself is unchanged.
   const { $schema: _draft, ...plain } = schema;
   schema = plain;
@@ -60,6 +64,7 @@ export async function runStructured(
         "--disable-slash-commands",
         "--settings",
         '{"disableAllHooks":true}',
+        ...(system ? ["--system-prompt", system] : []),
         ...(model ? ["--model", model] : []),
       ];
     else throw Error("Choose the Codex or Claude CLI.");

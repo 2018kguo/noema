@@ -205,7 +205,7 @@
     }
     return `<div class="lesson-topline"><a href="#home">\u2190 Course</a></div><h1>Find your starting depth</h1><p class="lead">Answer what you can. These questions are meant to be hard, so choose \u201CI\u2019m not sure\u201D rather than guessing. Each section starts at the deepest level you show you already know.</p><form id="placement-form">${sections().filter((phase) => probes.some((q) => q.phase === phase)).map(
       (phase) => `<section class="placement-section"><h2>${e(phaseLabel(phase))}</h2>${probes.filter((q) => q.phase === phase).map(
-        (q) => `<fieldset class="question" data-place-q="${e(q.id)}"><legend>${e(q.prompt)}</legend>${[...q.options, "I\u2019m not sure"].map((option, i) => `<label class="choice"><input type="radio" name="${e(q.id)}" value="${i < q.options.length ? i : -1}" required><span>${e(option)}</span></label>`).join("")}</fieldset>`
+        (q) => `<div class="question" data-place-q="${e(q.id)}"><fieldset><legend>${e(q.prompt)}</legend>${[...q.options, "I\u2019m not sure"].map((option, i) => `<label class="choice"><input type="radio" name="${e(q.id)}" value="${i < q.options.length ? i : -1}" required><span>${e(option)}</span></label>`).join("")}</fieldset></div>`
       ).join("")}</section>`
     ).join(
       ""

@@ -6,7 +6,7 @@ import { InboxStore, normalizeLink } from "../src/inbox-store";
 import { loadBundle, validateCourse, ROOT } from "../src/course";
 import { validateGrade, selectedContext } from "../src/grade";
 import { extractArticle, cleanHTML, canonical } from "../src/html";
-import { collect, publicURL, NeedsInput } from "../src/source-reader";
+import { collect, publicURL, NeedsInput, research } from "../src/source-reader";
 import { InboxWorker } from "../src/inbox-worker";
 import { Crawler } from "../src/crawl";
 import { makeServer } from "../src/server";
@@ -135,10 +135,15 @@ test("cancel during generation cannot publish even when provider returns a resul
   const s = store();
   s.configure("claude", "haiku", true);
   const i = s.add("https://example.org/a", "", "public source ".repeat(30)).item;
-  const w = new InboxWorker(s, async () => {
-    s.action(i.id, "cancel");
-    return { output: sample.path, title: "stale" };
-  });
+  const w = new InboxWorker(
+    s,
+    async () => {
+      s.action(i.id, "cancel");
+      return { output: sample.path, title: "stale" };
+    },
+    undefined,
+    async (_item, reading) => reading,
+  );
   await w.processNext();
   expect(s.get(i.id).state).toBe("cancelled");
   expect(s.get(i.id).course_path).toBeNull();
@@ -468,4 +473,48 @@ test("structured calls never send a $schema URI and surface the CLI's own error"
   } finally {
     process.env.PATH = path;
   }
+});
+test("research fetches only links the sources contain, plus named reference pages", async () => {
+  const dir = temp(),
+    fetched: string[] = [];
+  const page = (title: string) =>
+    `<html><head><title>${title}</title></head><body><article><p>${"word ".repeat(80)}</p></article></body></html>`;
+  const reading = {
+    documents: [
+      {
+        url: "https://example.org/post",
+        title: "Post",
+        text: "text",
+        sha256: "x",
+        links: ["https://example.org/paper", "https://example.org/about"],
+        embeds: [],
+      },
+    ],
+    scope: "Post only.",
+    gaps: [],
+    media_note: "",
+  };
+  const result = await research(
+    { id: "a", url: "https://example.org/post", note: "" } as never,
+    reading,
+    dir,
+    async () => ({
+      links: ["https://example.org/paper", "https://evil.example/made-up"],
+      background: ["Attention (machine learning)"],
+    }),
+    async (url) => {
+      fetched.push(url);
+      return [page(url), url];
+    },
+  );
+  expect(fetched.sort()).toEqual([
+    "https://en.wikipedia.org/api/rest_v1/page/html/Attention_(machine_learning)",
+    "https://example.org/paper",
+  ]);
+  expect(result.documents.map((d) => d.id)).toEqual(["source1", "source2", "source3"]);
+  // Saved: a second run neither asks the model nor fetches.
+  const again = await research({ id: "a", url: "", note: "" } as never, reading, dir, async () => {
+    throw Error("asked again");
+  });
+  expect(again.documents).toHaveLength(3);
 });

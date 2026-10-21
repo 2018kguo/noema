@@ -96,7 +96,33 @@ const generatedReview = z
     takeaway: t,
   })
   .strict();
-export type Stage = (state: "writing" | "checking", message: string, title?: string) => void;
+const editSchema = z
+  .object({
+    intuition_html: t.nullable(),
+    mechanism_html: t.nullable(),
+    frontier_html: t.nullable(),
+    example_setup: t,
+    example_steps: arr(3, 3),
+  })
+  .strict();
+async function pool<T, R>(items: T[], limit: number, work: (item: T, i: number) => Promise<R>) {
+  const results: R[] = [];
+  let next = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, async () => {
+      while (next < items.length) {
+        const i = next++;
+        results[i] = await work(items[i], i);
+      }
+    }),
+  );
+  return results;
+}
+export type Stage = (
+  state: "researching" | "writing" | "checking",
+  message: string,
+  title?: string,
+) => void;
 export function lessonContext(
   documents: Reading["documents"],
   outline: z.infer<typeof planSchema>["lessons"][number],
@@ -162,28 +188,46 @@ export async function generate(
     learner_goal:
       item.note || "Understand this from first principles, judge its claims, and apply it.",
   });
+  const system = schemas.SYSTEM + "\n" + writing;
+  // Data first, instructions last: calls that share data (plan, reviews) reuse the cached
+  // prefix. A saved checkpoint that no longer validates is regenerated, and an answer that
+  // fails validation gets one corrected retry before the item fails.
   async function checkpoint<T>(
     name: string,
+    data: string,
     instruction: string,
     schema: z.ZodType<T>,
-    jsonSchema?: Record<string, unknown>,
+    jsonSchema: Record<string, unknown> = z.toJSONSchema(schema),
   ): Promise<T> {
     const path = join(directory, name + ".json");
     try {
       return schema.parse(JSON.parse(await readFile(path, "utf8")));
     } catch (e) {
-      if ((e as NodeJS.ErrnoException).code !== "ENOENT") throw e;
+      if ((e as NodeJS.ErrnoException).code !== "ENOENT" && !(e instanceof z.ZodError)) throw e;
     }
-    if (cancelled()) throw new Cancelled("Preparation stopped.");
-    const raw = await caller(
-      settings.provider,
-      settings.model,
-      schemas.SYSTEM + "\n" + writing + "\n" + instruction,
-      jsonSchema || z.toJSONSchema(schema),
-      900,
-      cancelled,
-    );
-    const value = schema.parse(raw);
+    const ask = (extra = "") => {
+      if (cancelled()) throw new Cancelled("Preparation stopped.");
+      return caller(
+        settings.provider,
+        settings.model,
+        data + "\n\n" + instruction + extra,
+        jsonSchema,
+        900,
+        cancelled,
+        system,
+      );
+    };
+    let parsed = schema.safeParse(await ask());
+    if (!parsed.success)
+      parsed = schema.safeParse(
+        await ask(
+          "\n\nYour previous answer failed validation: " +
+            JSON.stringify(parsed.error.issues).slice(0, 3000) +
+            "\nReturn a corrected, complete answer.",
+        ),
+      );
+    if (!parsed.success) throw parsed.error;
+    const value = parsed.data;
     if (cancelled()) throw new Cancelled("Preparation stopped before saving.");
     const temp = path + "." + randomUUID() + ".tmp";
     await writeFile(temp, JSON.stringify(value, null, 2) + "\n");
@@ -191,36 +235,62 @@ export async function generate(
     return value;
   }
   stage("writing", "Planning prerequisites and reading blocks.", documents[0].title);
+  const sourceIds = documents.map((d) => d.id!),
+    planJson = z.toJSONSchema(planSchema) as unknown as {
+      properties: { lessons: { items: { properties: { sources: { items: object } } } } };
+    };
+  // Only real source ids are valid citations; the schema says so, so the model can't invent them.
+  planJson.properties.lessons.items.properties.sources.items = { type: "string", enum: sourceIds };
   const plan = await checkpoint(
     "plan",
-    'Plan 8–12 topics, up to 20 for a broad goal. Order prerequisite concepts before applications. Name phases as "01 · Foundations". Each focus names one concrete idea; group related topics into roughly 30-minute reading blocks before quizzes. Introduce terms in plain English. Introductions use two short sentences. Review descriptions give situations without revealing verdicts. For every phase, write placement probes: one level-2 (Mechanism) and one level-3 (Frontier) multiple-choice question that a reader who already works at that depth answers quickly and a newcomer cannot guess; never test vocabulary alone.\n' +
-      corpus,
-    planSchema,
+    corpus,
+    'Plan 8–12 topics, up to 20 for a broad goal. Order prerequisite concepts before applications. Name phases as "01 · Foundations". Each focus names one concrete idea; group related topics into roughly 30-minute reading blocks before quizzes. Introduce terms in plain English. Introductions use two short sentences. Review descriptions give situations without revealing verdicts. For every phase, write placement probes: one level-2 (Mechanism) and one level-3 (Frontier) multiple-choice question that a reader who already works at that depth answers quickly and a newcomer cannot guess; never test vocabulary alone.' +
+      " Cite sources only by their id field.",
+    planSchema
+      .refine((p) => p.lessons.every((l) => l.sources.every((id) => sourceIds.includes(id))), {
+        message: "Lesson sources must be source ids: " + sourceIds.join(", "),
+      })
+      .refine((p) => p.placement.every((q) => p.lessons.some((l) => l.phase === q.phase)), {
+        message: "Placement phases must match lesson phases exactly",
+      }),
+    planJson,
   );
-  const sourceIds = new Set(documents.map((d) => d.id));
-  if (plan.lessons.some((l) => l.sources.some((id) => !sourceIds.has(id))))
-    throw Error("Plan referenced an unknown source.");
-  const lessons: Lesson[] = [];
-  for (const [i, outline] of plan.lessons.entries()) {
-    stage(
-      "writing",
-      `Writing topic ${i + 1} of ${plan.lessons.length}: ${outline.title}`,
-      plan.title,
-    );
+  let written = 0;
+  const lessons: Lesson[] = await pool(plan.lessons, 3, async (outline, i) => {
+    const id = "idea-" + (i + 1);
     const result = await checkpoint(
       "lesson-" + (i + 1),
-      "Write one topic at up to three depths, each a self-contained 300–600 word explanation for its reader, never the same text made longer: intuition_html (level 1) for a smart outsider: the concrete situation, the core idea and why it matters; mechanism_html (level 2) for someone who will build or operate it: real moving parts, numbers, code paths and trade-offs; frontier_html (level 3) for a researcher: evidence, how it was measured and where it breaks, competing approaches and open problems. Set a depth to null when it would add nothing (a prerequisite topic may be level 1 only; a specialist topic may be level 3 only). Anchor every level high; do not talk down. Define prerequisites before using them. Explain one small invented example in three steps, with a concrete title. Use a small number of purposeful visuals. Inline illustrations name the level whose text they sit in and go after a numbered top-level paragraph of that text: flow for relationships, binding for a one-site equilibrium occupancy model in nM, screen for natural-frequency true/false positives. Each has its own unique slug id. Use at most two inline illustrations and only where prose has introduced the question. Keep the worked-example visual null if it would repeat an inline illustration. A funnel is only for successive conditional retention rates from the same group. Binding assumes one-to-one binding, equilibrium and free ligand concentration; it says nothing about patient benefit. screen rates are fractions, not percentages. Always label invented assumptions. State units, denominator, assumptions, exact endpoint, and that fractional counts are expectations. Funnel has three gates, one per example step; flow steps are zero-based and ordered. Source_ids must be this lesson’s sources. Do not treat invented rates as measurements. Write one question per written level, tagged with that level; level 1 tests application, level 2 mechanism, level 3 judgment of evidence. Make the question self-contained and answerable from the main reading, with plausible misconceptions and similarly concise options. option_feedback explains the specific reasoning in each option. Do not make the correct answer obvious from length or wording. Transfer task is new, concrete and answerable from this lesson, with reasoning criteria.\n" +
-        JSON.stringify({
-          outline,
-          earlier_lessons: plan.lessons.slice(0, i),
-          course_title: plan.title,
-          sources: lessonContext(documents, outline),
-        }),
+      JSON.stringify({
+        course_title: plan.title,
+        all_topics: plan.lessons,
+        sources: lessonContext(documents, outline),
+      }),
+      "Write one topic at up to three depths, each a self-contained 300–600 word explanation for its reader, never the same text made longer: intuition_html (level 1) for a smart outsider: the concrete situation, the core idea and why it matters; mechanism_html (level 2) for someone who will build or operate it: real moving parts, numbers, code paths and trade-offs; frontier_html (level 3) for a researcher: evidence, how it was measured and where it breaks, competing approaches and open problems. Set a depth to null when it would add nothing (a prerequisite topic may be level 1 only; a specialist topic may be level 3 only). Anchor every level high; do not talk down. Define prerequisites before using them. Explain one small invented example in three steps, with a concrete title. Use a small number of purposeful visuals. Inline illustrations name the level whose text they sit in and go after a numbered top-level paragraph of that text: flow for relationships, binding for a one-site equilibrium occupancy model in nM, screen for natural-frequency true/false positives. Each has its own unique slug id. Use at most two inline illustrations and only where prose has introduced the question. Keep the worked-example visual null if it would repeat an inline illustration. A funnel is only for successive conditional retention rates from the same group. Binding assumes one-to-one binding, equilibrium and free ligand concentration; it says nothing about patient benefit. screen rates are fractions, not percentages. Always label invented assumptions. State units, denominator, assumptions, exact endpoint, and that fractional counts are expectations. Funnel has three gates, one per example step; flow steps are zero-based and ordered. Source_ids must be this lesson’s sources. Do not treat invented rates as measurements. Write one question per written level, tagged with that level; level 1 tests application, level 2 mechanism, level 3 judgment of evidence. Make the question self-contained and answerable from the main reading, with plausible misconceptions and similarly concise options. option_feedback explains the specific reasoning in each option. Do not make the correct answer obvious from length or wording. Transfer task is new, concrete and answerable from this lesson, with reasoning criteria." +
+        "\nWrite topic " +
+        (i + 1) +
+        ": " +
+        JSON.stringify(outline),
       generatedLesson,
       schemas.LESSON,
     );
-    const id = "idea-" + (i + 1);
-    lessons.push({
+    const levels = Object.fromEntries(
+      (
+        [
+          [1, result.intuition_html],
+          [2, result.mechanism_html],
+          [3, result.frontier_html],
+        ] as const
+      ).flatMap(([n, html]) => (html ? [[String(n), html]] : [])),
+    );
+    // A separate editing pass per topic: tone, definitions and logic, across every written level.
+    const edited = await checkpoint(
+      "edit-" + (i + 1),
+      JSON.stringify({ levels, example: [result.example_setup, result.example_steps] }),
+      "Edit this topic as a demanding editor using the writing guide's second-pass questions. Remove LLM tics, slogans and self-narration; define terms before use; fix jumps in logic. Preserve every fact, number, level, paragraph count and the paragraph each illustration follows. Return the same levels (null for a level that is absent) and three example steps.",
+      editSchema,
+    );
+    stage("writing", `Wrote ${++written} of ${plan.lessons.length} topics`, plan.title);
+    return {
       id,
       title: outline.title,
       phase: outline.phase,
@@ -231,13 +301,13 @@ export async function generate(
       levels: Object.fromEntries(
         (
           [
-            [1, result.intuition_html],
-            [2, result.mechanism_html],
-            [3, result.frontier_html],
+            [1, edited.intuition_html],
+            [2, edited.mechanism_html],
+            [3, edited.frontier_html],
           ] as const
-        ).flatMap(([n, html]) => (html ? [[n, cleanHTML(html)]] : [])),
+        ).flatMap(([n, html]) => (html && levels[n] ? [[n, cleanHTML(html)]] : [])),
       ),
-      example: [result.example_setup, result.example_steps],
+      example: [edited.example_setup, edited.example_steps],
       example_title: result.example_title,
       visual: result.visual,
       illustrations: result.illustrations,
@@ -245,54 +315,27 @@ export async function generate(
       transfer: [result.transfer_prompt, result.rubric, result.transfer_example],
       sources: outline.sources,
       takeaway: result.takeaway,
+    };
+  });
+  stage("checking", "Preparing guided reviews.", plan.title);
+  const reviewData =
+    corpus +
+    "\n" +
+    JSON.stringify({
+      course: plan,
+      lessons: lessons.map((l) => ({ id: l.id, title: l.title, takeaway: l.takeaway })),
     });
-  }
-  stage("checking", "Editing explanations and checking the teaching sequence.", plan.title);
-  const edited = await checkpoint(
-    "editorial-v2",
-    "Edit each topic's lowest written level and its example. Keep its length. Define terms and fix jumps in logic. Preserve every fact, number, lesson ID, quiz meaning, transfer task, visual, paragraph count and the relationship between inline illustrations and their preceding paragraphs. Remove slogans. Keep three example steps. Explain each percentage’s denominator and fractional expected counts. Name precise endpoints.\n" +
-      JSON.stringify(lessons),
-    z
-      .object({
-        lessons: z
-          .array(
-            z
-              .object({ id: t, lowest_level_html: t, example_setup: t, example_steps: arr(3, 3) })
-              .strict(),
-          )
-          .length(lessons.length),
-      })
-      .strict(),
-  );
-  if (
-    new Set(edited.lessons.map((l) => l.id)).size !== lessons.length ||
-    lessons.some((l) => !edited.lessons.some((e) => e.id === l.id))
-  )
-    throw Error("Editorial pass omitted a lesson. Drafts are saved.");
-  for (const l of lessons) {
-    const e = edited.lessons.find((e) => e.id === l.id)!;
-    const lowest = ([1, 2, 3] as const).find((n) => l.levels[n])!;
-    l.levels[lowest] = cleanHTML(e.lowest_level_html);
-    l.example = [e.example_setup, e.example_steps];
-  }
-  const reviews = [];
-  for (const [i, proposal] of plan.reviews.entries()) {
-    stage("checking", `Preparing guided review ${i + 1} of ${plan.reviews.length}.`, plan.title);
+  const reviews = await pool(plan.reviews, 3, async (proposal, i) => {
     const r = await checkpoint(
       "review-" + (i + 1),
+      reviewData,
       "Write a guided review about: " +
         proposal +
-        ". Title must not reveal the answer. Give background, all facts for a small prediction, and a worked review connecting evidence to a decision. Label this an illustrative teaching scenario, not an upstream patch or quote.\n" +
-        JSON.stringify({
-          course: plan,
-          lessons: lessons.map((l) => ({ id: l.id, title: l.title, takeaway: l.takeaway })),
-        }) +
-        "\n" +
-        corpus,
+        ". Title must not reveal the answer. Give background, all facts for a small prediction, and a worked review connecting evidence to a decision. Label this an illustrative teaching scenario, not an upstream patch or quote.",
       generatedReview,
       schemas.REVIEW,
     );
-    reviews.push({
+    return {
       id: "review-" + (i + 1),
       kind: "Claim and design review",
       lesson: lessons.at(-1)!.id,
@@ -316,8 +359,8 @@ export async function generate(
         trace_hint: r.hint,
         takeaway: r.takeaway,
       },
-    });
-  }
+    };
+  });
   let about =
     "<h1>What this course is built on</h1><p>" +
     escapeHTML(reading.scope) +
