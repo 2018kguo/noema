@@ -41,6 +41,7 @@ function article() {
   delete c.META.progress_key;
   c.LABS = [];
   c.LESSONS = [c.LESSONS[0]];
+  c.META.placement = c.META.placement?.filter((q) => q.phase === c.LESSONS[0].phase);
   delete c.LESSONS[0].activity;
   writeFileSync(join(dir, "course.json"), JSON.stringify(c));
   writeFileSync(join(dir, "challenges.json"), "[]");
