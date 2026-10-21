@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowRight, Check, ChevronRight, Circle, Menu } from "lucide-react";
+import { ArrowRight, Check, ChevronRight, Circle, ExternalLink, Menu } from "lucide-react";
 import { Button } from "./components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./components/ui/card";
 import {
@@ -19,7 +19,12 @@ export type LessonSummary = {
   skipped?: boolean;
 };
 export type HomeProps = {
-  meta: { title: string; introduction: string; footnote: string };
+  meta: {
+    title: string;
+    introduction: string;
+    footnote: string;
+    origin?: { url: string; title: string; image?: string };
+  };
   lessons: LessonSummary[];
   current: LessonSummary;
   started: boolean;
@@ -132,6 +137,31 @@ export function CourseHome({
           <p className="ui:max-w-[64ch] ui:text-lg ui:leading-8 ui:text-muted-foreground">
             {meta.introduction}
           </p>
+          {meta.origin && (
+            <a
+              href={meta.origin.url}
+              target="_blank"
+              rel="noopener"
+              className="ui:mt-5 ui:flex ui:max-w-xl ui:items-center ui:gap-4 ui:rounded-lg ui:border ui:border-border ui:p-3 ui:no-underline ui:transition-colors ui:hover:bg-muted"
+              data-course-origin
+            >
+              {meta.origin.image && (
+                <img
+                  src={meta.origin.image}
+                  alt=""
+                  className="ui:h-14 ui:w-24 ui:shrink-0 ui:rounded ui:object-cover"
+                  onError={(e) => (e.currentTarget.style.display = "none")}
+                />
+              )}
+              <span className="ui:min-w-0">
+                <span className="ui:block ui:text-sm ui:text-muted-foreground">Started from</span>
+                <span className="ui:block ui:truncate ui:text-base ui:font-medium ui:text-foreground">
+                  {meta.origin.title}
+                </span>
+              </span>
+              <ExternalLink size={16} className="ui:ml-auto ui:shrink-0 ui:text-muted-foreground" />
+            </a>
+          )}
           <p className="ui:mt-5 ui:text-base ui:leading-7 ui:text-muted-foreground">
             {lessons.length} topics in {progress.blockCount} reading blocks. Quizzes follow each
             block.

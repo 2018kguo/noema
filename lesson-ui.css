@@ -1044,3 +1044,71 @@ dfn[data-term]:hover {
   border-left: 3px solid var(--line);
   color: var(--muted);
 }
+
+/* Images and videos sit in the reading column at full width, with a caption and credit. */
+.teaching-media {
+  margin: 2rem 0;
+}
+.teaching-media h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.0625rem;
+}
+.teaching-media img,
+.video-poster,
+.video-frame {
+  display: block;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--soft);
+}
+.video-poster,
+.video-frame {
+  aspect-ratio: 16 / 9;
+}
+.video-poster {
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+}
+.video-poster img {
+  height: 100%;
+  object-fit: cover;
+  border: 0;
+  border-radius: 0;
+}
+.video-poster .play {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 68px;
+  height: 48px;
+  transform: translate(-50%, -50%);
+  border-radius: 12px;
+  background: rgb(0 0 0 / 0.75);
+}
+.video-poster .play::after {
+  content: "";
+  position: absolute;
+  inset: 50% auto auto 54%;
+  transform: translate(-50%, -50%);
+  border-style: solid;
+  border-width: 10px 0 10px 17px;
+  border-color: transparent transparent transparent #fff;
+}
+.video-poster:hover .play,
+.video-poster:focus-visible .play {
+  background: #c4302b;
+}
+.media-caption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  margin-top: 0.5rem;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+.media-credit a {
+  color: inherit;
+}

@@ -253,13 +253,39 @@ export async function generate(
         ?.text.replace(/\s+/g, " ")
         .includes(quote.replace(/\s+/g, " ")),
   };
+  // Media the sources actually contain: YouTube embeds or links, and captioned article images.
+  const youtube = (u: string) =>
+    /(?:youtube(?:-nocookie)?\.com\/(?:embed\/|watch\?v=)|youtu\.be\/)([\w-]{11})/.exec(u)?.[1];
+  const media = {
+    videos: [
+      ...new Map(
+        documents.flatMap((d) =>
+          [...d.embeds.map((e) => e.src || ""), ...d.links]
+            .map(youtube)
+            .filter(Boolean)
+            .map((id) => [id!, { youtube_id: id!, source_id: d.id! }] as const),
+        ),
+      ).values(),
+    ].slice(0, 12),
+    images: documents
+      .flatMap((d) => (d.figures || []).map((f) => ({ url: f.src, alt: f.alt, source_id: d.id! })))
+      .slice(0, 30),
+  };
+  const allowedMedia = new Set([
+    ...media.videos.map((v) => v.youtube_id),
+    ...media.images.map((i) => i.url),
+  ]);
   let written = 0;
   const lessons: Lesson[] = await pool(plan.lessons, 3, async (outline, i) => {
     const id = "idea-" + (i + 1);
     const result = await checkpoint(
       "lesson-" + (i + 1),
-      JSON.stringify({ course_title: plan.title, all_topics: plan.lessons }),
-      "Write one topic at up to three depths, each a self-contained 300–600 word explanation for its reader, never the same text made longer: intuition_html (level 1) for a smart outsider: the concrete situation, the core idea and why it matters; mechanism_html (level 2) for someone who will build or operate it: real moving parts, numbers, code paths and trade-offs; frontier_html (level 3) for a researcher: evidence, how it was measured and where it breaks, competing approaches and open problems. Set a depth to null when it would add nothing (a prerequisite topic may be level 1 only; a specialist topic may be level 3 only). Anchor every level high; do not talk down. Define prerequisites before using them. Every named thing must be explained where it appears or linked: mark the first use per level of a course glossary term as <dfn data-term='exact glossary term'>term</dfn>, and cite a source as <a data-source='source id' data-quote='a short exact phrase copied from that source'>readable name</a> so the link opens at that passage; never refer to 'the post' or 'the README' as if the reader had it open. Explain one small invented example in three steps, with a concrete title. Use a small number of purposeful visuals. Inline illustrations name the level whose text they sit in and go after a numbered top-level paragraph of that text: flow for relationships, binding for a one-site equilibrium occupancy model in nM, screen for natural-frequency true/false positives. Each has its own unique slug id. Use at most two inline illustrations and only where prose has introduced the question. Keep the worked-example visual null if it would repeat an inline illustration. A funnel is only for successive conditional retention rates from the same group. Binding assumes one-to-one binding, equilibrium and free ligand concentration; it says nothing about patient benefit. screen rates are fractions, not percentages. Always label invented assumptions. State units, denominator, assumptions, exact endpoint, and that fractional counts are expectations. Funnel has three gates, one per example step; flow steps are zero-based and ordered. Source_ids must be this lesson’s sources. Do not treat invented rates as measurements. Write one question per written level, tagged with that level; level 1 tests application, level 2 mechanism, level 3 judgment of evidence. Make the question self-contained and answerable from the main reading, with plausible misconceptions and similarly concise options. option_feedback explains the specific reasoning in each option. Do not make the correct answer obvious from length or wording. Transfer task is new, concrete and answerable from this lesson, with reasoning criteria." +
+      JSON.stringify({
+        course_title: plan.title,
+        all_topics: plan.lessons,
+        media_candidates: media,
+      }),
+      "Write one topic at up to three depths, each a self-contained 300–600 word explanation for its reader, never the same text made longer: intuition_html (level 1) for a smart outsider: the concrete situation, the core idea and why it matters; mechanism_html (level 2) for someone who will build or operate it: real moving parts, numbers, code paths and trade-offs; frontier_html (level 3) for a researcher: evidence, how it was measured and where it breaks, competing approaches and open problems. Set a depth to null when it would add nothing (a prerequisite topic may be level 1 only; a specialist topic may be level 3 only). Anchor every level high; do not talk down. Define prerequisites before using them. Every named thing must be explained where it appears or linked: mark the first use per level of a course glossary term as <dfn data-term='exact glossary term'>term</dfn>, and cite a source as <a data-source='source id' data-quote='a short exact phrase copied from that source'>readable name</a> so the link opens at that passage; never refer to 'the post' or 'the README' as if the reader had it open. Explain one small invented example in three steps, with a concrete title. Use a small number of purposeful visuals. When a media_candidates video or image shows exactly what a paragraph discusses, embed it as an illustration of kind video (youtube_id, credit) or image (url, alt, credit, credit_url = its source page); never invent media. Inline illustrations name the level whose text they sit in and go after a numbered top-level paragraph of that text: flow for relationships, binding for a one-site equilibrium occupancy model in nM, screen for natural-frequency true/false positives. Each has its own unique slug id. Use at most two inline illustrations and only where prose has introduced the question. Keep the worked-example visual null if it would repeat an inline illustration. A funnel is only for successive conditional retention rates from the same group. Binding assumes one-to-one binding, equilibrium and free ligand concentration; it says nothing about patient benefit. screen rates are fractions, not percentages. Always label invented assumptions. State units, denominator, assumptions, exact endpoint, and that fractional counts are expectations. Funnel has three gates, one per example step; flow steps are zero-based and ordered. Source_ids must be this lesson’s sources. Do not treat invented rates as measurements. Write one question per written level, tagged with that level; level 1 tests application, level 2 mechanism, level 3 judgment of evidence. Make the question self-contained and answerable from the main reading, with plausible misconceptions and similarly concise options. option_feedback explains the specific reasoning in each option. Do not make the correct answer obvious from length or wording. Transfer task is new, concrete and answerable from this lesson, with reasoning criteria." +
         "\nWrite topic " +
         (i + 1) +
         ": " +
@@ -324,7 +350,11 @@ export async function generate(
     if (lesson.visual && !fits(lesson.visual, true)) lesson.visual = null;
     lesson.illustrations = (lesson.illustrations || []).filter(
       (i) =>
-        fits(i.visual, false) && i.after_paragraph <= paragraphCount(lesson.levels[i.level] || ""),
+        fits(i.visual, false) &&
+        (i.visual.kind === "video"
+          ? allowedMedia.has(i.visual.youtube_id)
+          : i.visual.kind !== "image" || allowedMedia.has(i.visual.url)) &&
+        i.after_paragraph <= paragraphCount(lesson.levels[i.level] || ""),
     );
     return lesson;
   });
@@ -387,6 +417,11 @@ export async function generate(
     META: {
       id: item.id,
       title: plan.title,
+      origin: {
+        url: item.url,
+        title: documents[0].title,
+        ...(documents[0].image ? { image: documents[0].image } : {}),
+      },
       heading: plan.heading,
       eyebrow: "YOUR COURSE",
       introduction: plan.introduction,

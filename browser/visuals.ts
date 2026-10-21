@@ -131,8 +131,35 @@ function funnel(visual: Funnel, part: number, id: string) {
     </div>`;
 }
 
+// Media figures. A video shows its thumbnail until played, so nothing loads from YouTube
+// (and no player script runs) unless the reader asks for it.
+function media(visual: Extract<Visual, { kind: "image" | "video" }>, id: string) {
+  const caption = `<figcaption class="media-caption"><span>${escape(visual.caption)}</span><span class="media-credit">${visual.kind === "image" ? `<a href="${escape(visual.credit_url)}" target="_blank" rel="noopener">${escape(visual.credit)}</a>` : escape(visual.credit)}</span></figcaption>`;
+  const body =
+    visual.kind === "image"
+      ? `<img src="${escape(visual.url)}" alt="${escape(visual.alt)}" loading="lazy" decoding="async">`
+      : `<button type="button" class="video-poster" data-youtube="${escape(visual.youtube_id)}" data-start="${visual.start || 0}" aria-label="Play video: ${escape(visual.title)}"><img src="https://i.ytimg.com/vi/${escape(visual.youtube_id)}/hqdefault.jpg" alt="" loading="lazy"><span class="play" aria-hidden="true"></span></button>`;
+  return `<figure class="teaching-media" data-visual="${escape(id)}"><h2>${escape(visual.title)}</h2>${body}${caption}</figure>`;
+}
+function play(button: HTMLElement) {
+  const frame = document.createElement("iframe");
+  frame.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(button.dataset.youtube!)}?autoplay=1&start=${Number(button.dataset.start) || 0}`;
+  frame.title = button.getAttribute("aria-label")!.replace("Play video: ", "");
+  frame.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
+  frame.allowFullscreen = true;
+  frame.className = "video-frame";
+  button.replaceWith(frame);
+}
+if (typeof document !== "undefined")
+  document.addEventListener("click", (event) => {
+    const poster =
+      event.target instanceof Element && event.target.closest<HTMLElement>("[data-youtube]");
+    if (poster) play(poster);
+  });
+
 function render(visual: Visual | null | undefined, part: number, id: string) {
   if (!visual) return "";
+  if (visual.kind === "image" || visual.kind === "video") return media(visual, id);
   const body =
     visual.kind === "binding" || visual.kind === "screen" || visual.kind === "schedule"
       ? interactive(visual, id)

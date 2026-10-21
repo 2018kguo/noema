@@ -38,7 +38,8 @@ function courseCards() {
     {
       id: "deepinfer",
       title: inbox.sample.title,
-      url: "https://github.com/deepseek-ai/DeepInfer",
+      url: inbox.sample.origin?.url || "https://github.com/deepseek-ai/DeepInfer",
+      image: inbox.sample.origin?.image || null,
       courseUrl: inbox.sample.url,
       sample: true,
     },
@@ -72,6 +73,8 @@ function courseCards() {
       domain: item.sample ? "Included course · DeepInfer" : domain(item.url),
       url: item.courseUrl,
       sample: item.sample,
+      origin: item.url,
+      image: item.image || null,
       progress,
     });
   }
@@ -134,7 +137,7 @@ function row(item) {
     active = activeStates.includes(item.state);
   if (ready)
     return `<div data-ready-course="${escapeHTML(item.id)}"><a href="${escapeHTML(item.course_url)}">${escapeHTML(item.title)}</a></div>`;
-  const content = `<span class="source-icon" aria-hidden="true">${domain(item.url).startsWith("github") ? "⌘" : "↗"}</span><span class="item-copy"><span class="item-title">${escapeHTML(item.title)}</span><span class="item-domain">${escapeHTML(domain(item.url))}</span>${item.note ? `<span class="item-note">${escapeHTML(item.note)}</span>` : ""}${active ? `<span class="item-progress">${escapeHTML(item.message)}</span>` : ""}</span><span class="item-end">${badge(item.state)}${ready ? '<span class="row-link">Open course ↗</span>' : ""}<span class="row-time">${age(item.created)}</span></span>`;
+  const content = `<span class="source-icon" aria-hidden="true"><img src="https://icons.duckduckgo.com/ip3/${escapeHTML(domain(item.url).split(" ")[0])}.ico" alt="" width="18" height="18" onerror="this.replaceWith(document.createTextNode('↗'))"></span><span class="item-copy"><span class="item-title">${escapeHTML(item.title)}</span><span class="item-domain">${escapeHTML(domain(item.url))}</span>${item.note ? `<span class="item-note">${escapeHTML(item.note)}</span>` : ""}${active ? `<span class="item-progress">${escapeHTML(item.message)}</span>` : ""}</span><span class="item-end">${badge(item.state)}${ready ? '<span class="row-link">Open course ↗</span>' : ""}<span class="row-time">${age(item.created)}</span></span>`;
   return ready
     ? `<div class="item-entry"><a class="item-row ready-row" href="${escapeHTML(item.course_url)}">${content}</a><button class="item-more" data-item="${escapeHTML(item.id)}" aria-label="Details and sharing for ${escapeHTML(item.title)}" title="Details and sharing">···</button></div>`
     : `<button class="item-row" data-item="${escapeHTML(item.id)}">${content}</button>`;

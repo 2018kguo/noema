@@ -137,8 +137,28 @@
       ${reached === visual.stages.length ? `<details class="visual-experiment"><summary>What if one rate changes?</summary><div class="visual-experiment-body"><p>Keep the starting group and the other rates fixed. Predict which counts will change, then move the slider.</p><label for="visual-rate-${escape(id)}">${escape(visual.stages[visual.adjustable_stage].label)}: <output data-visual-rate-label>${number((custom ? custom.rate : rates[visual.adjustable_stage]) * 100)}%</output></label><input id="visual-rate-${escape(id)}" data-visual-rate="${escape(id)}" type="range" min="0" max="100" step="0.5" value="${(custom ? custom.rate : rates[visual.adjustable_stage]) * 100}"><div data-visual-experiment-result></div><button class="text-button" data-visual-reset="${escape(id)}" type="button">Restore the example\u2019s rates</button></div></details>` : ""}
     </div>`;
   }
+  function media(visual, id) {
+    const caption = `<figcaption class="media-caption"><span>${escape(visual.caption)}</span><span class="media-credit">${visual.kind === "image" ? `<a href="${escape(visual.credit_url)}" target="_blank" rel="noopener">${escape(visual.credit)}</a>` : escape(visual.credit)}</span></figcaption>`;
+    const body = visual.kind === "image" ? `<img src="${escape(visual.url)}" alt="${escape(visual.alt)}" loading="lazy" decoding="async">` : `<button type="button" class="video-poster" data-youtube="${escape(visual.youtube_id)}" data-start="${visual.start || 0}" aria-label="Play video: ${escape(visual.title)}"><img src="https://i.ytimg.com/vi/${escape(visual.youtube_id)}/hqdefault.jpg" alt="" loading="lazy"><span class="play" aria-hidden="true"></span></button>`;
+    return `<figure class="teaching-media" data-visual="${escape(id)}"><h2>${escape(visual.title)}</h2>${body}${caption}</figure>`;
+  }
+  function play(button) {
+    const frame = document.createElement("iframe");
+    frame.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(button.dataset.youtube)}?autoplay=1&start=${Number(button.dataset.start) || 0}`;
+    frame.title = button.getAttribute("aria-label").replace("Play video: ", "");
+    frame.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
+    frame.allowFullscreen = true;
+    frame.className = "video-frame";
+    button.replaceWith(frame);
+  }
+  if (typeof document !== "undefined")
+    document.addEventListener("click", (event) => {
+      const poster = event.target instanceof Element && event.target.closest("[data-youtube]");
+      if (poster) play(poster);
+    });
   function render(visual, part, id) {
     if (!visual) return "";
+    if (visual.kind === "image" || visual.kind === "video") return media(visual, id);
     const body = visual.kind === "binding" || visual.kind === "screen" || visual.kind === "schedule" ? interactive(visual, id) : visual.kind === "funnel" ? funnel(visual, part, id) : `<ol class="concept-flow">${visual.nodes.map((node) => `<li class="${node.step === part ? "current" : node.step > part ? "upcoming" : ""}" ${node.step === part ? 'aria-current="step"' : ""}><span class="flow-node-number">${node.step + 1}</span><div><b>${escape(node.label)}</b><p>${escape(node.detail)}</p></div></li>`).join("")}</ol>`;
     return `<figure class="teaching-visual" data-visual="${escape(id)}"><figcaption><h2>${escape(visual.title)}</h2></figcaption>${body}<p class="visual-caption">${escape(visual.caption)}</p></figure>`;
   }

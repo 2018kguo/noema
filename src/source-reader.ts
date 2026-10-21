@@ -19,6 +19,10 @@ export const documentSchema = z.object({
   embeds: z.array(z.record(z.string(), z.string())),
   // Added by research for context; generation gives these a smaller share of the prompt.
   background: z.boolean().optional(),
+  // The page's preview image, shown on course cards so people recognize where it came from.
+  image: z.string().optional(),
+  // Images in the article, offered to generation as figures it may embed.
+  figures: z.array(z.object({ src: z.string(), alt: z.string() })).optional(),
 });
 export const readingSchema = z.object({
   documents: z.array(documentSchema).min(1),
@@ -118,7 +122,20 @@ export function document(url: string, raw: string, minWords = 60) {
       ),
     ].sort(),
     embeds: p.embeds,
+    figures: p.figures.flatMap((f) => {
+      const src = preview(f.src || "", url);
+      return src && f.alt?.trim() ? [{ src, alt: f.alt.trim() }] : [];
+    }),
+    ...(preview(p.image, url) ? { image: preview(p.image, url) } : {}),
   };
+}
+function preview(image: string, base: string) {
+  try {
+    const u = new URL(image, unwrap(base));
+    return u.protocol === "https:" ? u.href : "";
+  } catch {
+    return "";
+  }
 }
 const socials = ["x.com", "twitter.com", "www.x.com", "www.twitter.com"];
 const pageEntry = z

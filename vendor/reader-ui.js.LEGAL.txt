@@ -73,6 +73,7 @@ lucide-react/dist/esm/icons/chevron-down.mjs:
 lucide-react/dist/esm/icons/chevron-right.mjs:
 lucide-react/dist/esm/icons/circle.mjs:
 lucide-react/dist/esm/icons/ellipsis.mjs:
+lucide-react/dist/esm/icons/external-link.mjs:
 lucide-react/dist/esm/icons/menu.mjs:
 lucide-react/dist/esm/lucide-react.mjs:
   /**

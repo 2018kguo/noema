@@ -14,7 +14,8 @@ export function extractArticle(html: string) {
     embeds: Record<string, string>[] = [],
     figures: Record<string, string>[] = [];
   let current = "",
-    title = "";
+    title = "",
+    image = "";
   const flush = () => {
     const t = current.replace(/\s+/g, " ").trim();
     if (t && !blocks.includes(t)) blocks.push(t);
@@ -49,6 +50,13 @@ export function extractArticle(html: string) {
         figures.push(
           Object.fromEntries(Object.entries(attrs).filter(([k]) => ["src", "alt"].includes(k))),
         );
+      // The page's own preview image (what a chat app shows for the link).
+      if (
+        tag === "meta" &&
+        !image &&
+        ["og:image", "twitter:image"].includes(attrs.property || attrs.name || "")
+      )
+        image = attrs.content || "";
       if (hidden.has(tag)) return;
       if (boundaries.has(tag)) flush();
       if (tag === "a" && attrs.href) links.push(attrs.href);
@@ -62,7 +70,7 @@ export function extractArticle(html: string) {
   }
   walk(parse(html));
   flush();
-  return { blocks, links, embeds, figures, title: title.trim() };
+  return { blocks, links, embeds, figures, title: title.trim(), image };
 }
 // Hover links survive sanitizing: <dfn data-term> and <a data-source> (no href; the reader adds
 // it from SOURCES). With `refs`, marks that point nowhere are unwrapped to plain text.

@@ -26,6 +26,30 @@ export const questionSchema = z
 const visualText = text.max(1500),
   step = z.number().int().nonnegative();
 export const visualSchema = z.discriminatedUnion("kind", [
+  // Rich media from the open web: an image (diagram, photo, chart) or a YouTube video.
+  z
+    .object({
+      kind: z.literal("image"),
+      title: visualText,
+      caption: visualText,
+      source_ids: z.array(text),
+      url: z.url().refine((u) => u.startsWith("https://"), "Images load over https"),
+      alt: visualText,
+      credit: visualText,
+      credit_url: z.url(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("video"),
+      title: visualText,
+      caption: visualText,
+      source_ids: z.array(text),
+      youtube_id: z.string().regex(/^[\w-]{11}$/),
+      start: z.number().int().nonnegative().optional(),
+      credit: visualText,
+    })
+    .strict(),
   z
     .object({
       kind: z.literal("schedule"),
@@ -209,6 +233,15 @@ export const courseSchema = z.object({
       start_label: text,
       footnote: text,
       about_html: text,
+      // The link that started the course, shown so people remember where it came from.
+      origin: z
+        .object({
+          url: z.url(),
+          title: text,
+          image: z.url().optional(),
+        })
+        .strict()
+        .optional(),
       // Probes that set a starting level per course section (phase).
       placement: z
         .array(

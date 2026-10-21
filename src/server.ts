@@ -57,13 +57,28 @@ export function makeServer(options: ServerOptions) {
       },
     });
   };
+  // A ready course's origin preview image, read once per course file.
+  const images = new Map<string, string | null>();
+  const originImage = (path: string | null) => {
+    if (!path) return null;
+    if (!images.has(path))
+      try {
+        images.set(path, loadBundle(path).course.META.origin?.image ?? null);
+      } catch {
+        images.set(path, null);
+      }
+    return images.get(path)!;
+  };
   function snapshot() {
     return {
-      items: store!.list().map((i) => store!.projection(i)),
+      items: store!
+        .list()
+        .map((i) => ({ ...store!.projection(i), image: originImage(i.course_path) })),
       settings: store!.settings(),
       sample: {
         title: initial.course.META.title,
         url: "/learn/deepinfer/",
+        origin: initial.course.META.origin ?? null,
         lessons: initial.course.LESSONS.length,
       },
     };
