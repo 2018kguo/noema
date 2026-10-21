@@ -234,7 +234,7 @@ export const courseSchema = z.object({
       introduction: text.max(600).refine((v) => !/[<>]/.test(v), "Introduction must be plain text"),
       eyebrow: text,
       start_label: text,
-      footnote: text,
+      footnote: text.optional(),
       about_html: text,
       // The link that started the course, shown so people remember where it came from.
       origin: z

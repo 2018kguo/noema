@@ -42,7 +42,7 @@ export type HomeProps = {
   meta: {
     title: string;
     introduction: string;
-    footnote: string;
+    footnote?: string;
     origin?: { url: string; title: string; image?: string };
   };
   lessons: LessonSummary[];
@@ -171,14 +171,19 @@ export function CourseHome({
               className="ui:mt-5 ui:flex ui:max-w-xl ui:items-center ui:gap-4 ui:rounded-lg ui:border ui:border-border ui:p-3 ui:no-underline ui:transition-colors ui:hover:bg-muted"
               data-course-origin
             >
-              {meta.origin.image && (
-                <img
-                  src={meta.origin.image}
-                  alt=""
-                  className="ui:h-14 ui:w-24 ui:shrink-0 ui:rounded ui:object-cover"
-                  onError={(e) => (e.currentTarget.style.display = "none")}
-                />
-              )}
+              <img
+                src={
+                  meta.origin.image ||
+                  `https://icons.duckduckgo.com/ip3/${new URL(meta.origin.url).hostname}.ico`
+                }
+                alt=""
+                className={
+                  meta.origin.image
+                    ? "ui:h-14 ui:w-24 ui:shrink-0 ui:rounded ui:object-cover"
+                    : "ui:h-6 ui:w-6 ui:shrink-0"
+                }
+                onError={(e) => (e.currentTarget.style.display = "none")}
+              />
               <span className="ui:min-w-0">
                 <span className="ui:block ui:text-sm ui:text-muted-foreground">Started from</span>
                 <span className="ui:block ui:truncate ui:text-base ui:font-medium ui:text-foreground">
@@ -365,7 +370,11 @@ export function CourseHome({
             ))}
           </Accordion>
         </section>
-        <p className="ui:mt-7 ui:text-sm ui:leading-7 ui:text-muted-foreground">{meta.footnote}</p>
+        {meta.footnote && (
+          <p className="ui:mt-7 ui:text-sm ui:leading-7 ui:text-muted-foreground">
+            {meta.footnote}
+          </p>
+        )}
         {!storageOK && (
           <p
             role="alert"

@@ -241,6 +241,13 @@ export async function generate(
       .refine((p) => p.lessons.every((l) => l.sources.every((id) => sourceIds.includes(id))), {
         message: "Lesson sources must be source ids: " + sourceIds.join(", "),
       })
+      .refine(
+        (p) => p.lessons.every((l) => !/\breading block|\blessons? \d|\bminutes\b/i.test(l.goal)),
+        {
+          message:
+            "Each goal states what the reader will understand; never mention reading blocks, lesson numbers or timing",
+        },
+      )
       .refine((p) => p.lessons.every((l) => !titleTells(l.title).some((t) => t.strong)), {
         message:
           "Name each topic plainly, with no flourish (no 'without the fog', 'actually', 'more than a') and no list of three; one subject per title",
@@ -467,8 +474,6 @@ export async function generate(
       eyebrow: "YOUR COURSE",
       introduction: plan.introduction,
       start_label: "START HERE",
-      footnote:
-        "Read and work through the examples in roughly 30-minute blocks. Questions come together afterward. Deeper reading is optional.",
       placement: plan.placement.map((q, i) => ({ ...q, id: "place-" + (i + 1) })),
       about_html: about,
     },

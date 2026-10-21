@@ -130,7 +130,7 @@ const TITLE_TELLS: Tell[] = [
   {
     kind: "list of three",
     strong: true,
-    re: /^[^,:]+, [^,]+,? and [^,]+$|: [^,]+, [^,]+,? and [^,]+$/,
+    re: /^[^,:]+, (?!with\b|without\b|or\b)[^,:]+,? and [^,]+$|: [^,]+, [^,:]+,? and [^,]+$/,
     fix: "name the one thing the topic is about",
   },
 ];
@@ -139,6 +139,9 @@ export type Hit = { kind: string; sentence: string; strong: boolean; fix: string
 const strip = (html: string) =>
   html
     .replace(/<[^>]+>/g, " ")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&")
     .replace(/\s+/g, " ")
     .trim();
 export function tells(html: string): Hit[] {

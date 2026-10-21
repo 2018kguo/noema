@@ -130,6 +130,8 @@ export function document(url: string, raw: string, minWords = 60) {
   };
 }
 function preview(image: string, base: string) {
+  // An empty URL would resolve to the page itself, which is not an image.
+  if (!image?.trim()) return "";
   try {
     const u = new URL(image, unwrap(base));
     return u.protocol === "https:" ? u.href : "";
@@ -229,9 +231,14 @@ export async function collect(item: Item, output: string, fetcher = fetchText): 
           "https://publish.twitter.com/oembed?" +
             new URLSearchParams({ url: item.url, omit_script: "true" }),
         );
-        documents.push(
-          document(item.url, z.object({ html: z.string() }).parse(JSON.parse(raw)).html, 12),
-        );
+        const post = z
+          .object({ html: z.string(), author_name: z.string().optional() })
+          .parse(JSON.parse(raw));
+        documents.push({
+          ...document(item.url, post.html, 12),
+          // The page path is only a numeric post id; name the post by its author instead.
+          title: `Post by ${post.author_name || "@" + u.pathname.split("/")[1]} on X`,
+        });
         scope =
           "The single embedded post and up to two linked pages; thread and replies were not read.";
         for (const link of documents[0].links

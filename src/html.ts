@@ -105,10 +105,11 @@ export function cleanHTML(
     "td",
     "br",
   ]);
-  function walk(n: Node): string {
+  function walk(n: Node, code = false): string {
     if ("tagName" in n) {
       if (hidden.has(n.tagName)) return "";
-      const content = "childNodes" in n ? n.childNodes.map(walk).join("") : "";
+      const inCode = code || n.tagName === "code" || n.tagName === "pre";
+      const content = "childNodes" in n ? n.childNodes.map((c) => walk(c, inCode)).join("") : "";
       const mark = { dfn: "data-term", a: "data-source" }[n.tagName];
       if (mark) {
         const target = n.attrs.find((a) => a.name === mark)?.value || "",
@@ -128,9 +129,20 @@ export function cleanHTML(
         ? "<" + n.tagName + ">" + content + (n.tagName === "br" ? "" : "</" + n.tagName + ">")
         : content;
     }
-    if (n.nodeName === "#text" && "value" in n) return escapeHTML(n.value);
-    return "childNodes" in n ? n.childNodes.map(walk).join("") : "";
+    // Prose never contains a literal "\n" or \"; they are a line break or quote the model escaped twice.
+    if (n.nodeName === "#text" && "value" in n)
+      return escapeHTML(
+        code ? n.value : n.value.replace(/(?:\\[nrt])+/g, " ").replace(/\\(["'])/g, "$1"),
+      );
+    return "childNodes" in n ? n.childNodes.map((c) => walk(c, code)).join("") : "";
   }
+  // A model sometimes returns the HTML as a JSON string literal, quotes and escapes included.
+  const trimmed = value.trim();
+  if (trimmed.startsWith('"') && trimmed.endsWith('"'))
+    try {
+      const inner = JSON.parse(trimmed);
+      if (typeof inner === "string") value = inner;
+    } catch {}
   return walk(parseFragment(value));
 }
 export function unwrap(url: string) {

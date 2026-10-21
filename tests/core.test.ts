@@ -181,6 +181,31 @@ test("pasted source collection is cached and never fetches the original link", a
   expect(result.documents[0].text).toBe(i.source_text);
   expect(await collect(i, dir)).toEqual(result);
 });
+test("an X post is named by its author and never uses its own URL as a preview image", async () => {
+  const s = store(),
+    i = s.add("https://x.com/someone/status/2112955825367269788", "").item;
+  const result = await collect(i, temp(), async (url) => {
+    if (!url.startsWith("https://publish.twitter.com/oembed")) throw Error("not fetched: " + url);
+    return [
+      JSON.stringify({
+        html:
+          "<blockquote><p>We built one kernel for training and inference. " +
+          "More detail. ".repeat(20) +
+          "</p></blockquote>",
+        author_name: "Some Lab",
+      }),
+      url,
+    ];
+  });
+  expect(result.documents[0].title).toBe("Post by Some Lab on X");
+  expect(result.documents[0].image).toBeUndefined();
+});
+test("double-escaped model HTML is unwrapped; code keeps its escapes", () => {
+  expect(cleanHTML(JSON.stringify("<p>One.</p>\n<p>Two</p>"))).toBe("<p>One.</p>\n<p>Two</p>");
+  expect(cleanHTML('<p>A \\n line and a \\"quote\\"</p><pre><code>print("\\n")</code></pre>')).toBe(
+    "<p>A   line and a &quot;quote&quot;</p><pre><code>print(&quot;\\n&quot;)</code></pre>",
+  );
+});
 test("DNS rejects a local address before connection", async () => {
   await expect(publicURL("http://127.0.0.1/")).rejects.toThrow();
 });

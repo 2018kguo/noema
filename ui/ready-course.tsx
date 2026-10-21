@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ArrowRight, ExternalLink, MoreHorizontal } from "lucide-react";
 import { Card, CardContent } from "./components/ui/card";
 import { Progress } from "./components/ui/progress";
@@ -47,19 +48,32 @@ export function ReadyCourse({
   origin,
   image,
 }: ReadyCourseProps) {
+  const [broken, setBroken] = useState(false);
   const available = progress?.kind === "available" ? progress : null;
   const href = available?.started && !available.complete ? url + "#" + available.resumeRoute : url;
   return (
     <Card className="ui:mb-3 ui:gap-0 ui:py-0 ui:rounded-lg ui:shadow-none" data-learning-card={id}>
       <CardContent className="ui:relative ui:flex ui:gap-5 ui:p-6">
-        {image && (
+        {image && !broken ? (
           <img
             src={image}
             alt=""
             loading="lazy"
             className="ui:hidden ui:h-[84px] ui:w-[160px] ui:shrink-0 ui:rounded-md ui:border ui:border-border ui:object-cover ui:sm:block"
-            onError={(e) => (e.currentTarget.style.display = "none")}
+            onError={() => setBroken(true)}
           />
+        ) : (
+          // No preview image (an X post has none): a quiet tile with the site's icon keeps cards aligned.
+          <span className="ui:hidden ui:h-[84px] ui:w-[160px] ui:shrink-0 ui:items-center ui:justify-center ui:rounded-md ui:border ui:border-border ui:bg-muted ui:sm:flex">
+            <img
+              src={`https://icons.duckduckgo.com/ip3/${host(origin)}.ico`}
+              alt=""
+              width={28}
+              height={28}
+              className="ui:opacity-80"
+              onError={(e) => (e.currentTarget.style.display = "none")}
+            />
+          </span>
         )}
         <a
           href={href}
