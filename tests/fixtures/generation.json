@@ -1,0 +1,308 @@
+{
+  "plan": {
+    "title": "Fixture course",
+    "heading": "Understand the mechanism",
+    "introduction": "Begin with a small example.",
+    "lessons": [
+      {
+        "title": "Idea 0",
+        "phase": "01 \u00b7 Foundations",
+        "goal": "Explain the mechanism.",
+        "focus": "Use a concrete example.",
+        "sources": ["source1"]
+      },
+      {
+        "title": "Idea 1",
+        "phase": "01 \u00b7 Foundations",
+        "goal": "Explain the mechanism.",
+        "focus": "Use a concrete example.",
+        "sources": ["source1"]
+      },
+      {
+        "title": "Idea 2",
+        "phase": "01 \u00b7 Foundations",
+        "goal": "Explain the mechanism.",
+        "focus": "Use a concrete example.",
+        "sources": ["source1"]
+      },
+      {
+        "title": "Idea 3",
+        "phase": "01 \u00b7 Foundations",
+        "goal": "Explain the mechanism.",
+        "focus": "Use a concrete example.",
+        "sources": ["source1"]
+      },
+      {
+        "title": "Idea 4",
+        "phase": "01 \u00b7 Foundations",
+        "goal": "Explain the mechanism.",
+        "focus": "Use a concrete example.",
+        "sources": ["source1"]
+      }
+    ],
+    "glossary": [
+      {
+        "term": "Term 0",
+        "definition": "A source concept."
+      },
+      {
+        "term": "Term 1",
+        "definition": "A source concept."
+      },
+      {
+        "term": "Term 2",
+        "definition": "A source concept."
+      },
+      {
+        "term": "Term 3",
+        "definition": "A source concept."
+      },
+      {
+        "term": "Term 4",
+        "definition": "A source concept."
+      },
+      {
+        "term": "Term 5",
+        "definition": "A source concept."
+      },
+      {
+        "term": "Term 6",
+        "definition": "A source concept."
+      },
+      {
+        "term": "Term 7",
+        "definition": "A source concept."
+      },
+      {
+        "term": "Term 8",
+        "definition": "A source concept."
+      },
+      {
+        "term": "Term 9",
+        "definition": "A source concept."
+      },
+      {
+        "term": "Term 10",
+        "definition": "A source concept."
+      },
+      {
+        "term": "Term 11",
+        "definition": "A source concept."
+      },
+      {
+        "term": "Term 12",
+        "definition": "A source concept."
+      },
+      {
+        "term": "Term 13",
+        "definition": "A source concept."
+      },
+      {
+        "term": "Term 14",
+        "definition": "A source concept."
+      }
+    ],
+    "reviews": ["Assess a proposal.", "Assess a proposal.", "Assess a proposal."]
+  },
+  "lesson": {
+    "beginner_html": "<h2>Start with a question you have probably already had.</h2><p>You send a message to a chatbot. There is a pause, then the answer starts appearing a little at a time. Somewhere, a computer is turning your message into an answer. What is it actually doing, and why can one service feel much faster than another?</p><p>To answer that, we need to separate three things that are often all called \u201cthe model\u201d: the learned model itself, the software that runs it, and the service you interact with.</p><h3>The model contains learned numbers.</h3><p>During training, a computer adjusts a large collection of numbers so that the model gets better at predicting text. Those numbers are called <b>weights</b>. Think of them as the settings of a very large machine: their values determine how information moves through the machine and which predictions it makes.</p><p>After training, you can save the weights to files. When you fine-tune a base model, you adjust those learned numbers or add a smaller learned update to them. You are changing the model\u2019s behavior.</p><h3>Answering uses those numbers.</h3><p>When the model answers your question, it uses its weights to calculate what piece of text could come next. It chooses one piece, adds it to the text so far, and uses the longer text to make the next prediction. Repeating that process produces a response.</p><p>Using a trained model to make predictions is called <b>inference</b>. In ordinary inference, the model does not update its weights after each word. Its working state changes as the conversation grows, but its learned weights stay fixed.</p><h3>The engine organizes the work.</h3><p>Someone must load the weights, reserve memory, decide which requests to work on together, run the calculations, and keep track of each unfinished answer. That software is an <b>inference engine</b>. Two engines can run the same learned model and still use different amounts of memory or take different amounts of time.</p><p>The service around the engine handles things such as signing you in, deciding which machine receives your request, and sending the answer back to your screen. A faster engine helps, but the service can add delays too.</p><p>DeepInfer is an inference engine. We will use it to study these decisions after we understand the smaller pieces. Your first job is simply to keep the learned model, the engine, and the surrounding service separate in your mind.</p>",
+    "mechanism_html": "<p>Follow a single request from left to right. Text first becomes a sequence of numbered pieces, which we will call tokens in lesson three. The engine feeds those numbers through the model\u2019s calculations. The result is a set of scores for possible next pieces. The engine chooses a piece and runs the process again. Because the answer is unfinished between rounds, the engine must remember which request owns which working state.</p><p>This is why an engine is more than a function that loads a file and returns a paragraph. It coordinates a repeated process for many requests sharing limited hardware.</p><p>An engine manages execution: weight loading, memory allocation, request batching, attention state, kernels and sampling. A serving system adds routing, admission control, streaming, failures and operations.</p><p>Model quality and serving quality are separate axes. Wrong prompt formatting can make good weights look bad. Poor scheduling can make a correct model feel slow.</p><p>DeepInfer is a specialized case study. Its README currently names <b>DeepSeek-V4.1-Flash</b>. It releases offline inference capabilities and leaves a full KV-cache service, production disaggregation and replica load balancing outside the release. That does not mean the engine lacks local attention caches.</p>",
+    "judgment_html": "<p>Suppose you replace the engine but keep the same weights. What should stay the same? The answer depends on the change you are making. Some changes should reproduce the same numerical result. Others preserve the probabilities of possible outputs, even if one particular answer differs. Still others deliberately approximate the calculation to save work. Before judging speed, name which promise you are trying to keep.</p><p>Define the contract before optimizing: given weights, tokenizer, prompt IDs, attention semantics and sampling settings, what outputs are legal? Then define workload and service targets. An optimization might preserve the mathematical function, only the output distribution, or approximate both. Those are different promises.</p><p>Your long-term task is to map a bottleneck to a layer you can change, then prove both correctness and benefit. \u201cFaster\u201d without a workload and quality contract is an incomplete engineering statement.</p>",
+    "example_setup": "Your team makes three changes to a chatbot. Which part of the system does each change affect?",
+    "example_steps": [
+      "First, the team fine-tunes the model so its replies follow your preferred writing style. That changes learned weights or a learned adapter. It belongs to the model, because it changes the prediction the same input can produce.",
+      "Next, the team arranges for the computer to process several people\u2019s questions together. The learned weights can remain exactly the same. This is an engine decision: it changes how the computer schedules and executes the work.",
+      "Finally, the team adds a sign-in page and sends each request to an available machine. Those responsibilities belong to the surrounding service. If the chatbot feels slow, knowing which of these three parts is responsible tells you where to investigate."
+    ],
+    "example_title": "Follow three changes",
+    "visual": {
+      "kind": "flow",
+      "title": "Model \u2192 engine \u2192 service",
+      "caption": "An authored example. These are three responsibilities in one system; a change in one can affect the others.",
+      "source_ids": [],
+      "nodes": [
+        {
+          "label": "Model: change the learned behavior",
+          "detail": "Fine-tuning changes weights or an adapter. The same input can produce different predictions.",
+          "step": 0
+        },
+        {
+          "label": "Engine: change how work runs",
+          "detail": "Batching combines requests on the computer. Compare predictions to check that the scheduling change preserves the intended behavior.",
+          "step": 1
+        },
+        {
+          "label": "Service: get the request to a machine",
+          "detail": "Sign-in, routing and availability surround model execution. A delay here also affects the user\u2019s wait.",
+          "step": 2
+        }
+      ]
+    },
+    "questions": [
+      {
+        "prompt": "Two teams use exactly the same learned model weights. Could their engines still take different amounts of time and memory to answer?",
+        "options": [
+          "No. Matching weights force identical execution costs.",
+          "Yes. The software can organize and execute the same calculations differently.",
+          "Only if one team retrains the model."
+        ],
+        "correct": 1,
+        "why": "Yes. Keeping the learned numbers fixed does not fix how requests are grouped, how memory is managed, or how calculations run. One engine can avoid repeated work that another engine performs. The model and the organization of its execution are different parts of the system.",
+        "hint": "Separate learned numbers from how they are executed."
+      },
+      {
+        "prompt": "The public release supports offline inference. What follows?",
+        "options": [
+          "It is already a complete hosted chat service",
+          "It cannot allocate any KV memory",
+          "A service still needs surrounding components"
+        ],
+        "correct": 2,
+        "why": "Offline execution can use local KV state while lacking a distributed cache service and online routing.",
+        "hint": "Local attention state and a fleet cache system are different things."
+      },
+      {
+        "prompt": "Before accepting an optimization, first specify\u2026",
+        "options": [
+          "Workload, output contract and target metrics",
+          "Only peak GPU utilization",
+          "Only a single impressive tokens/s number"
+        ],
+        "correct": 0,
+        "why": "You need to know what must stay correct and which measured behavior should improve.",
+        "hint": "Ask: faster for whom, doing what?"
+      }
+    ],
+    "transfer_prompt": "A friend asks: \u201cIf the model has already been trained, why do we still need an inference engine?\u201d Explain the difference, then name one job the surrounding service does.",
+    "rubric": [
+      "Names weights and execution separately",
+      "Explains iterative next-token prediction",
+      "Names one surrounding service responsibility"
+    ],
+    "transfer_example": "Training produced the learned numbers, or weights, that determine the model\u2019s calculations. When the model answers, the engine repeatedly runs those calculations, chooses a next token, adds it to the text so far, and continues. It also manages memory and coordinates requests that share the hardware. The surrounding service has additional jobs, such as signing users in and sending each request to an available machine.",
+    "takeaway": "The learned model decides which calculations to do. The engine organizes how the computer runs them."
+  },
+  "editor": {
+    "lessons": [
+      {
+        "id": "idea-1",
+        "beginner_html": "<h2>Start with a question you have probably already had.</h2><p>You send a message to a chatbot. There is a pause, then the answer starts appearing a little at a time. Somewhere, a computer is turning your message into an answer. What is it actually doing, and why can one service feel much faster than another?</p><p>To answer that, we need to separate three things that are often all called \u201cthe model\u201d: the learned model itself, the software that runs it, and the service you interact with.</p><h3>The model contains learned numbers.</h3><p>During training, a computer adjusts a large collection of numbers so that the model gets better at predicting text. Those numbers are called <b>weights</b>. Think of them as the settings of a very large machine: their values determine how information moves through the machine and which predictions it makes.</p><p>After training, you can save the weights to files. When you fine-tune a base model, you adjust those learned numbers or add a smaller learned update to them. You are changing the model\u2019s behavior.</p><h3>Answering uses those numbers.</h3><p>When the model answers your question, it uses its weights to calculate what piece of text could come next. It chooses one piece, adds it to the text so far, and uses the longer text to make the next prediction. Repeating that process produces a response.</p><p>Using a trained model to make predictions is called <b>inference</b>. In ordinary inference, the model does not update its weights after each word. Its working state changes as the conversation grows, but its learned weights stay fixed.</p><h3>The engine organizes the work.</h3><p>Someone must load the weights, reserve memory, decide which requests to work on together, run the calculations, and keep track of each unfinished answer. That software is an <b>inference engine</b>. Two engines can run the same learned model and still use different amounts of memory or take different amounts of time.</p><p>The service around the engine handles things such as signing you in, deciding which machine receives your request, and sending the answer back to your screen. A faster engine helps, but the service can add delays too.</p><p>DeepInfer is an inference engine. We will use it to study these decisions after we understand the smaller pieces. Your first job is simply to keep the learned model, the engine, and the surrounding service separate in your mind.</p>",
+        "example_setup": "Your team makes three changes to a chatbot. Which part of the system does each change affect?",
+        "example_steps": [
+          "First, the team fine-tunes the model so its replies follow your preferred writing style. That changes learned weights or a learned adapter. It belongs to the model, because it changes the prediction the same input can produce.",
+          "Next, the team arranges for the computer to process several people\u2019s questions together. The learned weights can remain exactly the same. This is an engine decision: it changes how the computer schedules and executes the work.",
+          "Finally, the team adds a sign-in page and sends each request to an available machine. Those responsibilities belong to the surrounding service. If the chatbot feels slow, knowing which of these three parts is responsible tells you where to investigate."
+        ]
+      },
+      {
+        "id": "idea-2",
+        "beginner_html": "<h2>Start with a question you have probably already had.</h2><p>You send a message to a chatbot. There is a pause, then the answer starts appearing a little at a time. Somewhere, a computer is turning your message into an answer. What is it actually doing, and why can one service feel much faster than another?</p><p>To answer that, we need to separate three things that are often all called \u201cthe model\u201d: the learned model itself, the software that runs it, and the service you interact with.</p><h3>The model contains learned numbers.</h3><p>During training, a computer adjusts a large collection of numbers so that the model gets better at predicting text. Those numbers are called <b>weights</b>. Think of them as the settings of a very large machine: their values determine how information moves through the machine and which predictions it makes.</p><p>After training, you can save the weights to files. When you fine-tune a base model, you adjust those learned numbers or add a smaller learned update to them. You are changing the model\u2019s behavior.</p><h3>Answering uses those numbers.</h3><p>When the model answers your question, it uses its weights to calculate what piece of text could come next. It chooses one piece, adds it to the text so far, and uses the longer text to make the next prediction. Repeating that process produces a response.</p><p>Using a trained model to make predictions is called <b>inference</b>. In ordinary inference, the model does not update its weights after each word. Its working state changes as the conversation grows, but its learned weights stay fixed.</p><h3>The engine organizes the work.</h3><p>Someone must load the weights, reserve memory, decide which requests to work on together, run the calculations, and keep track of each unfinished answer. That software is an <b>inference engine</b>. Two engines can run the same learned model and still use different amounts of memory or take different amounts of time.</p><p>The service around the engine handles things such as signing you in, deciding which machine receives your request, and sending the answer back to your screen. A faster engine helps, but the service can add delays too.</p><p>DeepInfer is an inference engine. We will use it to study these decisions after we understand the smaller pieces. Your first job is simply to keep the learned model, the engine, and the surrounding service separate in your mind.</p>",
+        "example_setup": "Your team makes three changes to a chatbot. Which part of the system does each change affect?",
+        "example_steps": [
+          "First, the team fine-tunes the model so its replies follow your preferred writing style. That changes learned weights or a learned adapter. It belongs to the model, because it changes the prediction the same input can produce.",
+          "Next, the team arranges for the computer to process several people\u2019s questions together. The learned weights can remain exactly the same. This is an engine decision: it changes how the computer schedules and executes the work.",
+          "Finally, the team adds a sign-in page and sends each request to an available machine. Those responsibilities belong to the surrounding service. If the chatbot feels slow, knowing which of these three parts is responsible tells you where to investigate."
+        ]
+      },
+      {
+        "id": "idea-3",
+        "beginner_html": "<h2>Start with a question you have probably already had.</h2><p>You send a message to a chatbot. There is a pause, then the answer starts appearing a little at a time. Somewhere, a computer is turning your message into an answer. What is it actually doing, and why can one service feel much faster than another?</p><p>To answer that, we need to separate three things that are often all called \u201cthe model\u201d: the learned model itself, the software that runs it, and the service you interact with.</p><h3>The model contains learned numbers.</h3><p>During training, a computer adjusts a large collection of numbers so that the model gets better at predicting text. Those numbers are called <b>weights</b>. Think of them as the settings of a very large machine: their values determine how information moves through the machine and which predictions it makes.</p><p>After training, you can save the weights to files. When you fine-tune a base model, you adjust those learned numbers or add a smaller learned update to them. You are changing the model\u2019s behavior.</p><h3>Answering uses those numbers.</h3><p>When the model answers your question, it uses its weights to calculate what piece of text could come next. It chooses one piece, adds it to the text so far, and uses the longer text to make the next prediction. Repeating that process produces a response.</p><p>Using a trained model to make predictions is called <b>inference</b>. In ordinary inference, the model does not update its weights after each word. Its working state changes as the conversation grows, but its learned weights stay fixed.</p><h3>The engine organizes the work.</h3><p>Someone must load the weights, reserve memory, decide which requests to work on together, run the calculations, and keep track of each unfinished answer. That software is an <b>inference engine</b>. Two engines can run the same learned model and still use different amounts of memory or take different amounts of time.</p><p>The service around the engine handles things such as signing you in, deciding which machine receives your request, and sending the answer back to your screen. A faster engine helps, but the service can add delays too.</p><p>DeepInfer is an inference engine. We will use it to study these decisions after we understand the smaller pieces. Your first job is simply to keep the learned model, the engine, and the surrounding service separate in your mind.</p>",
+        "example_setup": "Your team makes three changes to a chatbot. Which part of the system does each change affect?",
+        "example_steps": [
+          "First, the team fine-tunes the model so its replies follow your preferred writing style. That changes learned weights or a learned adapter. It belongs to the model, because it changes the prediction the same input can produce.",
+          "Next, the team arranges for the computer to process several people\u2019s questions together. The learned weights can remain exactly the same. This is an engine decision: it changes how the computer schedules and executes the work.",
+          "Finally, the team adds a sign-in page and sends each request to an available machine. Those responsibilities belong to the surrounding service. If the chatbot feels slow, knowing which of these three parts is responsible tells you where to investigate."
+        ]
+      },
+      {
+        "id": "idea-4",
+        "beginner_html": "<h2>Start with a question you have probably already had.</h2><p>You send a message to a chatbot. There is a pause, then the answer starts appearing a little at a time. Somewhere, a computer is turning your message into an answer. What is it actually doing, and why can one service feel much faster than another?</p><p>To answer that, we need to separate three things that are often all called \u201cthe model\u201d: the learned model itself, the software that runs it, and the service you interact with.</p><h3>The model contains learned numbers.</h3><p>During training, a computer adjusts a large collection of numbers so that the model gets better at predicting text. Those numbers are called <b>weights</b>. Think of them as the settings of a very large machine: their values determine how information moves through the machine and which predictions it makes.</p><p>After training, you can save the weights to files. When you fine-tune a base model, you adjust those learned numbers or add a smaller learned update to them. You are changing the model\u2019s behavior.</p><h3>Answering uses those numbers.</h3><p>When the model answers your question, it uses its weights to calculate what piece of text could come next. It chooses one piece, adds it to the text so far, and uses the longer text to make the next prediction. Repeating that process produces a response.</p><p>Using a trained model to make predictions is called <b>inference</b>. In ordinary inference, the model does not update its weights after each word. Its working state changes as the conversation grows, but its learned weights stay fixed.</p><h3>The engine organizes the work.</h3><p>Someone must load the weights, reserve memory, decide which requests to work on together, run the calculations, and keep track of each unfinished answer. That software is an <b>inference engine</b>. Two engines can run the same learned model and still use different amounts of memory or take different amounts of time.</p><p>The service around the engine handles things such as signing you in, deciding which machine receives your request, and sending the answer back to your screen. A faster engine helps, but the service can add delays too.</p><p>DeepInfer is an inference engine. We will use it to study these decisions after we understand the smaller pieces. Your first job is simply to keep the learned model, the engine, and the surrounding service separate in your mind.</p>",
+        "example_setup": "Your team makes three changes to a chatbot. Which part of the system does each change affect?",
+        "example_steps": [
+          "First, the team fine-tunes the model so its replies follow your preferred writing style. That changes learned weights or a learned adapter. It belongs to the model, because it changes the prediction the same input can produce.",
+          "Next, the team arranges for the computer to process several people\u2019s questions together. The learned weights can remain exactly the same. This is an engine decision: it changes how the computer schedules and executes the work.",
+          "Finally, the team adds a sign-in page and sends each request to an available machine. Those responsibilities belong to the surrounding service. If the chatbot feels slow, knowing which of these three parts is responsible tells you where to investigate."
+        ]
+      },
+      {
+        "id": "idea-5",
+        "beginner_html": "<h2>Start with a question you have probably already had.</h2><p>You send a message to a chatbot. There is a pause, then the answer starts appearing a little at a time. Somewhere, a computer is turning your message into an answer. What is it actually doing, and why can one service feel much faster than another?</p><p>To answer that, we need to separate three things that are often all called \u201cthe model\u201d: the learned model itself, the software that runs it, and the service you interact with.</p><h3>The model contains learned numbers.</h3><p>During training, a computer adjusts a large collection of numbers so that the model gets better at predicting text. Those numbers are called <b>weights</b>. Think of them as the settings of a very large machine: their values determine how information moves through the machine and which predictions it makes.</p><p>After training, you can save the weights to files. When you fine-tune a base model, you adjust those learned numbers or add a smaller learned update to them. You are changing the model\u2019s behavior.</p><h3>Answering uses those numbers.</h3><p>When the model answers your question, it uses its weights to calculate what piece of text could come next. It chooses one piece, adds it to the text so far, and uses the longer text to make the next prediction. Repeating that process produces a response.</p><p>Using a trained model to make predictions is called <b>inference</b>. In ordinary inference, the model does not update its weights after each word. Its working state changes as the conversation grows, but its learned weights stay fixed.</p><h3>The engine organizes the work.</h3><p>Someone must load the weights, reserve memory, decide which requests to work on together, run the calculations, and keep track of each unfinished answer. That software is an <b>inference engine</b>. Two engines can run the same learned model and still use different amounts of memory or take different amounts of time.</p><p>The service around the engine handles things such as signing you in, deciding which machine receives your request, and sending the answer back to your screen. A faster engine helps, but the service can add delays too.</p><p>DeepInfer is an inference engine. We will use it to study these decisions after we understand the smaller pieces. Your first job is simply to keep the learned model, the engine, and the surrounding service separate in your mind.</p>",
+        "example_setup": "Your team makes three changes to a chatbot. Which part of the system does each change affect?",
+        "example_steps": [
+          "First, the team fine-tunes the model so its replies follow your preferred writing style. That changes learned weights or a learned adapter. It belongs to the model, because it changes the prediction the same input can produce.",
+          "Next, the team arranges for the computer to process several people\u2019s questions together. The learned weights can remain exactly the same. This is an engine decision: it changes how the computer schedules and executes the work.",
+          "Finally, the team adds a sign-in page and sends each request to an available machine. Those responsibilities belong to the surrounding service. If the chatbot feels slow, knowing which of these three parts is responsible tells you where to investigate."
+        ]
+      }
+    ]
+  },
+  "review": {
+    "title": "Can two models share this cache?",
+    "prompt": "A teammate wants more requests to reuse the cache and proposes the change below. Would you accept it? Walk through two requests, explain whether they may share the saved work, say what you would keep or change, and describe a test of the actual results. Assume the adapters can change calculations in attention layers.",
+    "artifact": "# Before\ncache_key = (base_revision, adapter_id, tuple(prompt_ids))\n# Proposed change\ncache_key = tuple(prompt_ids)",
+    "context": "Cached keys/values depend on model parameters and the preceding token trajectory, not only the literal input IDs. Distinct adapters can have equal shapes and different learned values.",
+    "setup": [
+      "Imagine that you run two versions of a model: one writes customer-support replies and another writes legal summaries. They start from the same base model, but you fine-tuned them with different adapters. An adapter is a smaller set of learned changes applied to a base model. Using a different adapter can change the calculations even when the model has the same size.",
+      "When a model reads a prompt, its attention layers produce intermediate numbers. The engine can save some of those numbers in a cache so that a later request with a matching beginning can avoid repeating work. These saved numbers are usually called keys and values, or KV. They are results of a calculation; they are not just a copy of the original text.",
+      "A cache key is the label the engine uses to decide whether saved work belongs to the request it is about to run. This example asks you to review a change to that label. The teammate wants more requests to find an existing entry, which is called a cache hit. Your job is to decide when a hit actually represents work the new request is allowed to reuse. Assume here that the adapters change calculations in the attention layers."
+    ],
+    "terms": [
+      {
+        "name": "base_revision",
+        "explanation": "The exact saved version of the base model, before applying an adapter."
+      },
+      {
+        "name": "adapter_id",
+        "explanation": "The identity of the learned adapter used for this request."
+      },
+      {
+        "name": "prompt_ids",
+        "explanation": "The numbered text pieces that make up the input."
+      },
+      {
+        "name": "cache_key",
+        "explanation": "A label used to find a saved result; matching labels cause the engine to try reusing it."
+      }
+    ],
+    "reading": [
+      {
+        "name": "The original line",
+        "explanation": "The parentheses group the base version, adapter identity, and input IDs into one cache label. Two requests must match all three parts to use the same entry."
+      },
+      {
+        "name": "tuple(prompt_ids)",
+        "explanation": "In Python, tuple makes an ordered collection that can be used inside a dictionary key. It does not recalculate the saved attention values."
+      },
+      {
+        "name": "The proposed line",
+        "explanation": "Only the input IDs remain in the label. Think through what information the lookup now uses, and what information it no longer uses."
+      }
+    ],
+    "prediction": "Request A uses adapter A with input IDs [1, 2, 3] and fills the cache. Request B uses adapter B with those same input IDs. What label does each request produce before and after the change, and what saved work would B receive?",
+    "hint": "Hold the prompt fixed, then change a parameter that affects attention.",
+    "criteria": [
+      {
+        "label": "Explains when saved work belongs to a different model",
+        "rule": "Explains that removing base/adapter identity can reuse KV computed under different model parameters, producing incorrect hidden state or logits.",
+        "feedback": "Connect cached numerical state to the weights/adapters that produced it."
+      },
+      {
+        "label": "Walks through two requests",
+        "rule": "Uses the same prompt IDs with two different bases or attention-affecting adapters and describes the second request hitting the first request's incompatible state.",
+        "feedback": "Give two concrete requests sharing prompt IDs and differing in model or adapter."
+      },
+      {
+        "label": "Keeps the needed model information in the cache label",
+        "rule": "Includes immutable base and adapter identity in a compatibility key, and acknowledges other settings that affect state or requires cache invalidation on model changes.",
+        "feedback": "Restore parameter identity; dimensions alone are not enough."
+      },
+      {
+        "label": "Checks results against fresh computation",
+        "rule": "Compares cache-hit output/logits with an uncached reference for two model/adapter identities rather than checking only key shape or successful execution.",
+        "feedback": "Compare cached and uncached results while alternating adapters."
+      }
+    ],
+    "solution": "The key now aliases two distinct numerical computations. Run prompt IDs [1,2,3] under adapter A, then under attention-changing adapter B: B can hit A's KV and produce a hybrid result. Include immutable base/adapter and relevant positional/precision identity in the compatibility namespace. Test A\u2192B\u2192A with the same IDs against uncached reference logits; include a legitimate same-model hit.",
+    "takeaway": "Reusing work is safe only when you can show that the saved calculation matches the new request. A higher cache-hit rate does not establish that."
+  }
+}

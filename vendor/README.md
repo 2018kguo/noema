@@ -1,16 +1,7 @@
-# Reader components
+# Offline reader components
 
-The reader uses Web Awesome 3.14.0’s free card, details and progress-bar
-components (MIT), built with Lit (BSD-3-Clause). No Pro components are included.
-See the included license files and `components.js.LEGAL.txt` for notices.
+The reader uses actual shadcn/ui source pinned in `ui/components/source.json`, built on Radix. Typography uses the self-hosted Geist Variable font. Lucide supplies icons. All browser dependencies are bundled locally.
 
-Upstream: https://github.com/shoelace-style/webawesome
+Run `bun install --frozen-lockfile && bun run build:ui`. Commit `vendor/` and the generated root browser scripts together. `bun run import:ui` reimports the pinned upstream components with the documented utility prefix adaptation; it is not needed for normal builds.
 
-Rebuild from the repository root with `npm ci --ignore-scripts && npm run build:ui`.
-The exact packages are pinned in `package-lock.json`; `manifest.json` records
-output hashes. CI checks that rebuilding produces the committed files.
-Node is needed to update these assets. Running a course requires only Python.
-
-Only these selected components and the default theme ship. The server and ZIP
-export share an explicit asset allowlist in `course_bundle.py`. New dependencies
-must include their license notices and remain usable without a CDN connection.
+`manifest.json` records versions, provenance and output hashes. `THIRD-PARTY-LICENSES.txt` contains complete shipped licenses, including shadcn MIT and Geist OFL. No CDN is required to read or share a course.

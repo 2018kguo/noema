@@ -1,0 +1,95 @@
+/* Tailwind's ui: prefix keeps utilities out of the existing lesson styles. */
+@import "tailwindcss/theme.css" layer(theme) prefix(ui);
+@import "tailwindcss/utilities.css" layer(utilities) prefix(ui) important;
+@source "./";
+@theme inline {
+  --color-background: #ffffff;
+  --color-foreground: #18181b;
+  --color-card: #ffffff;
+  --color-card-foreground: #18181b;
+  --color-primary: #18181b;
+  --color-primary-foreground: #fafafa;
+  --color-secondary: #f4f4f5;
+  --color-secondary-foreground: #18181b;
+  --color-muted: #f4f4f5;
+  --color-muted-foreground: #71717a;
+  --color-accent: #f4f4f5;
+  --color-accent-foreground: #18181b;
+  --color-destructive: #dc2626;
+  --color-border: #e4e4e7;
+  --color-input: #e4e4e7;
+  --color-ring: #a1a1aa;
+  --font-sans: "Geist Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --animate-accordion-down: accordion-down 160ms ease-out;
+  --animate-accordion-up: accordion-up 160ms ease-out;
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+}
+@font-face {
+  font-family: "Geist Variable";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("./geist-latin-wght-normal.woff2") format("woff2");
+}
+.shadcn {
+  font-family: "Geist Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #18181b;
+}
+/* The legacy reader has a reset already. Reset native controls inside React roots
+   without applying Tailwind's global preflight to authored lesson content. */
+.shadcn :where(button, [data-slot]) {
+  box-sizing: border-box;
+  border-color: #e4e4e7;
+  border-style: solid;
+  border-width: 0;
+}
+.shadcn :where(button) {
+  font: inherit;
+  background: none;
+  cursor: pointer;
+}
+[data-course-home] :where(p, h1, h2, h3, h4) {
+  margin: 0;
+  font: inherit;
+  letter-spacing: normal;
+}
+.shadcn [data-slot="accordion-item"] > h3 {
+  margin: 0;
+  font: inherit;
+  letter-spacing: normal;
+}
+.shadcn :where(svg) {
+  display: block;
+}
+.shadcn :where(button:focus-visible, a:focus-visible) {
+  outline: 2px solid #a1a1aa;
+  outline-offset: 3px;
+}
+.shadcn [data-slot="button"] {
+  min-height: 40px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .shadcn *,
+  .shadcn *::before,
+  .shadcn *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -1,9 +1,52 @@
 {
-  "name": "noema-ui",
+  "name": "noema",
+  "version": "0.2.0",
   "private": true,
-  "scripts": {"build:ui": "node scripts/build-ui.mjs"},
+  "type": "module",
+  "scripts": {
+    "build:ui": "bun scripts/build-ui.ts",
+    "typecheck": "tsrs --noEmit && tsrs --noEmit -p browser && tsrs --noEmit -p scripts",
+    "import:ui": "bun scripts/import-components.ts",
+    "start": "bun src/cli.ts serve",
+    "course": "bun src/cli.ts course",
+    "inbox": "bun src/cli.ts inbox",
+    "crawl": "bun src/cli.ts crawl",
+    "lint": "oxlint",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "test": "bun test tests",
+    "check": "bun run fmt:check && bun run lint && bun run typecheck && bun test tests",
+    "evaluate": "bun src/evaluate.ts"
+  },
+  "dependencies": {
+    "fflate": "0.8.3",
+    "ipaddr.js": "2.5.0",
+    "parse5": "8.0.1",
+    "zod": "4.6.7"
+  },
   "devDependencies": {
-    "@awesome.me/webawesome": "3.14.0",
-    "esbuild": "0.28.2"
-  }
+    "@fontsource-variable/geist": "5.3.0",
+    "@tailwindcss/node": "4.3.3",
+    "@tailwindcss/oxide": "4.3.3",
+    "@types/bun": "1.4.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "esbuild": "0.28.2",
+    "lucide-react": "1.60.0",
+    "oxc-parser": "0.155.0",
+    "oxfmt": "0.74.0",
+    "oxlint": "1.89.0",
+    "radix-ui": "1.8.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "tailwind-merge": "3.7.0",
+    "tailwindcss": "4.3.3",
+    "tsrs": "0.18.0-ts7.1.0-dev.20260929"
+  },
+  "engines": {
+    "bun": ">=1.4.3"
+  },
+  "packageManager": "bun@1.4.3"
 }

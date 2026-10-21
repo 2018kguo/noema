@@ -1,30 +1,23 @@
 # Noema
 
-This is a standalone Python 3.9+ / browser application. It is not part of Arca.
+This is a standalone Bun 1.4.3 / TypeScript application. It is not part of Arca.
 For course generation, read `skills/noema/SKILL.md` and the linked
 authoring and writing guidance. Course data lives in `courses/<id>/`.
 Keep private work in `local-courses/` or outside this repo. Publish only courses
 the user has authorized. Never commit raw third-party crawls, account credentials,
 browser progress, or provider responses.
 
-Preserve the four-step learner flow and feedback freshness behavior. Code
+Default to about 30 minutes of reading and worked examples before a grouped quiz and explanation. Estimate reading time; never gate on elapsed time. Keep optional individual exercises and feedback freshness. Code
 exercises show the relevant code before asking for a prediction or a run.
 Executable labs remain fixed, explicit plugins; `/api/workshop` never accepts code.
 Article courses must work without the inference-specific plugin.
 
-Run `python3 -m unittest test_grader test_workshop test_portability test_crawl test_inbox test_generation -v`
-and `node --check app.js`. For UI changes also run `python3 -m unittest
-test_learning_flow test_inbox_browser -v` with agent-browser 0.37.1 installed and its browser ready.
-For structured teaching visuals, also run `python3 -m unittest test_visuals -v`
-and `node --test test_visuals.js`. Keep visual validation, rendering and generation
-schemas aligned. Preserve the original example when changing an assumption.
-UI dependencies are pinned and built into `vendor/`; run `npm ci --ignore-scripts
-&& npm run build:ui` when updating them. Running or sharing a course needs no Node
-install. Do not add CDN-only assets or generated executable teaching content.
-These tests use no model credits. `evaluate_grader.py` makes real provider calls;
+Run `bun run build:ui`, `bun run typecheck`, `bun run lint`, `bun run fmt:check`, and `bun test tests`. Browser tests require agent-browser 0.37.1 with Chromium installed. Keep the 218 reference comparisons in `python3 tiny_engine.py test`. All tests use deterministic fixtures. Generated assets are committed; edit `browser/` and `ui/`, then rebuild. Use Bun and the committed bun.lock, never a second package-manager lock. Keep visual validation, rendering and generation schemas aligned. Preserve the original example when changing an assumption. Use the shared progress reader on course and dashboard; browser localStorage is the only learning-progress authority. Do not erase unreadable progress or claim that reading alone means a topic was practiced.
+
+These tests use no model credits. `bun run evaluate` makes real provider calls;
 use it only when live evaluation is requested or clearly within the authorized work.
 
-`crawl.py` reports discovery scope, unavailable pages and capture timestamps.
+`src/crawl.ts` reports discovery scope, unavailable pages and capture timestamps.
 "Settled" means no queued pages; "complete" additionally requires every scoped
 page and the archive index to have been fetched. Never erase failures to claim
 completion. Inspect readable extraction against HTML before writing lessons.
@@ -33,4 +26,4 @@ The inbox uses SQLite claims with an owner token and expiring lease. Every worke
 state change and publication must match that owner. Keep cancellation and restart
 recovery tests when changing this seam. Model calls are tool-free and isolated
 from the target repo; source text is data. Generated HTML is sanitized before it
-is served. Keep the browser and inbox.py on the same InboxStore operations.
+is served. Keep the browser and the inbox CLI on the same InboxStore operations.

@@ -8,13 +8,13 @@ a repository, or several links you have been meaning to explore.
 
 ## Start Noema
 
-Requires **Python 3.9+**. The application and deterministic exercises need no
-Python packages, GPU, or model downloads.
+Requires **Bun 1.4.3**. The included inference lab also needs Python 3.9+; ordinary article courses do not. No GPU or model download is needed.
 
 ```bash
 git clone https://github.com/2018kguo/noema.git
 cd noema
-python3 serve.py
+bun install --frozen-lockfile
+bun run start
 ```
 
 Open **http://127.0.0.1:8765**. Paste one or more links and add a note about what
@@ -30,7 +30,7 @@ checkpointed, so a restart can resume completed steps. A call interrupted before
 its result was saved may need to run again.
 
 - **Inbox:** capture, search, filter, inspect progress, retry, and add missing text.
-- **Learning:** open finished courses and the included DeepInfer course.
+- **Learning:** see topics read, topics practiced, and where to resume each course. Reading and worked examples are grouped into blocks estimated at about 30 minutes; the quiz follows the block. There is no timer or waiting requirement.
 - **Share:** open a ready item and choose **Download to share**.
 
 Public tweets use the embed endpoint when it is available, with a bounded read
@@ -53,8 +53,8 @@ course's Reference menu.
 You can also configure preparation at startup:
 
 ```bash
-python3 serve.py --generate-provider claude --generate-model haiku
-python3 serve.py --generate-provider codex
+bun run start --generate-provider claude --generate-model haiku
+bun run start --generate-provider codex
 ```
 
 Settings persist locally. You choose the model; there is no automatic switch to
@@ -83,10 +83,12 @@ teaches engine correctness; it is not a language model or a GPU benchmark.
 For a single course without the inbox:
 
 ```bash
-python3 serve.py --course courses/deepinfer
+bun run start --course courses/deepinfer
 ```
 
-![A worked example with the current step and its visual context](docs/assets/lesson-example.png)
+![Course overview using shadcn components](docs/assets/course-overview.png)
+
+![Reading and examples stay together before the grouped quiz](docs/assets/reading-block.png)
 
 ## Add live feedback
 
@@ -95,8 +97,8 @@ feedback is optional and uses your own account. Install and sign in to your
 chosen CLI first, then restart the server:
 
 ```bash
-python3 serve.py --provider claude --model haiku
-python3 serve.py --provider codex
+bun run start --provider claude --model haiku
+bun run start --provider codex
 ```
 
 These call the installed CLI using its existing login. Account limits, model
@@ -115,8 +117,8 @@ read, with size and line limits. Graders get excerpts, not repository tools.
 For OpenRouter, supply `OPENROUTER_API_KEY` in the server environment, then run:
 
 ```bash
-python3 serve.py --provider openrouter --model YOUR_STRUCTURED_OUTPUT_MODEL_ID
-python3 serve.py --provider jev --model typesafe/jev-1.13
+bun run start --provider openrouter --model YOUR_STRUCTURED_OUTPUT_MODEL_ID
+bun run start --provider jev --model typesafe/jev-1.13
 ```
 
 OpenRouter's [structured outputs](https://openrouter.ai/docs/guides/features/structured-outputs)
@@ -153,8 +155,8 @@ For archived blogs, the reusable crawler finds pages through Wayback's index and
 same-site article links:
 
 ```bash
-python3 course.py init local-courses/topic --id topic --title 'My topic'
-python3 crawl.py https://example.org/blog/a-post \
+bun run course init local-courses/topic --id topic --title 'My topic'
+bun run crawl https://example.org/blog/a-post \
   --archive-at YYYYMMDDhhmmss --out local-courses/topic/sources
 ```
 
@@ -162,8 +164,8 @@ python3 crawl.py https://example.org/blog/a-post \
 the crawl and [`docs/AUTHORING.md`](docs/AUTHORING.md). Validate and serve it:
 
 ```bash
-python3 course.py validate local-courses/topic
-python3 serve.py --course local-courses/topic --port 8766
+bun run course validate local-courses/topic
+bun run start --course local-courses/topic --port 8766
 ```
 
 The inbox automates generation through the selected CLI, with model tools disabled.
@@ -172,7 +174,7 @@ write custom activities, and verify a course in a real browser. Give it several
 bookmarks in one task if useful. Modal execution, social-account bookmark sync,
 and multi-user hosting are not built in.
 
-`crawl.py` saves raw pages, readable text, a link graph, hashes, timestamps, and
+`src/crawl.ts` saves raw pages, readable text, a link graph, hashes, timestamps, and
 coverage in `manifest.json`. It resumes fetched pages and retries failures with
 `--retry-unavailable`. Captures are the nearest available to the requested date;
 each actual capture date is recorded and may differ. External citations are
@@ -182,87 +184,82 @@ sources separately. An exhausted queue can still have partial coverage.
 To put a thoroughly crawled collection in the same inbox:
 
 ```bash
-python3 inbox.py add https://example.org/blog/a-post \
+bun run inbox add https://example.org/blog/a-post \
   --sources local-courses/topic/sources --note 'Teach the prerequisites and judge the claims.'
-python3 inbox.py status
+bun run inbox status
 ```
 
 The worker uses that manifest's collected documents rather than the default
-bounded article read. `inbox.py` and the browser use the same persistent queue.
+bounded article read. `src/cli.ts inbox` and the browser use the same persistent queue.
 
 ## Share a course
 
 For a ready inbox item, choose **Download to share**. For the included sample, share this repo. For a locally generated course:
 
 ```bash
-python3 course.py bundle local-courses/topic --out dist/topic.zip
+bun run course bundle local-courses/topic --out dist/topic.zip
 ```
 
 Send the ZIP. The recipient unzips it, runs
-`python3 serve.py --course course`, and opens http://127.0.0.1:8765. They get the
-same lessons and exercises and can connect their own grader. The bundle includes
+`bun serve.js`, and opens http://127.0.0.1:8765. They get the
+same lessons and exercises and can connect their own grader. Bun 1.4.3 is required; the ZIP includes a bundled server, so no dependency install is needed. The bundle includes
 the runtime and selected course JSON only. It excludes raw crawls, browser
 progress, keys, and local provider settings. Review your authored course text
 before sharing it; the bundle cannot determine whether you included private text
 inside a lesson.
 
-Your `127.0.0.1` link works only on your computer. A static host alone cannot run
-Python exercises or signed-in CLI graders. Public hosting would need a separate
+Your `127.0.0.1` link works only on your computer. A static host alone cannot run the optional Python exercise or signed-in CLI graders. Public hosting would need a separate
 deployment with authentication, per-user state, and execution isolation; that is
 outside this local prototype.
 
 ## Develop and verify
 
-The reader uses locally bundled [Web Awesome](https://webawesome.com/) cards,
-disclosures and progress indicators. Structured flow and cohort visuals follow
+The reader uses real [shadcn/ui](https://ui.shadcn.com/) components built on Radix, with self-hosted Geist typography and Lucide icons. The course overview follows a documentation layout with a section sidebar and full-width topic rows. Structured flow and cohort visuals follow
 the worked example step by step. Cohort experiments keep the original calculation
 beside a changed assumption; motion respects the reader's reduced-motion setting.
 See [the authoring guide](docs/AUTHORING.md) for the data shapes and writing rules.
 Generated lessons use these shared components instead of generating scripts.
 
-Running Noema and sharing a course still require only Python. To change the
-pinned UI dependencies, use Node and `npm ci --ignore-scripts && npm run build:ui`.
-Commit the rebuilt `vendor/` assets; they are included in portable downloads and
-require no CDN connection. Licenses and provenance are in [vendor/](vendor/README.md).
+All application source is TypeScript: the Bun HTTP server, SQLite queue, source reader, crawler, generation pipeline, graders, browser reader, and React components. Browser JavaScript and `vendor/` are generated assets. The server/domain and React components use strict checking; the migrated browser controller currently permits implicit parameter types and nullable DOM lookups while its saved-state and progress models are explicit.
+
+Use Bun 1.4.3, `tsrs` for checking, Oxlint for linting, and Oxfmt for formatting. Dependencies are pinned in `bun.lock`. Rebuild and commit browser assets when their source changes; exported courses use those same local assets, with no CDN.
 
 ```bash
-python3 -m unittest test_grader test_workshop test_portability test_crawl test_inbox test_generation test_visuals -v
+bun install --frozen-lockfile
+bun run build:ui
+bun run fmt:check
+bun run lint
+bun run typecheck
+bun test tests/core.test.ts tests/generation.test.ts
 python3 tiny_engine.py test
-node --check app.js
-node --test test_visuals.js
 ```
 
-Browser tests need [agent-browser](https://github.com/vercel-labs/agent-browser)
-**0.37.1** and its installed Chromium:
+Browser regressions use [agent-browser](https://github.com/vercel-labs/agent-browser) 0.37.1 and real Chromium. They include feedback freshness, code repair, mobile geometry, uninterrupted reading, and grouped quizzes. They make no model calls.
 
 ```bash
-npm install -g agent-browser@0.37.1
+bun install -g agent-browser@0.37.1
 agent-browser install
-python3 -m unittest test_learning_flow test_inbox_browser -v
+bun test tests/browser.test.ts
 ```
 
-CI runs deterministic checks and browser tests without provider credentials.
-`evaluate_grader.py --provider claude --model haiku` makes paid/account-metered
-calls against authored smoke fixtures. It is opt-in and is not a calibrated
-grader benchmark.
+CI checks the same pinned stack and verifies that rebuilding produces the committed assets. `bun run evaluate --provider claude --model haiku` is an opt-in live smoke test that uses your provider account; it does not establish grading accuracy or calibration.
 
 ## What lives where
 
-| Path | Purpose |
-| --- | --- |
-| `skills/noema/` | Reusable discovery, teaching, writing, and verification workflow |
-| `courses/deepinfer/` | Public sample lessons, sources, and review rubrics |
-| `course_bundle.py`, `course.py` | Course validation, scaffolding, portable sharing |
-| `serve.py` | Loopback inbox/course server and optional grader adapters |
-| `inbox_store.py`, `inbox_worker.py` | SQLite queue, fenced work claims, restart recovery |
-| `source_reader.py`, `generate_course.py` | Bounded source collection and checkpointed course writing |
-| `inbox.html`, `inbox.js`, `inbox.css` | Daily link inbox |
-| `inbox.py` | Same queue operations for a terminal or coding agent |
-| `app.js`, `style.css`, `lesson-ui.css`, `index.html` | Shared learner interface |
-| `visuals.js`, `vendor/` | Validated teaching visuals and pinned open-source components |
-| `tiny_engine.py` | Sample's fixed CPU exercise plugin |
-| `crawl.py` | Resumable source discovery and archive coverage |
-| `local-data/`, `local-courses/`, `dist/` | Ignored queue, private work, and share bundles |
+| Path                                                         | Purpose                                                          |
+| ------------------------------------------------------------ | ---------------------------------------------------------------- |
+| `skills/noema/`                                              | Reusable discovery, teaching, writing, and verification workflow |
+| `courses/deepinfer/`                                         | Public sample lessons, sources, and review rubrics               |
+| `src/course.ts`, `src/share.ts`, `src/cli.ts`                | Validation, scaffolding, portable sharing, commands              |
+| `src/server.ts`, `src/grade.ts`                              | Loopback HTTP server and rubric-driven grading                   |
+| `src/inbox-store.ts`, `src/inbox-worker.ts`                  | Existing SQLite queue and leased work claims                     |
+| `src/source-reader.ts`, `src/generation.ts`, `src/crawl.ts`  | Collection, checkpointed authoring, archive coverage             |
+| `browser/`                                                   | TypeScript reader, inbox, progress and structured visuals        |
+| `ui/`                                                        | React components and pinned shadcn source                        |
+| `app.js`, `inbox.js`, `progress.js`, `visuals.js`, `vendor/` | Generated offline browser assets                                 |
+| `tiny_engine.py`                                             | Sample's optional fixed CPU exercise plugin                      |
+| `tests/`                                                     | Bun unit, integration, portability and browser regressions       |
+| `local-data/`, `local-courses/`, `dist/`                     | Ignored queue, private work, and share bundles                   |
 
 Code and original teaching material are MIT licensed. Linked repositories,
 papers, articles, and their authors' names retain their own rights. Third-party

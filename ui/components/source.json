@@ -1,0 +1,31 @@
+{
+  "project": "shadcn/ui",
+  "revision": "ba1503c64472b82256d9de95e2e62c5901a38e8b",
+  "source": "https://raw.githubusercontent.com/shadcn-ui/ui/ba1503c64472b82256d9de95e2e62c5901a38e8b/",
+  "upstream": {
+    "button": {
+      "path": "apps/v4/registry/new-york-v4/ui/button.tsx",
+      "sha256": "79dd6f75f8136394442202d6b8b922fb269eaad0a5dba579397c9d5b41f893bb"
+    },
+    "card": {
+      "path": "apps/v4/registry/new-york-v4/ui/card.tsx",
+      "sha256": "ef8305b12c3112dab42a4708b41b1ebcc042fa5ab4c20f039da8d45b09ed5059"
+    },
+    "accordion": {
+      "path": "apps/v4/registry/new-york-v4/ui/accordion.tsx",
+      "sha256": "99de242681eb43121969db02bbb102aeeb1865ef52c7635672508a58c5429085"
+    },
+    "badge": {
+      "path": "apps/v4/registry/new-york-v4/ui/badge.tsx",
+      "sha256": "13a9380dfff853ee730c14a52df49f22aecd31f40f2998d7c1e7ec458b6e1650"
+    },
+    "progress": {
+      "path": "apps/v4/registry/new-york-v4/ui/progress.tsx",
+      "sha256": "e012e1f7e6e66d11229d1233eccf91954edcd9179b418ff1d114dc651b86fd35"
+    }
+  },
+  "changes": [
+    "Prefix Tailwind classes with ui: to prevent collisions with lesson CSS.",
+    "Use explicit transition properties instead of transition-all."
+  ]
+}

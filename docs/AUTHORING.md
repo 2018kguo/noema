@@ -5,7 +5,7 @@ through the shared UI. Use the DeepInfer sample as a complete worked schema.
 The JSON is trusted authored content: `layers` and `META.about_html` contain HTML.
 Never insert raw crawled HTML, scripts, or untrusted user text into them.
 
-Create a draft with `python3 course.py init local-courses/topic --id topic --title
+Create a draft with `bun run course init local-courses/topic --id topic --title
 'My topic'`. Crawl into its `sources/` subdirectory afterward. The scaffold is
 deliberately incomplete; validation fails until lessons and metadata are written.
 
@@ -42,14 +42,52 @@ Each `LESSONS` entry uses:
   "needs": [],
   "recall": "What outcome do we eventually care about?",
   "predict": "Would doubling the number of measurements settle this question?",
-  "layers": ["<p>Full beginner explanation...</p>", "<p>Mechanism and calculation...</p>", "<p>Evidence and design judgment...</p>"],
-  "example": ["A concrete setup with all needed facts.", ["First worked step.", "Second worked step.", "Third worked step."]],
-  "questions": [
-    {"id": "prediction-1", "level": 1, "prompt": "...", "options": ["...", "...", "..."], "correct": 1, "why": "Explain the reasoning.", "hint": "One small nudge.", "repair": "prediction"},
-    {"id": "prediction-2", "level": 2, "prompt": "...", "options": ["...", "..."], "correct": 0, "why": "...", "hint": "...", "repair": "prediction"},
-    {"id": "prediction-3", "level": 3, "prompt": "...", "options": ["...", "..."], "correct": 1, "why": "...", "hint": "...", "repair": "prediction"}
+  "layers": [
+    "<p>Full beginner explanation...</p>",
+    "<p>Mechanism and calculation...</p>",
+    "<p>Evidence and design judgment...</p>"
   ],
-  "transfer": ["Apply the idea to a new situation.", ["An explicit reasoning requirement.", "Another requirement."], "One worked explanation, not the only acceptable wording."],
+  "example": [
+    "A concrete setup with all needed facts.",
+    ["First worked step.", "Second worked step.", "Third worked step."]
+  ],
+  "questions": [
+    {
+      "id": "prediction-1",
+      "level": 1,
+      "prompt": "...",
+      "options": ["...", "...", "..."],
+      "correct": 1,
+      "why": "Explain the reasoning.",
+      "hint": "One small nudge.",
+      "repair": "prediction"
+    },
+    {
+      "id": "prediction-2",
+      "level": 2,
+      "prompt": "...",
+      "options": ["...", "..."],
+      "correct": 0,
+      "why": "...",
+      "hint": "...",
+      "repair": "prediction"
+    },
+    {
+      "id": "prediction-3",
+      "level": 3,
+      "prompt": "...",
+      "options": ["...", "..."],
+      "correct": 1,
+      "why": "...",
+      "hint": "...",
+      "repair": "prediction"
+    }
+  ],
+  "transfer": [
+    "Apply the idea to a new situation.",
+    ["An explicit reasoning requirement.", "Another requirement."],
+    "One worked explanation, not the only acceptable wording."
+  ],
   "sources": ["a-source-id"],
   "takeaway": "One useful connection to remember."
 }
@@ -71,9 +109,9 @@ structures; the runtime renders it without executing generated code:
   "caption": "An authored example of three responsibilities in one system.",
   "source_ids": [],
   "nodes": [
-    {"label": "Model", "detail": "Change learned weights or an adapter.", "step": 0},
-    {"label": "Engine", "detail": "Change how requests run on the computer.", "step": 1},
-    {"label": "Service", "detail": "Route requests to available machines.", "step": 2}
+    { "label": "Model", "detail": "Change learned weights or an adapter.", "step": 0 },
+    { "label": "Engine", "detail": "Change how requests run on the computer.", "step": 1 },
+    { "label": "Service", "detail": "Route requests to available machines.", "step": 2 }
   ]
 }
 ```
@@ -92,9 +130,9 @@ relationship the learner must reason about; do not repeat three headings.
   "start_label": "Start inspection",
   "adjustable_stage": 1,
   "stages": [
-    {"label": "Pass size check", "rate": 0.8},
-    {"label": "Pass strength check", "rate": 0.5},
-    {"label": "Pass final inspection", "rate": 0.75}
+    { "label": "Pass size check", "rate": 0.8 },
+    { "label": "Pass strength check", "rate": 0.5 },
+    { "label": "Pass final inspection", "rate": 0.75 }
   ]
 }
 ```
@@ -108,7 +146,7 @@ where relevant. `source_ids` must reference sources already on that lesson;
 use an empty array for wholly invented examples. Never relabel an intermediate
 gate as proof of the ultimate outcome.
 
-Cards, disclosures and progress indicators use the free MIT-licensed Web Awesome
+Cards, disclosures and progress indicators use the MIT-licensed shadcn/ui and Radix
 components. Their pinned assets ship locally and inside exported ZIPs. Add new
 teaching patterns to the shared renderer, validator and generator schema together;
 do not put custom controls, scripts or raw SVG into generated course HTML.
@@ -139,11 +177,17 @@ keyword-based mastery grade. The rubric checks explained reasoning.
 
 ## Check before sharing
 
-Validate cross-references with `python3 course.py validate <course>`. Read several
+Validate cross-references with `bun run course validate <course>`. Read several
 lessons from beginning to end, including deeper levels and wrong-answer feedback.
 Verify a real browser flow and phone layout. Check source coverage against the
 manifest and give the learner an honest account of omissions.
 
-Share only the authored bundle with `python3 course.py bundle <course> --out
+Share only the authored bundle with `bun run course bundle <course> --out
 dist/<id>.zip`. It contains no raw sources. Publication permission and rights to
 the material are separate from the fact that the app can package it.
+
+## Reading blocks and progress
+
+The default reader combines topics and worked examples until their estimated time reaches about 30 minutes. The estimate includes reading at 170 words per minute and at least three minutes per example; each topic gets at least five minutes. `reading_minutes` can override a topic estimate after editorial review. Optional deeper layers are not counted. A final lone topic joins the previous block. Questions are collected at the end, with one check action for the whole block, followed by an explanation. No timer gates access.
+
+The dashboard reads the same browser progress key as the course. Marking a block read increases reading progress; completing its quiz and comparing the current explanation records practice. Existing completed lessons remain counted.

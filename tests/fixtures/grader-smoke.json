@@ -1,0 +1,23 @@
+[
+  {
+    "name": "strong cache review",
+    "id": "cache-key",
+    "minimum_met": 4,
+    "maximum_met": 4,
+    "answer": "The key aliases different numerical computations. Run prompt IDs [1,2,3] under attention-changing adapter A, then the same IDs under adapter B: B can reuse A\u2019s KV and obtain wrong logits. Restore immutable base revision and adapter identity, plus other state-affecting settings, in the cache namespace. Compare A then B then A on the same token IDs against separate uncached reference logits; also test a valid same-model cache hit."
+  },
+  {
+    "name": "confident but wrong cache review",
+    "id": "cache-key",
+    "minimum_met": 0,
+    "maximum_met": 0,
+    "answer": "This is safe because same shapes mean same values. KV contains only raw token IDs, so adapters cannot matter. A high hit rate proves correctness. I would check tuple length and HTTP 200; no reference comparison is needed."
+  },
+  {
+    "name": "strong prefix-probability review",
+    "id": "prefix-sum",
+    "minimum_met": 4,
+    "maximum_met": 4,
+    "answer": "Later drafts contribute only if every earlier draft survives. For conditional rates [0.5,0.5], the accepted-draft expectation is 0.5+0.25=0.75, while the patch says 1.0. Restore a running cumulative product and sum those products; this excludes target correction or bonus tokens. Compare to independent enumeration on mixed rates, [0,1] and [1,1]."
+  }
+]

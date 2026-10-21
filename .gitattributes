@@ -1,2 +1,2 @@
-# Generated Lit template strings contain significant whitespace at line endings.
-vendor/components.js -whitespace
+# Generated bundles can contain significant whitespace inside string literals.
+vendor/*.js -whitespace

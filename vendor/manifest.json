@@ -1,13 +1,67 @@
 {
-  "package": "@awesome.me/webawesome",
-  "version": "3.14.0",
-  "license": "MIT",
-  "source": "https://github.com/shoelace-style/webawesome",
+  "component_system": "shadcn/ui",
+  "source": {
+    "project": "shadcn/ui",
+    "revision": "ba1503c64472b82256d9de95e2e62c5901a38e8b",
+    "source": "https://raw.githubusercontent.com/shadcn-ui/ui/ba1503c64472b82256d9de95e2e62c5901a38e8b/",
+    "upstream": {
+      "button": {
+        "path": "apps/v4/registry/new-york-v4/ui/button.tsx",
+        "sha256": "79dd6f75f8136394442202d6b8b922fb269eaad0a5dba579397c9d5b41f893bb"
+      },
+      "card": {
+        "path": "apps/v4/registry/new-york-v4/ui/card.tsx",
+        "sha256": "ef8305b12c3112dab42a4708b41b1ebcc042fa5ab4c20f039da8d45b09ed5059"
+      },
+      "accordion": {
+        "path": "apps/v4/registry/new-york-v4/ui/accordion.tsx",
+        "sha256": "99de242681eb43121969db02bbb102aeeb1865ef52c7635672508a58c5429085"
+      },
+      "badge": {
+        "path": "apps/v4/registry/new-york-v4/ui/badge.tsx",
+        "sha256": "13a9380dfff853ee730c14a52df49f22aecd31f40f2998d7c1e7ec458b6e1650"
+      },
+      "progress": {
+        "path": "apps/v4/registry/new-york-v4/ui/progress.tsx",
+        "sha256": "e012e1f7e6e66d11229d1233eccf91954edcd9179b418ff1d114dc651b86fd35"
+      }
+    },
+    "changes": [
+      "Prefix Tailwind classes with ui: to prevent collisions with lesson CSS.",
+      "Use explicit transition properties instead of transition-all."
+    ]
+  },
+  "packages": {
+    "@fontsource-variable/geist": "5.3.0",
+    "@radix-ui/primitive": "1.2.0",
+    "@radix-ui/react-accordion": "1.3.1",
+    "@radix-ui/react-collapsible": "1.2.1",
+    "@radix-ui/react-collection": "1.2.0",
+    "@radix-ui/react-compose-refs": "1.1.5",
+    "@radix-ui/react-context": "1.3.0",
+    "@radix-ui/react-direction": "1.2.0",
+    "@radix-ui/react-id": "1.1.4",
+    "@radix-ui/react-presence": "1.1.11",
+    "@radix-ui/react-primitive": "2.2.0",
+    "@radix-ui/react-progress": "1.2.1",
+    "@radix-ui/react-slot": "1.5.0",
+    "@radix-ui/react-use-controllable-state": "1.3.0",
+    "@radix-ui/react-use-effect-event": "0.0.5",
+    "@radix-ui/react-use-layout-effect": "1.1.4",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "lucide-react": "1.60.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "scheduler": "0.28.0",
+    "tailwind-merge": "3.7.0",
+    "tailwindcss": "4.3.3"
+  },
   "sha256": {
-    "components.js": "5fde1b5f9b44d89e2284c910e59806607ee4b5b31c207b7815718d31cfd73315",
-    "components.js.LEGAL.txt": "83e1411cb33027d1e3179764829dc19f611530a2270d7cd20d04bfab13501fb9",
-    "theme.css": "305220884e052cf511cd14ec490ea9d116476755ee393472e795056c0ae802f5",
-    "Web-Awesome-LICENSE.md": "e024db6c0a83b08f33eedda3eb92d90439169903f7d9d7cfeb200c989cd62881",
-    "Lit-LICENSE.txt": "2d020f2411f86da60ae4f433debac5f6bfe0d2e3c624517b4eadac8ead2599db"
+    "reader-ui.js": "d298f0e0ba16b4e2866c6508a5da35628f0f8a035408fb7f1add7e3598754c22",
+    "reader-ui.js.LEGAL.txt": "599f348473577f8a53dda9083912b47c4937e8becae556cefa82089498b903bf",
+    "reader-ui.css": "66a8619c644c35d295472ea955616859b8e09416b3cbbdae73bd69bf2ab92547",
+    "geist-latin-wght-normal.woff2": "19f9c92546aa300c312235e3125af1b81394d8db9a4bc4a425cd5b641d2d54e1",
+    "THIRD-PARTY-LICENSES.txt": "a4b6b6cb5a21a441a9893922a1f7ffb9b716641a63dcfd44cc12f02fbfcbd15e"
   }
 }

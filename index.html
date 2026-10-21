@@ -1,22 +1,69 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Noema</title>
-<meta name="description" content="An interactive course with explanations, worked examples, practice, and feedback.">
-<link rel="stylesheet" href="vendor/theme.css">
-<link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="lesson-ui.css">
-<script type="module" src="vendor/components.js"></script>
-<script src="visuals.js"></script>
-</head>
-<body>
-<a class="skip" href="#main">Skip to lesson</a>
-<header class="app-header"><div class="header-inner"><a class="brand" id="course-brand" href="#home"><span class="brand-mark">n</span><span id="course-title">Noema</span></a><nav aria-label="Main navigation"><a href="#home" data-nav="home">Course</a><a href="#practice" data-nav="practice">Practice</a><details class="reference-menu"><summary>Reference</summary><div><a href="#glossary">Glossary</a><a href="#sources">Sources</a><a href="#settings">Feedback settings</a><button id="export">Export progress</button></div></details></nav></div></header>
-<main id="main" tabindex="-1"></main>
-<footer class="site-footer"><span>Your place and answers are saved in this browser.</span><a href="#sources">About this course</a></footer>
-<div id="toast" role="status" aria-live="polite"></div>
-<script>
-fetch('course.json').then(r=>{if(!r.ok)throw Error('Course data could not load');return r.json();}).then(course=>{Object.assign(window,course);document.title=course.META.title;document.getElementById('course-title').textContent='Noema';if(location.pathname.startsWith('/learn/'))document.getElementById('course-brand').href='/';const script=document.createElement('script');script.src='app.js';document.body.appendChild(script);}).catch(()=>{document.getElementById('main').innerHTML='<h1>Start the local workbook</h1><p>Run <code>python3 serve.py</code> in this folder, then open <a href="http://127.0.0.1:8765">http://127.0.0.1:8765</a>.</p>';});
-</script>
-</body></html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Noema</title>
+    <meta
+      name="description"
+      content="An interactive course with explanations, worked examples, practice, and feedback."
+    />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="lesson-ui.css" />
+    <link rel="stylesheet" href="vendor/reader-ui.css" />
+    <link
+      rel="preload"
+      href="vendor/geist-latin-wght-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <script type="module" src="vendor/reader-ui.js"></script>
+    <script src="visuals.js"></script>
+    <script src="progress.js"></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to lesson</a>
+    <header class="app-header">
+      <div class="header-inner">
+        <a class="brand" id="course-brand" href="#home"
+          ><svg
+            class="brand-icon"
+            xmlns="http://www.w3.org/2000/svg"
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12 7v14" />
+            <path
+              d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"
+            /></svg
+          ><span id="course-title">Noema</span></a
+        >
+        <nav aria-label="Main navigation">
+          <a href="#home" data-nav="home">Course</a
+          ><a href="#practice" data-nav="practice">Practice</a>
+          <details class="reference-menu">
+            <summary>Reference</summary>
+            <div>
+              <a href="#glossary">Glossary</a><a href="#sources">Sources</a
+              ><a href="#settings">Feedback settings</a><button id="export">Export progress</button>
+            </div>
+          </details>
+        </nav>
+      </div>
+    </header>
+    <main id="main" tabindex="-1"></main>
+    <footer class="site-footer">
+      <span>Your place and answers are saved in this browser.</span
+      ><a href="#sources">About this course</a>
+    </footer>
+    <div id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>

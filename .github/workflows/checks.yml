@@ -6,20 +6,21 @@ jobs:
   checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
         with:
-          python-version: '3.9'
-      - uses: actions/setup-node@v4
+          bun-version: "1.4.3"
+      - uses: actions/setup-python@v6
         with:
-          node-version: '22'
-      - run: python3 course.py validate courses/deepinfer
-      - run: python3 -m unittest test_grader test_workshop test_portability test_crawl test_inbox test_generation test_visuals -v
+          python-version: "3.13"
+      - run: bun install --frozen-lockfile
+      - run: bun run build:ui
+      - run: git diff --exit-code -- vendor app.js inbox.js progress.js visuals.js
+      - run: bun run fmt:check
+      - run: bun run lint
+      - run: bun run typecheck
+      - run: bun run course validate courses/deepinfer
       - run: python3 tiny_engine.py test
-      - run: node --check app.js
-      - run: node --check inbox.js
-      - run: node --test test_visuals.js
-      - run: npm ci --ignore-scripts && npm run build:ui && git diff --exit-code -- vendor
-      - run: npm install -g agent-browser@0.37.1
+      - run: bun install -g agent-browser@0.37.1
       - run: agent-browser install --with-deps
-      - run: python3 -m unittest test_learning_flow test_inbox_browser -v
+      - run: bun test tests

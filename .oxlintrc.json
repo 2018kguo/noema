@@ -1,0 +1,17 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "ignorePatterns": [
+    "vendor/**",
+    "local-data/**",
+    "local-courses/**",
+    "dist/**",
+    "app.js",
+    "inbox.js",
+    "visuals.js",
+    "progress.js"
+  ],
+  "plugins": ["typescript", "react", "jsx-a11y", "oxc"],
+  "categories": {
+    "correctness": "error"
+  }
+}

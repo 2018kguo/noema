@@ -1,0 +1,13 @@
+{
+  "ignorePatterns": [
+    "vendor/**",
+    "local-data/**",
+    "local-courses/**",
+    "dist/**",
+    "courses/**",
+    "app.js",
+    "inbox.js",
+    "progress.js",
+    "visuals.js"
+  ]
+}

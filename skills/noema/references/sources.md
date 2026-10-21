@@ -6,7 +6,7 @@ collections, inspect the starting article's links, the blog index, and related
 posts. Follow prerequisites and primary research where they change the lesson.
 Do not recursively crawl unrelated external sites.
 
-Use `crawl.py` for a resumable archived blog crawl. `--archive-at` requests the
+Use `bun run crawl` for a resumable archived blog crawl. `--archive-at` requests the
 nearest available capture; each page's actual timestamp is in the manifest. The
 archive index and same-site links define article scope. External links are a
 separate inventory, not a claim that their contents were fetched or verified.

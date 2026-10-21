@@ -266,10 +266,16 @@ def exercise(name):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['test', 'demo', 'bench', 'exercise'])
+    parser.add_argument('command', choices=['test', 'demo', 'bench', 'exercise', 'case', 'source'])
     parser.add_argument('exercise_name', nargs='?', default='')
     args = parser.parse_args()
-    if args.command == 'test':
+    if args.command == 'case':
+        import json
+        print(json.dumps(lesson_experiment(args.exercise_name)))
+    elif args.command == 'source':
+        import json
+        print(json.dumps(workshop_sources()))
+    elif args.command == 'test':
         run_tests()
     elif args.command == 'exercise':
         exercise(args.exercise_name)
