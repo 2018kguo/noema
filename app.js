@@ -107,6 +107,7 @@
   }
   state.version = 6;
   var readingObserver = null;
+  var keepScroll = false;
   var challenges = [];
   var serverStatus = null;
   var assessment = { kind: "idle" };
@@ -373,10 +374,11 @@
       state.lastLesson = parts[3];
       save();
     }
-    if (parts[3] && block.lessons.some((l) => l.id === parts[3]))
+    if (parts[3] && block.lessons.some((l) => l.id === parts[3]) && !keepScroll)
       requestAnimationFrame(
         () => document.getElementById("read-" + parts[3])?.scrollIntoView({ block: "start" })
       );
+    keepScroll = false;
     readingObserver = new IntersectionObserver(
       (entries) => {
         if (activeBlock()?.id !== block.id || location.hash.split("/")[2] !== "read") return;
@@ -1205,10 +1207,22 @@
     if (topicLevel) {
       const [id, n] = topicLevel.dataset.topicLevel.split(":");
       state.lessonLevels = { ...state.lessonLevels, [id]: Number(n) };
+      const bar = () => document.querySelector(`[data-topic-level^="${id}:"]`)?.closest(".level-bar");
+      const before = bar()?.getBoundingClientRect().top ?? 0;
+      const parts = location.hash.slice(1).split("/");
+      if (parts[0] === "block") {
+        state.lastLesson = id;
+        history.replaceState(null, "", `#block/${parts[1]}/${parts[2] || "read"}/${id}`);
+      }
       save();
-      const y = window.scrollY;
+      keepScroll = parts[0] === "block";
       render();
-      window.scrollTo(0, y);
+      requestAnimationFrame(
+        () => requestAnimationFrame(() => {
+          const now = bar()?.getBoundingClientRect().top;
+          if (now !== void 0) window.scrollBy(0, now - before);
+        })
+      );
       return;
     }
     const jump = event.target.closest("[data-read-jump]");

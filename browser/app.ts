@@ -59,6 +59,8 @@ if (previousWorkshop && !previousWorkshop.cacheLab) {
 }
 state.version = 6;
 let readingObserver = null;
+// Set for one render when the reader should stay put (a depth switch re-renders in place).
+let keepScroll = false;
 let challenges = [];
 let serverStatus = null;
 let assessment: AssessmentState = { kind: "idle" };
@@ -392,10 +394,11 @@ function observeReading() {
     state.lastLesson = parts[3];
     save();
   }
-  if (parts[3] && block.lessons.some((l) => l.id === parts[3]))
+  if (parts[3] && block.lessons.some((l) => l.id === parts[3]) && !keepScroll)
     requestAnimationFrame(() =>
       document.getElementById("read-" + parts[3])?.scrollIntoView({ block: "start" }),
     );
+  keepScroll = false;
   readingObserver = new IntersectionObserver(
     (entries) => {
       if (activeBlock()?.id !== block.id || location.hash.split("/")[2] !== "read") return;
@@ -1480,10 +1483,25 @@ document.addEventListener("click", async (event) => {
   if (topicLevel) {
     const [id, n] = topicLevel.dataset.topicLevel.split(":");
     state.lessonLevels = { ...state.lessonLevels, [id]: Number(n) };
+    // Keep this topic's depth switch where it was on screen. The block URL names the topic the
+    // reader restores to after a render, so point it here first, then correct for text above that
+    // changed length once that restore has run.
+    const bar = () => document.querySelector(`[data-topic-level^="${id}:"]`)?.closest(".level-bar");
+    const before = bar()?.getBoundingClientRect().top ?? 0;
+    const parts = location.hash.slice(1).split("/");
+    if (parts[0] === "block") {
+      state.lastLesson = id;
+      history.replaceState(null, "", `#block/${parts[1]}/${parts[2] || "read"}/${id}`);
+    }
     save();
-    const y = window.scrollY;
+    keepScroll = parts[0] === "block";
     render();
-    window.scrollTo(0, y);
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        const now = bar()?.getBoundingClientRect().top;
+        if (now !== undefined) window.scrollBy(0, now - before);
+      }),
+    );
     return;
   }
   const jump = event.target.closest<HTMLAnchorElement>("[data-read-jump]");

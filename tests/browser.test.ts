@@ -909,3 +909,27 @@ test("switching one topic's depth or following a stale block link never blanks t
   await wait("document.querySelector('[data-course-outline]') !== null");
   expect(await js("location.hash")).toBe("#home");
 });
+test("switching depth keeps the reader at that topic instead of jumping to the block's first topic", async () => {
+  const first = await js(
+    "NoemaProgress.blocks(NoemaProgress.path(LESSONS, {}), META.reading_block_size)[0]",
+  );
+  const second = first.lessons[1].id;
+  await command("open", origin + "/#block/" + first.id + "/read/" + first.lessons[0].id);
+  await wait(`document.querySelector('[data-topic-level="${second}:2"]') !== null`);
+  await js(
+    `document.querySelector('[data-topic-level="${second}:2"]').closest('.level-bar').scrollIntoView({block: 'center'}); true`,
+  );
+  const before = await js(
+    `document.querySelector('[data-topic-level="${second}:2"]').closest('.level-bar').getBoundingClientRect().top`,
+  );
+  await command("click", `[data-topic-level="${second}:2"]`);
+  await wait(
+    `document.querySelector('#read-${second} [aria-pressed=true]')?.textContent.includes('Mechanism')`,
+  );
+  await Bun.sleep(300);
+  const after = await js(
+    `document.querySelector('[data-topic-level="${second}:2"]').closest('.level-bar').getBoundingClientRect().top`,
+  );
+  expect(Math.abs(after - before)).toBeLessThan(4);
+  expect(await js("location.hash")).toBe("#block/" + first.id + "/read/" + second);
+});
