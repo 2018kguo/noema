@@ -12,6 +12,8 @@ exercises show the relevant code before asking for a prediction or a run.
 Executable labs remain fixed, explicit plugins; `/api/workshop` never accepts code.
 Article courses must work without the inference-specific plugin.
 
+Course content follows `skills/noema/references/writing.md` (teach the topic, not the test; no LLM tells; every name explained or linked) for existing and generated courses alike. After editing any course, run `bun run course inspect <dir>` and fix what it flags.
+
 Keep typography readable: normal interface text is 16px, lesson prose 18px, and secondary text at least 14px at the default browser size. The root font is 100% so rem units respect browser preferences. Wrap layouts on narrow screens instead of shrinking text. Avoid decorative all-caps labels, repeated section labels and informational pills; keep labels that identify a field, real status, source or position. Use the shared components and verify computed sizes in a real browser.
 
 Run `bun run build:ui`, `bun run typecheck`, `bun run lint`, `bun run fmt:check`, and `bun test tests`. Browser tests require agent-browser 0.37.1 with Chromium installed. Keep the 218 reference comparisons in `python3 tiny_engine.py test`. All tests use deterministic fixtures. Generated assets are committed; edit `browser/` and `ui/`, then rebuild. Use Bun and the committed bun.lock, never a second package-manager lock. Keep visual validation, rendering and generation schemas aligned. Preserve the original example when changing an assumption. Use the shared progress reader on course and dashboard; browser localStorage is the only learning-progress authority. Do not erase unreadable progress or claim that reading alone means a topic was practiced.

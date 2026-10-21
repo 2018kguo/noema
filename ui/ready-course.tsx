@@ -85,7 +85,7 @@ export function ReadyCourse({
               <div className="ui:mt-4 ui:flex ui:flex-wrap ui:items-center ui:justify-between ui:gap-x-3 ui:gap-y-1 ui:text-base ui:text-muted-foreground">
                 <span>
                   {available.read} of {available.total} topics read · {available.practiced}{" "}
-                  practiced
+                  questions answered
                 </span>
                 <span className="ui:tabular-nums">{available.percent}%</span>
               </div>
@@ -98,7 +98,7 @@ export function ReadyCourse({
               {(available.started || available.complete) && (
                 <p className="ui:mt-3 ui:text-base ui:leading-7 ui:text-muted-foreground">
                   {available.complete
-                    ? "All blocks practiced"
+                    ? "Every question answered"
                     : "Continue: " + available.currentTitle}
                 </p>
               )}

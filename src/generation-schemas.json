@@ -15,15 +15,22 @@
         "type": "string"
       },
       "example_setup": {
-        "type": "string"
+        "type": ["string", "null"]
       },
       "example_steps": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        },
-        "minItems": 3,
-        "maxItems": 3
+        "anyOf": [
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 2,
+            "maxItems": 4
+          },
+          {
+            "type": "null"
+          }
+        ]
       },
       "visual": {
         "anyOf": [
@@ -732,6 +739,10 @@
         },
         "minItems": 0,
         "maxItems": 4
+      },
+      "example_level": {
+        "type": "integer",
+        "enum": [1, 2, 3]
       }
     },
     "required": [
@@ -747,7 +758,8 @@
       "rubric",
       "transfer_example",
       "takeaway",
-      "illustrations"
+      "illustrations",
+      "example_level"
     ],
     "additionalProperties": false
   },

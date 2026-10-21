@@ -15,7 +15,7 @@ import { type Item, type Settings } from "./inbox-store";
 import { type Reading } from "./source-reader";
 import { runStructured, Cancelled } from "./structured-cli";
 import { cleanHTML, escapeHTML, paragraphCount } from "./html";
-import { tells } from "./tells";
+import { tells, arithmetic } from "./tells";
 import schemas from "./generation-schemas.json";
 const t = z.string(),
   arr = (min: number, max: number) => z.array(t).min(min).max(max);
@@ -68,8 +68,9 @@ const generatedLesson = z
     mechanism_html: t.nullable(),
     frontier_html: t.nullable(),
     example_title: t,
-    example_setup: t,
-    example_steps: arr(3, 3),
+    example_setup: t.nullable(),
+    example_steps: arr(2, 4).nullable(),
+    example_level: levelSchema,
     visual: visualSchema.nullable(),
     illustrations: z.array(illustrationSchema).max(4).default([]),
     questions: z.array(generatedQuestion).min(1).max(4),
@@ -103,8 +104,8 @@ const editSchema = z
     intuition_html: t.nullable(),
     mechanism_html: t.nullable(),
     frontier_html: t.nullable(),
-    example_setup: t,
-    example_steps: arr(3, 3),
+    example_setup: t.nullable(),
+    example_steps: arr(2, 4).nullable(),
   })
   .strict();
 // Only level HTML carries markup; every other field renders as escaped text, so tags a model
@@ -286,7 +287,7 @@ export async function generate(
         all_topics: plan.lessons,
         media_candidates: media,
       }),
-      "Write one topic at up to three depths, each a self-contained 300–600 word explanation for its reader, never the same text made longer: intuition_html (level 1) for a smart outsider: the concrete situation, the core idea and why it matters; mechanism_html (level 2) for someone who will build or operate it: real moving parts, numbers, code paths and trade-offs; frontier_html (level 3) for a researcher: evidence, how it was measured and where it breaks, competing approaches and open problems. Set a depth to null when it would add nothing (a prerequisite topic may be level 1 only; a specialist topic may be level 3 only). Anchor every level high; do not talk down. Define prerequisites before using them. Every named thing must be explained where it appears or linked: mark the first use per level of a course glossary term as <dfn data-term='exact glossary term'>term</dfn>, and cite a source as <a data-source='source id' data-quote='a short exact phrase copied from that source'>readable name</a> so the link opens at that passage; never refer to 'the post' or 'the README' as if the reader had it open. Teach what the source is about, spending words where it spends them; never bend a topic into arithmetic to make it gradable. Give one example: a concrete case walked through in three steps, real when possible (an event, system, decision or failure the sources report), with a title naming what it shows; use numbers only when the topic itself is quantitative. Use a small number of purposeful visuals. When a media_candidates video or image shows exactly what a paragraph discusses, embed it as an illustration of kind video (youtube_id, credit) or image (url, alt, credit, credit_url = its source page); never invent media. Inline illustrations name the level whose text they sit in and go after a numbered top-level paragraph of that text: flow for relationships, binding for a one-site equilibrium occupancy model in nM, screen for natural-frequency true/false positives. Each has its own unique slug id. Use at most two inline illustrations and only where prose has introduced the question. Keep the worked-example visual null if it would repeat an inline illustration. A funnel is only for successive conditional retention rates from the same group. Binding assumes one-to-one binding, equilibrium and free ligand concentration; it says nothing about patient benefit. screen rates are fractions, not percentages. Always label invented assumptions. When numbers appear, state units and what a percentage is a share of. Funnel has three gates, one per example step; flow steps are zero-based and ordered. Source_ids must be this lesson’s sources. Do not treat invented rates as measurements. Write one question per written level, tagged with that level, that checks whether the idea landed (which explanation fits, what would happen if something changed, what a claim does and does not show), not arithmetic; level 1 tests the core idea, level 2 how it works, level 3 judgment of evidence. Make the question self-contained and answerable from the main reading, with plausible misconceptions and similarly concise options. option_feedback explains the specific reasoning in each option. Do not make the correct answer obvious from length or wording. Transfer task is new, concrete and answerable from this lesson, with reasoning criteria." +
+      "Write one topic at up to three depths, each a self-contained 300–600 word explanation for its reader, never the same text made longer: intuition_html (level 1) for a smart outsider: the concrete situation, the core idea and why it matters; mechanism_html (level 2) for someone who will build or operate it: real moving parts, numbers, code paths and trade-offs; frontier_html (level 3) for a researcher: evidence, how it was measured and where it breaks, competing approaches and open problems. Set a depth to null when it would add nothing (a prerequisite topic may be level 1 only; a specialist topic may be level 3 only). Anchor every level high; do not talk down. Define prerequisites before using them. Every named thing must be explained where it appears or linked: mark the first use per level of a course glossary term as <dfn data-term='exact glossary term'>term</dfn>, and cite a source as <a data-source='source id' data-quote='a short exact phrase copied from that source'>readable name</a> so the link opens at that passage; never refer to 'the post' or 'the README' as if the reader had it open. Teach what the source is about, spending words where it spends them; never bend a topic into arithmetic to make it gradable. Give one example only if it helps: a concrete case walked through in two to four steps, real when possible (an event, system, decision or failure the sources report), with a title naming what it shows, and example_level set to the depth whose reader it suits; use numbers only when the topic itself is quantitative; set example_setup and example_steps to null rather than invent a filler example. Use a small number of purposeful visuals. When a media_candidates video or image shows exactly what a paragraph discusses, embed it as an illustration of kind video (youtube_id, credit) or image (url, alt, credit, credit_url = its source page); never invent media. Inline illustrations name the level whose text they sit in and go after a numbered top-level paragraph of that text: flow for relationships, binding for a one-site equilibrium occupancy model in nM, screen for natural-frequency true/false positives. Each has its own unique slug id. Use at most two inline illustrations and only where prose has introduced the question. Keep the worked-example visual null if it would repeat an inline illustration. A funnel is only for successive conditional retention rates from the same group. Binding assumes one-to-one binding, equilibrium and free ligand concentration; it says nothing about patient benefit. screen rates are fractions, not percentages. Always label invented assumptions. When numbers appear, state units and what a percentage is a share of. Funnel has three gates, one per example step; flow steps are zero-based and ordered. Source_ids must be this lesson’s sources. Do not treat invented rates as measurements. Write one question per written level, tagged with that level, that checks whether the idea landed (which explanation fits, what would happen if something changed, what a claim does and does not show), not arithmetic; level 1 tests the core idea, level 2 how it works, level 3 judgment of evidence. Make the question self-contained and answerable from the main reading, with plausible misconceptions and similarly concise options. option_feedback explains the specific reasoning in each option. Do not make the correct answer obvious from length or wording. Transfer task is new, concrete and answerable from this lesson, with reasoning criteria." +
         "\nWrite topic " +
         (i + 1) +
         ": " +
@@ -304,15 +305,29 @@ export async function generate(
       ).flatMap(([n, html]) => (html ? [[String(n), html]] : [])),
     );
     // A separate editing pass per topic: tone, definitions and logic, across every written level.
-    const flagged = Object.values(levels).flatMap(tells);
+    const example =
+      result.example_setup && result.example_steps
+        ? ([result.example_setup, result.example_steps] as const)
+        : null;
+    const flagged = [
+      ...Object.values(levels).flatMap(tells),
+      ...(example && arithmetic(example[0] + " " + example[1].join(" ")) >= 3
+        ? [
+            {
+              kind: "arithmetic example: replace with a real case, or return example_setup null, unless the topic itself is quantitative",
+              sentence: example[0],
+            },
+          ]
+        : []),
+    ];
     const edited = await checkpoint(
       "edit-" + (i + 1),
       JSON.stringify({
         levels,
-        example: [result.example_setup, result.example_steps],
+        example,
         rewrite_these_sentences: flagged,
       }),
-      "Edit this topic as a demanding editor using the writing guide's second-pass questions. Remove LLM tics, slogans and self-narration; define terms before use; fix jumps in logic. Preserve every fact, number, level, paragraph count and the paragraph each illustration follows. Rewrite every sentence listed in rewrite_these_sentences so the named tell is gone. Return the same levels (null for a level that is absent) and three example steps.",
+      "Edit this topic as a demanding editor using the writing guide's second-pass questions. Remove LLM tics, slogans and self-narration; define terms before use; fix jumps in logic. Preserve every fact, number, level, paragraph count and the paragraph each illustration follows. Rewrite every sentence listed in rewrite_these_sentences so the named tell is gone. Return the same levels (null for a level that is absent) and the example (both example fields null when there is none or it should go).",
       editSchema,
       undefined,
       base,
@@ -335,7 +350,12 @@ export async function generate(
           ] as const
         ).flatMap(([n, html]) => (html && levels[n] ? [[n, cleanHTML(html, refs)]] : [])),
       ),
-      example: [edited.example_setup, edited.example_steps],
+      ...(example && edited.example_setup && edited.example_steps
+        ? {
+            example: [edited.example_setup, edited.example_steps] as [string, string[]],
+            example_level: levels[result.example_level] ? result.example_level : undefined,
+          }
+        : {}),
       example_title: result.example_title,
       visual: result.visual,
       illustrations: result.illustrations,
@@ -353,7 +373,7 @@ export async function generate(
         return false;
       }
     };
-    if (lesson.visual && !fits(lesson.visual, true)) lesson.visual = null;
+    if (lesson.visual && (!lesson.example || !fits(lesson.visual, true))) lesson.visual = null;
     lesson.illustrations = (lesson.illustrations || []).filter(
       (i) =>
         fits(i.visual, false) &&

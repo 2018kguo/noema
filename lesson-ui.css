@@ -1112,3 +1112,17 @@ dfn[data-term]:hover {
 .media-credit a {
   color: inherit;
 }
+
+/* Read marks: a quiet check on read topics in the block contents and topic headings. */
+.read-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--muted);
+}
+.reading-contents a .read-mark {
+  margin-left: auto;
+}
+.topic-end {
+  height: 1px;
+}

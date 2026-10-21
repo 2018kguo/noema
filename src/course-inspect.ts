@@ -1,8 +1,11 @@
 import type { Course } from "./course";
 import { paragraphCount, extractArticle } from "./html";
 import { available, LEVEL_NAMES } from "../browser/levels";
+import { tells, arithmetic } from "./tells";
 
-// An authoring inventory, not a claim that a course teaches well.
+// An authoring inventory, not a claim that a course teaches well. It flags the problems readers
+// reported: LLM tells, examples and questions whose difficulty is arithmetic, and examples with no
+// level of their own.
 export function inspectCourse(course: Course) {
   return course.LESSONS.map((lesson) => ({
     id: lesson.id,
@@ -18,5 +21,18 @@ export function inspectCourse(course: Course) {
       questions: lesson.questions.filter((q) => q.level === n).map((q) => q.prompt),
     })),
     example_visual: lesson.visual?.kind || null,
+    example: lesson.example
+      ? {
+          title: lesson.example_title || null,
+          level: lesson.example_level ?? available(lesson)[0],
+          arithmetic: arithmetic(lesson.example[0] + " " + lesson.example[1].join(" ")) >= 3,
+        }
+      : null,
+    arithmetic_questions: lesson.questions
+      .filter((q) => arithmetic(q.prompt + " " + q.options.join(" ")) >= 2)
+      .map((q) => q.id),
+    tells: available(lesson).flatMap((n) =>
+      tells(lesson.levels[n]!).map((t) => `${LEVEL_NAMES[n]}: ${t.kind}: ${t.sentence}`),
+    ),
   }));
 }

@@ -150,8 +150,11 @@ export const lessonSchema = z.object({
     .object({ 1: text.optional(), 2: text.optional(), 3: text.optional() })
     .strict()
     .refine((v) => LEVELS.some((n) => v[n]), "A topic needs at least one level"),
-  example: z.tuple([text, z.array(text).min(2)]),
+  // One concrete case, shown only at the depth it was written for (default: the lowest written
+  // level). Optional: no example beats a filler one.
+  example: z.tuple([text, z.array(text).min(2)]).optional(),
   example_title: z.string().optional(),
+  example_level: levelSchema.optional(),
   questions: z.array(questionSchema).min(1).max(6),
   illustrations: z.array(illustrationSchema).max(4).optional(),
   transfer: z.tuple([text, z.array(text).min(1), text]),
@@ -177,7 +180,7 @@ export function checkVisual(
   has(v.source_ids, new Set(l.sources), "visual source");
   if (
     v.kind === "funnel" &&
-    ((inExample && v.stages.length !== l.example[1].length) ||
+    ((inExample && v.stages.length !== (l.example?.[1].length ?? 0)) ||
       v.adjustable_stage >= v.stages.length)
   )
     throw Error("Invalid funnel gate");
@@ -185,7 +188,7 @@ export function checkVisual(
     v.kind === "flow" &&
     v.nodes.some(
       (n, i) =>
-        n.step >= (inExample ? l.example[1].length : v.nodes.length) ||
+        n.step >= (inExample ? (l.example?.[1].length ?? 0) : v.nodes.length) ||
         (i > 0 && n.step < v.nodes[i - 1].step),
     )
   )
@@ -362,6 +365,9 @@ export function validateCourse(raw: unknown, rawChallenges: unknown) {
       "illustration",
     );
     const have = available(l);
+    if (l.example_level && !have.includes(l.example_level))
+      throw Error("Example is set at a level the topic lacks: " + l.id);
+    if (l.visual && !l.example) throw Error("The example's visual needs an example: " + l.id);
     for (const n of have)
       if (!l.questions.some((q) => q.level === n))
         throw Error(`Level ${n} of ${l.id} has no question`);

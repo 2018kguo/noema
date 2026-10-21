@@ -734,7 +734,7 @@ test("dashboard shows per-course progress and resumes the saved block", async ()
       'document.querySelector("[data-learning-card]")?.textContent.includes("topics read")',
     );
     expect(await js('document.querySelector("[data-learning-card]").textContent')).toContain(
-      read + " of 18 topics read · 0 practiced",
+      read + " of 18 topics read · 0 questions answered",
     );
     expect(await js('document.querySelector(".sample-row").getAttribute("href")')).toContain(
       "/practice",
@@ -932,4 +932,42 @@ test("switching depth keeps the reader at that topic instead of jumping to the b
   );
   expect(Math.abs(after - before)).toBeLessThan(4);
   expect(await js("location.hash")).toBe("#block/" + first.id + "/read/" + second);
+});
+test("an example shows only at its own depth, and the lesson skips the example step elsewhere", async () => {
+  const l = sample.course.LESSONS.find(
+    (x) => x.example && !x.activity && x.levels[1] && x.levels[2],
+  )!;
+  await openRoute("lesson/" + l.id);
+  expect(
+    await js(
+      "[...document.querySelectorAll('.stepper button')].map((b) => b.textContent).join('|')",
+    ),
+  ).toContain("See an example");
+  await click(`[data-topic-level="${l.id}:2"]`);
+  await wait("!document.querySelector('.stepper').textContent.includes('See an example')");
+  expect(await js("document.querySelector('.flow-footer .primary')?.textContent")).toContain(
+    "try one question",
+  );
+});
+test("reaching the end of a topic marks it read with a visible check", async () => {
+  const first = await js(
+    "NoemaProgress.blocks(NoemaProgress.path(LESSONS, {}), META.reading_block_size)[0]",
+  );
+  const topic = first.lessons[0].id;
+  await command("open", origin + "/#block/" + first.id + "/read/" + topic);
+  await wait(`document.querySelector('[data-read-end="${topic}"]') !== null`);
+  expect(
+    await js(
+      `!!JSON.parse(localStorage.getItem(META.progress_key || "noema:" + META.id) || "{}").read?.["${topic}"]`,
+    ),
+  ).toBe(false);
+  await js(
+    `document.querySelector('[data-read-end="${topic}"]').scrollIntoView({block: 'center'}); true`,
+  );
+  await wait(`document.querySelector('[data-read-jump="${topic}"]').classList.contains('is-read')`);
+  expect(
+    await js(
+      `!!JSON.parse(localStorage.getItem(META.progress_key || "noema:" + META.id)).read["${topic}"]`,
+    ),
+  ).toBe(true);
 });

@@ -29,6 +29,7 @@ export type HomeProps = {
   current: LessonSummary;
   started: boolean;
   completed: Record<string, unknown>;
+  read: Record<string, unknown>;
   storageOK: boolean;
   progress: {
     read: number;
@@ -49,6 +50,7 @@ export function CourseHome({
   current,
   started,
   completed,
+  read,
   progress,
   routes,
   storageOK,
@@ -118,7 +120,7 @@ export function CourseHome({
             <p className="ui:mb-3 ui:text-sm ui:leading-6 ui:text-muted-foreground">
               {progress.read} of {lessons.length} topics read
               <br />
-              {finished} practiced
+              {finished} questions answered
             </p>
             <Progress
               value={(100 * progress.read) / lessons.length}
@@ -284,7 +286,13 @@ export function CourseHome({
                         </span>
                         <span className="ui:pt-1 ui:text-muted-foreground">
                           {completed[l.id] ? (
-                            <Check size={18} aria-label="Practiced" />
+                            <Check
+                              size={18}
+                              className="ui:text-foreground"
+                              aria-label="Question answered"
+                            />
+                          ) : read[l.id] ? (
+                            <Check size={18} className="ui:opacity-50" aria-label="Read" />
                           ) : current.id === l.id && started ? (
                             <Circle size={16} fill="currentColor" aria-label="In progress" />
                           ) : (

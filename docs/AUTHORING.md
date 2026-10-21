@@ -241,3 +241,20 @@ The dashboard reads the same browser progress key as the course. Marking a block
 ## Readable presentation
 
 The shared reader uses 18px lesson prose, 16px controls and ordinary interface text, and a 14px floor for secondary information at the default browser size. These sizes stay readable on phones; layouts wrap rather than shrinking text. Use meaningful headings and connected prose. Do not add all-caps kickers, duplicate headings, decorative badges or labels such as “LET’S MAKE IT CONCRETE.” Sources, field labels and actual status remain visible in sentence case. The browser provides navigation and progress.
+
+## Examples, reading and progress
+
+`example` is optional: one concrete case as `[setup, [2–4 steps]]`, real when the
+sources have one, with an `example_title` naming what it shows. It belongs to one
+depth, `example_level` (default: the topic's lowest written level), and appears only
+for readers at that depth; elsewhere the lesson skips its example step. Leave it out
+rather than invent a filler case, and do not use one to turn a non-quantitative
+topic into arithmetic. A lesson `visual` illustrates the example, so it needs one.
+
+A topic counts as read when the reader reaches its end (or moves past a lesson's
+reading step), and as practiced when they answer its question. Both show as checks
+in the block contents and the course outline.
+
+`bun run course inspect <dir>` lists, per topic, LLM tells, examples and questions
+whose difficulty is arithmetic, and each example's depth. Run it after editing a
+course; the generator's editing pass fixes the same findings automatically.

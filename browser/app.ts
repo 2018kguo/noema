@@ -159,10 +159,23 @@ function go(route) {
     focusContent();
   } else location.hash = route;
 }
+// An example belongs to the depth it was written for (the lowest written level unless set), so
+// a Mechanism reader never gets an Intuition walkthrough. A workshop's example is its lab, so it
+// always shows. Topics may have no example at all.
+function exampleShown(l) {
+  if (!l.example) return false;
+  if (l.activity?.kind === "workshop") return true;
+  return (l.example_level ?? available(l)[0]) === shownLevel(l);
+}
+const stepsFor = (l) => STEPS.filter((s) => s.id !== "example" || exampleShown(l));
 function flowFor(id) {
-  return state.flow[id] || { step: "learn" };
+  const flow = state.flow[id] || { step: "learn" },
+    l = lookup(id);
+  return flow.step === "example" && l && !exampleShown(l) ? { step: "check", part: 0 } : flow;
 }
 function setStep(id, step, part = 0) {
+  // Moving past a lesson's reading step means it was read.
+  if (step !== "learn") state.read[id] ??= { at: Date.now() };
   state.flow[id] = ["example", "check"].includes(step) ? { step, part } : { step };
   state.lastLesson = id;
   save();
@@ -366,7 +379,7 @@ function blockPage(id, step = "read") {
   if (step === "read")
     return (
       header +
-      `<header class="reading-block-header"><h1>${topics}</h1><p class="lead">About ${block.minutes} minutes of reading and examples. Read these ${block.lessons.length} topics at your own pace. The questions come together at the end of this block.</p><nav class="reading-contents" aria-label="In this reading block">${block.lessons.map((l, i) => `<a href="#block/${id}/read/${l.id}" data-read-jump="${l.id}"><span>${block.start + i + 1}</span>${e(l.title)}</a>`).join("")}</nav></header>${block.lessons.map((l, i) => `<section class="reading-topic" id="read-${l.id}"><div class="reading-topic-heading" data-read-topic="${l.id}"><span class="small">Topic ${block.start + i + 1}</span><h2>${e(l.title)}</h2><p class="lesson-goal">${e(l.goal)}</p>${levelBar(l)}</div><article class="prose">${readingHTML(l)}</article><section data-block-card class="block-worked-example"><h3>${e(l.example_title || "Worked example")}</h3><p>${e(l.example[0])}</p><ol class="block-example-steps">${l.example[1].map((text) => `<li>${e(text)}</li>`).join("")}</ol>${NoemaVisuals.render(l.visual, l.example[1].length - 1, l.id)}</section>${depthHTML(l)}${l.activity ? `<p class="block-activity-link"><a href="#lesson/${l.id}">Open the hands-on work for this topic →</a><span class="small">You can also return to it after the block.</span></p>` : ""}${background(l)}</section>`).join("")}<div class="block-reading-actions"><div><h2>Ready to try the questions?</h2><p class="small">Your answers for all ${block.lessons.length} topics will be checked together.</p></div><button class="primary" data-finish-reading="${id}">Mark this block read & start the quiz →</button><a href="#home">Save and return to the course</a></div>`
+      `<header class="reading-block-header"><h1>${topics}</h1><p class="lead">About ${block.minutes} minutes of reading. A topic counts as read when you reach its end; the questions come together after the last one.</p><nav class="reading-contents" aria-label="In this reading block">${block.lessons.map((l, i) => `<a href="#block/${id}/read/${l.id}" data-read-jump="${l.id}" class="${state.read[l.id] ? "is-read" : ""}"><span>${block.start + i + 1}</span>${e(l.title)}${state.read[l.id] ? `<span class="read-mark" title="Read">${icon("check", 14)}</span>` : ""}</a>`).join("")}</nav></header>${block.lessons.map((l, i) => `<section class="reading-topic" id="read-${l.id}"><div class="reading-topic-heading" data-read-topic="${l.id}"><span class="small">Topic ${block.start + i + 1}${state.read[l.id] ? ` · <span class="read-mark">${icon("check", 13)} Read</span>` : ""}</span><h2>${e(l.title)}</h2><p class="lesson-goal">${e(l.goal)}</p>${levelBar(l)}</div><article class="prose">${readingHTML(l)}</article>${exampleShown(l) ? `<section data-block-card class="block-worked-example"><h3>${e(l.example_title || "Example")}</h3><p>${e(l.example[0])}</p><ol class="block-example-steps">${l.example[1].map((text) => `<li>${e(text)}</li>`).join("")}</ol>${NoemaVisuals.render(l.visual, l.example[1].length - 1, l.id)}</section>` : ""}${depthHTML(l)}${l.activity ? `<p class="block-activity-link"><a href="#lesson/${l.id}">Open the hands-on work for this topic →</a><span class="small">You can also return to it after the block.</span></p>` : ""}${background(l)}<div class="topic-end" data-read-end="${l.id}" aria-hidden="true"></div></section>`).join("")}<div class="block-reading-actions"><div><h2>Ready to try the questions?</h2><p class="small">Your answers for all ${block.lessons.length} topics will be checked together.</p></div><button class="primary" data-finish-reading="${id}">Go to the questions →</button><a href="#home">Save and return to the course</a></div>`
     );
   if (step === "practice")
     return (
@@ -416,9 +429,26 @@ function observeReading() {
   document
     .querySelectorAll<HTMLInputElement>("[data-read-topic]")
     .forEach((heading) => readingObserver.observe(heading));
+  // Reaching the end of a topic is what "read" means; the check appears right away.
+  const endObserver = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      const id = entry.isIntersecting && (entry.target as HTMLElement).dataset.readEnd;
+      if (!id || state.read[id]) continue;
+      state.read[id] = { at: Date.now() };
+      save();
+      endObserver.unobserve(entry.target);
+      const jump = document.querySelector(`[data-read-jump="${id}"]`);
+      jump?.classList.add("is-read");
+      jump?.insertAdjacentHTML(
+        "beforeend",
+        `<span class="read-mark" title="Read">${icon("check", 14)}</span>`,
+      );
+    }
+  });
+  document.querySelectorAll("[data-read-end]").forEach((end) => endObserver.observe(end));
 }
-function stepper(l, step, steps = STEPS, action = "step", entity = "lesson") {
-  return `<nav class="stepper" aria-label="${steps === STEPS ? "Lesson" : "Review"} steps"><ol>${steps.map((s, i) => `<li><button data-${action}="${s.id}" data-${entity}="${l.id}" ${s.id === step ? 'aria-current="step"' : ""}><span class="step-number">${i + 1}</span><span>${s.label}</span></button>${i < steps.length - 1 ? '<span class="step-line" aria-hidden="true"></span>' : ""}</li>`).join("")}</ol></nav>`;
+function stepper(l, step, steps = stepsFor(l), action = "step", entity = "lesson") {
+  return `<nav class="stepper" aria-label="${steps === REVIEW_STEPS ? "Review" : "Lesson"} steps"><ol>${steps.map((s, i) => `<li><button data-${action}="${s.id}" data-${entity}="${l.id}" ${s.id === step ? 'aria-current="step"' : ""}><span class="step-number">${i + 1}</span><span>${s.label}</span></button>${i < steps.length - 1 ? '<span class="step-line" aria-hidden="true"></span>' : ""}</li>`).join("")}</ol></nav>`;
 }
 function lessonHeader(l, step) {
   const index = LESSONS.indexOf(l);
@@ -471,7 +501,7 @@ function question(q, { guided = false, batch = false } = {}) {
 }
 function readStep(l) {
   const reading = readingHTML(l);
-  return `<h1>${e(l.title)}</h1><p class="lesson-goal">${e(l.goal)}</p>${levelBar(l)}<article class="prose">${reading}</article>${depthHTML(l)}${background(l)}${footer(l, { primary: "next-example", primaryText: "Next: see an example" })}`;
+  return `<h1>${e(l.title)}</h1><p class="lesson-goal">${e(l.goal)}</p>${levelBar(l)}<article class="prose">${reading}</article>${depthHTML(l)}${background(l)}${footer(l, exampleShown(l) ? { primary: "next-example", primaryText: "Next: see an example" } : { primary: "next-check", primaryText: "Next: try one question" })}`;
 }
 function cacheCode(start, editable) {
   return `<section class="cache-code-panel"><div class="cache-code-heading"><span>Cache read · two saved positions</span><span>${editable ? "Change the highlighted value" : "Follow the highlighted value"}</span></div><pre class="cache-code" aria-label="Cache read code"><code><span class="code-line active"><span class="line-number">1</span>start = ${editable ? `<select id="cache-start" aria-label="First saved position to read"><option value="0" ${start === 0 ? "selected" : ""}>0</option><option value="1" ${start === 1 ? "selected" : ""}>1</option></select>` : `<mark>${start}</mark>`}</span><span class="code-line"><span class="line-number">2</span>keys = cache.keys[start:]</span><span class="code-line"><span class="line-number">3</span>values = cache.values[start:]</span><span class="code-line"><span class="line-number">4</span>attended = self.attention(q, keys, values)</span></code></pre><div class="code-explanation"><p><b>1 · Choose where the read begins.</b> Position 0 is the first saved entry. Position 1 is the second.</p><p><b>2–3 · Select matching keys and values.</b> <code>[start:]</code> means “from start to the end.” It does not delete anything from the original cache.</p><p><b>4 · Calculate attention.</b> The current query, <code>q</code>, determines how the visible values are mixed.</p></div><p class="small code-caption">This expands the cache-read lines of <code>cached_step</code> for the two-entry case. The exercise selects the corresponding branch of that function.</p></section>`;
@@ -779,7 +809,7 @@ function exampleStep(l, flow) {
 function checkStep(l) {
   if (l.activity && flowFor(l.id).part === 1) return appliedStep(l);
   const checked = savedQuestion(levelQuestion(l)).checked;
-  return `<h1>Try it yourself.</h1><p class="lead compact">Use the idea you just read. Take a guess if you’re unsure; the explanation afterward is part of the lesson.</p>${question(levelQuestion(l), { guided: true })}${footer(l, { back: "example", primary: checked ? (l.activity ? "open-activity" : "next-explain") : "submit-check", primaryText: checked ? (l.activity ? "Next: put it to work" : "Next: explain it back") : "Check my answer" })}`;
+  return `<h1>Try it yourself.</h1><p class="lead compact">Use the idea you just read. Take a guess if you’re unsure; the explanation afterward is part of the lesson.</p>${question(levelQuestion(l), { guided: true })}${footer(l, { back: exampleShown(l) ? "example" : "learn", primary: checked ? (l.activity ? "open-activity" : "next-explain") : "submit-check", primaryText: checked ? (l.activity ? "Next: put it to work" : "Next: explain it back") : "Check my answer" })}`;
 }
 function activityState(id): ActivityState {
   return state.activities[id] || { values: {}, part: 0 };
@@ -1295,6 +1325,7 @@ function render() {
       current: lookup(progress.currentId) || resumeLesson(),
       started: progress.started,
       completed: state.completed,
+      read: state.read,
       progress,
       routes,
       storageOK,
@@ -1319,6 +1350,9 @@ function recordQuestionCheck(q, choice) {
     firstChoice: old.firstChoice ?? choice,
     tries: (old.tries || 0) + 1,
   };
+  // Answering a topic's question is what "practiced" means.
+  const topic = LESSONS.find((l) => l.questions.some((x) => x.id === q.id));
+  if (topic) state.completed[topic.id] ??= { at: Date.now() };
 }
 document.addEventListener("submit", (event) => {
   if (!(event.target instanceof HTMLFormElement)) return;

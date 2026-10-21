@@ -34,3 +34,6 @@ export function tells(html: string) {
       TELLS.filter(([, re]) => re.test(sentence)).map(([kind]) => ({ kind, sentence })),
     );
 }
+// How much of a text is calculation: operators between numbers, equals signs, multiplication.
+export const arithmetic = (text: string) =>
+  (text.match(/[0-9][0-9.,]*\s*(?:×|÷|\/|=|\*|−|\+)\s*[0-9(]|[×÷=]/g) || []).length;
