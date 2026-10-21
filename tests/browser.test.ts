@@ -223,9 +223,7 @@ test("all review routes have one action and save predictions", async () => {
     expect(await js("!!document.querySelector('[data-grade].primary')")).toBeTruthy();
     expect(await js("!!document.querySelector('[data-finish-review].primary')")).toBeFalsy();
     await click("[data-finish-review]");
-    expect(await js("document.querySelector('h1').textContent")).toContain(
-      "Keep this check in mind.",
-    );
+    expect(await js("document.querySelector('h1').textContent")).toContain("Review complete");
   }
 }, 120000);
 

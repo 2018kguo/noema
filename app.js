@@ -28,6 +28,40 @@
     return result;
   }
 
+  // browser/icons.ts
+  var SHAPES = {
+    inbox: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+    "book-open": '<path d="M12 5v16"/><path d="M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z"/>',
+    settings: '<path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/>',
+    lightbulb: '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>',
+    cog: '<path d="M11 10.27 7 3.34"/><path d="m11 13.73-4 6.93"/><path d="M12 22v-2"/><path d="M12 2v2"/><path d="M14 12h8"/><path d="m17 20.66-1-1.73"/><path d="m17 3.34-1 1.73"/><path d="M2 12h2"/><path d="m20.66 17-1.73-1"/><path d="m20.66 7-1.73 1"/><path d="m3.34 17 1.73-1"/><path d="m3.34 7 1.73 1"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="12" r="8"/>',
+    telescope: '<path d="m10.065 12.493-6.18 1.318a.934.934 0 0 1-1.108-.702l-.537-2.15a1.07 1.07 0 0 1 .691-1.265l13.504-4.44"/><path d="m13.56 11.747 4.332-.924"/><path d="m16 21-3.105-6.21"/><path d="M16.485 5.94a2 2 0 0 1 1.455-2.425l1.09-.272a1 1 0 0 1 1.212.727l1.515 6.06a1 1 0 0 1-.727 1.213l-1.09.272a2 2 0 0 1-2.425-1.455z"/><path d="m6.158 8.633 1.114 4.456"/><path d="m8 21 3.105-6.21"/><circle cx="12" cy="13" r="2"/>',
+    "book-bookmark": '<path d="M10 2v7.751a.25.25 0 00.407.195l2.28-1.834a.5.5 0 01.627 0l2.28 1.834A.25.25 0 0016 9.751V2"/><path d="M4 19.5v-15A2.5 2.5 0 016.5 2H19a1 1 0 011 1v18a1 1 0 01-1 1H6.5a1 1 0 010-5H20"/>',
+    "external-link": '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+    "file-text": '<path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+    "graduation-cap": '<path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/>',
+    "list-checks": '<path d="M13 5h8"/><path d="M13 12h8"/><path d="M13 19h8"/><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/>',
+    "arrow-left": '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+    pause: '<rect x="14" y="3" width="5" height="18" rx="1"/><rect x="5" y="3" width="5" height="18" rx="1"/>',
+    play: '<path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/>',
+    plug: '<path d="M12 22v-5"/><path d="M15 8V2"/><path d="M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1z"/><path d="M9 8V2"/>',
+    search: '<path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/>',
+    plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+    check: '<path d="M20 6 9 17l-5-5"/>',
+    "circle-alert": '<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>',
+    "refresh-cw": '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
+    copy: '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+    compass: '<circle cx="12" cy="12" r="10"/><path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z"/>'
+  };
+  var icon = (name, size = 16) => `<svg class="icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${SHAPES[name]}</svg>`;
+
+  // browser/links.ts
+  function textFragment(quote) {
+    const enc = (t) => encodeURIComponent(t).replace(/-/g, "%2D").replace(/,/g, "%2C"), words = quote.trim().split(/\s+/);
+    return ":~:text=" + (words.length > 12 ? enc(words.slice(0, 5).join(" ")) + "," + enc(words.slice(-5).join(" ")) : enc(words.join(" ")));
+  }
+  var sourceHref = (url, quote) => quote ? url + (url.includes("#") ? "" : "#") + textFragment(quote) : url;
+
   // browser/app.ts
   var KEY = META.progress_key || "noema:" + META.id;
   var emptyState = () => ({
@@ -279,6 +313,7 @@
       (n) => `<details data-level-section="${n}"><summary>${n < shown ? "Need the basics?" : "Go deeper"} \xB7 ${LEVEL_NAMES[n]}</summary><div class="prose">${readingHTML(l, n, true)}</div></details>`
     ).join("")}</div></section>`;
   }
+  var LEVEL_ICONS = { 1: "lightbulb", 2: "cog", 3: "telescope" };
   var LEVEL_HINTS = {
     1: "The situation, the core idea and why it matters",
     2: "The moving parts, numbers and trade-offs",
@@ -288,7 +323,7 @@
     const v = view(l, state), have = available(l);
     const note = v.status === "above" ? `<p class="level-note">Written only at ${have.map((n) => LEVEL_NAMES[n]).join(" and ")} depth, deeper than your level here. Treat it as a stretch.</p>` : v.status === "below" ? `<p class="level-note">Your placement skips this topic. It\u2019s here if you want a refresher.</p>` : "";
     return `<div class="level-bar" role="group" aria-label="Depth for this topic">${have.map(
-      (n) => `<button type="button" data-topic-level="${l.id}:${n}" aria-pressed="${n === v.level}" title="${LEVEL_HINTS[n]}">${LEVEL_NAMES[n]}</button>`
+      (n) => `<button type="button" data-topic-level="${l.id}:${n}" aria-pressed="${n === v.level}" title="${LEVEL_HINTS[n]}">${icon(LEVEL_ICONS[n], 15)}${LEVEL_NAMES[n]}</button>`
     ).join("")}</div>${note}`;
   }
   function blockPage(id, step = "read") {
@@ -311,7 +346,7 @@
       "block"
     ) : ""}`;
     if (step === "read")
-      return header + `<header class="reading-block-header"><h1>${topics}</h1><p class="lead">About ${block.minutes} minutes of reading and examples. Read these ${block.lessons.length} topics at your own pace. The questions come together at the end of this block.</p><nav class="reading-contents" aria-label="In this reading block">${block.lessons.map((l, i) => `<a href="#block/${id}/read/${l.id}" data-read-jump="${l.id}"><span>${block.start + i + 1}</span>${e(l.title)}</a>`).join("")}</nav></header>${block.lessons.map((l, i) => `<section class="reading-topic" id="read-${l.id}"><div class="reading-topic-heading" data-read-topic="${l.id}"><span class="small">Topic ${block.start + i + 1}</span><h2>${e(l.title)}</h2><p class="lesson-goal">${e(l.goal)}</p>${levelBar(l)}</div><article class="prose">${readingHTML(l)}</article><section data-block-card class="block-worked-example"><h3>${e(l.example_title || "Worked example")}</h3><p>${e(l.example[0])}</p><ol class="block-example-steps">${l.example[1].map((text) => `<li>${e(text)}</li>`).join("")}</ol>${NoemaVisuals.render(l.visual, l.example[1].length - 1, l.id)}</section><div class="remember"><p>${e(l.takeaway)}</p></div>${depthHTML(l)}${l.activity ? `<p class="block-activity-link"><a href="#lesson/${l.id}">Open the hands-on work for this topic \u2192</a><span class="small">You can also return to it after the block.</span></p>` : ""}${background(l)}</section>`).join("")}<div class="block-reading-actions"><div><h2>Ready to try the questions?</h2><p class="small">Your answers for all ${block.lessons.length} topics will be checked together.</p></div><button class="primary" data-finish-reading="${id}">Mark this block read & start the quiz \u2192</button><a href="#home">Save and return to the course</a></div>`;
+      return header + `<header class="reading-block-header"><h1>${topics}</h1><p class="lead">About ${block.minutes} minutes of reading and examples. Read these ${block.lessons.length} topics at your own pace. The questions come together at the end of this block.</p><nav class="reading-contents" aria-label="In this reading block">${block.lessons.map((l, i) => `<a href="#block/${id}/read/${l.id}" data-read-jump="${l.id}"><span>${block.start + i + 1}</span>${e(l.title)}</a>`).join("")}</nav></header>${block.lessons.map((l, i) => `<section class="reading-topic" id="read-${l.id}"><div class="reading-topic-heading" data-read-topic="${l.id}"><span class="small">Topic ${block.start + i + 1}</span><h2>${e(l.title)}</h2><p class="lesson-goal">${e(l.goal)}</p>${levelBar(l)}</div><article class="prose">${readingHTML(l)}</article><section data-block-card class="block-worked-example"><h3>${e(l.example_title || "Worked example")}</h3><p>${e(l.example[0])}</p><ol class="block-example-steps">${l.example[1].map((text) => `<li>${e(text)}</li>`).join("")}</ol>${NoemaVisuals.render(l.visual, l.example[1].length - 1, l.id)}</section>${depthHTML(l)}${l.activity ? `<p class="block-activity-link"><a href="#lesson/${l.id}">Open the hands-on work for this topic \u2192</a><span class="small">You can also return to it after the block.</span></p>` : ""}${background(l)}</section>`).join("")}<div class="block-reading-actions"><div><h2>Ready to try the questions?</h2><p class="small">Your answers for all ${block.lessons.length} topics will be checked together.</p></div><button class="primary" data-finish-reading="${id}">Mark this block read & start the quiz \u2192</button><a href="#home">Save and return to the course</a></div>`;
     if (step === "practice")
       return header + `<h1>Put the ideas to work.</h1><p class="lead compact">Answer these ${block.lessons.length} questions, then check them together. Each asks you to use an idea from the reading.</p>${blockQuizSummary(block)}${block.lessons.map((l, i) => `<section class="block-question"><p class="small">${i + 1} \xB7 ${e(l.title)}</p>${question(levelQuestion(l), { guided: true, batch: true })}<a class="quiz-reading-link" href="#block/${id}/read/${l.id}">Revisit this explanation \u2192</a></section>`).join("")}${flowFooter({ back: `<button class="text-button" data-block-step="read" data-block="${id}">\u2190 Back to reading</button>`, primary: blockChecked(block) ? "block-explain" : "check-block", value: id, primaryText: blockChecked(block) ? "Next: explain an idea" : "Check all answers" })}`;
     if (step === "explain") return header + explainStep(block.lessons[block.lessons.length - 1]);
@@ -380,7 +415,7 @@
   }
   function readStep(l) {
     const reading = readingHTML(l);
-    return `<h1>${e(l.title)}</h1><p class="lesson-goal">${e(l.goal)}</p>${levelBar(l)}<article class="prose">${reading}</article><div class="remember"><p>${e(l.takeaway)}</p></div>${depthHTML(l)}${background(l)}${footer(l, { primary: "next-example", primaryText: "Next: see an example" })}`;
+    return `<h1>${e(l.title)}</h1><p class="lesson-goal">${e(l.goal)}</p>${levelBar(l)}<article class="prose">${reading}</article>${depthHTML(l)}${background(l)}${footer(l, { primary: "next-example", primaryText: "Next: see an example" })}`;
   }
   function cacheCode(start, editable) {
     return `<section class="cache-code-panel"><div class="cache-code-heading"><span>Cache read \xB7 two saved positions</span><span>${editable ? "Change the highlighted value" : "Follow the highlighted value"}</span></div><pre class="cache-code" aria-label="Cache read code"><code><span class="code-line active"><span class="line-number">1</span>start = ${editable ? `<select id="cache-start" aria-label="First saved position to read"><option value="0" ${start === 0 ? "selected" : ""}>0</option><option value="1" ${start === 1 ? "selected" : ""}>1</option></select>` : `<mark>${start}</mark>`}</span><span class="code-line"><span class="line-number">2</span>keys = cache.keys[start:]</span><span class="code-line"><span class="line-number">3</span>values = cache.values[start:]</span><span class="code-line"><span class="line-number">4</span>attended = self.attention(q, keys, values)</span></code></pre><div class="code-explanation"><p><b>1 \xB7 Choose where the read begins.</b> Position 0 is the first saved entry. Position 1 is the second.</p><p><b>2\u20133 \xB7 Select matching keys and values.</b> <code>[start:]</code> means \u201Cfrom start to the end.\u201D It does not delete anything from the original cache.</p><p><b>4 \xB7 Calculate attention.</b> The current query, <code>q</code>, determines how the visible values are mixed.</p></div><p class="small code-caption">This expands the cache-read lines of <code>cached_step</code> for the two-entry case. The exercise selects the corresponding branch of that function.</p></section>`;
@@ -790,7 +825,7 @@
     const related = challenges.filter((c) => c.lesson === l.id).map(
       (c) => `<button class="option-row" data-go="challenges/${c.id}"><span>Use this idea in a review<small>${e(c.title)} Start with background, then judge the proposal.</small></span><span>\u2192</span></button>`
     ).join("");
-    return `<p class="lesson-context">Lesson ${index + 1} \xB7 Your place is saved</p><h1>That\u2019s the main idea.</h1><p class="completion-takeaway">${e(l.takeaway)}</p><p class="lead compact">${next ? `Next, we\u2019ll build on this in \u201C${e(next.title)}.\u201D` : "Your experiment is already taking shape in the lesson activities. Revisit the notes here as you collect results for your own model."}</p><div class="completion-actions"><button class="primary" ${next ? `data-go="lesson/${next.id}"` : `data-open-activity="${l.id}"`}>${next ? "Start the next lesson" : "Revisit your experiment"} \u2192</button><a href="#home">Take a break</a></div><div class="optional-next"><h2>Want to spend more time here?</h2>${l.activity ? `<button class="option-row" data-open-activity="${l.id}"><span>Return to the hands-on activity<small>${e(l.activity.title)} Your notes and results are saved here.</small></span><span>\u2192</span></button>` : ""}${related}<button class="option-row" data-step="learn" data-lesson="${l.id}"><span>Read the explanation again<small>Including the optional calculations and engineering detail.</small></span><span>\u2192</span></button></div>${background(l)}`;
+    return `<p class="lesson-context">Lesson ${index + 1} \xB7 Your place is saved</p><h1>Lesson complete</h1><p class="lead compact">${next ? `Next: ${e(next.title)}.` : "That was the last lesson. Your notes from the activities are saved."}</p><div class="completion-actions"><button class="primary" ${next ? `data-go="lesson/${next.id}"` : `data-open-activity="${l.id}"`}>${next ? "Start the next lesson" : "Revisit your experiment"} \u2192</button><a href="#home">Take a break</a></div><div class="optional-next"><h2>Want to spend more time here?</h2>${l.activity ? `<button class="option-row" data-open-activity="${l.id}"><span>Return to the hands-on activity<small>${e(l.activity.title)} Your notes and results are saved here.</small></span><span>\u2192</span></button>` : ""}${related}<button class="option-row" data-step="learn" data-lesson="${l.id}"><span>Read the explanation again<small>Including the optional calculations and engineering detail.</small></span><span>\u2192</span></button></div>${background(l)}`;
   }
   function lesson(id) {
     const l = lookup(id);
@@ -859,7 +894,7 @@
     else if (review.step === "predict")
       content = `<h1>What would happen?</h1><p class="explain-prompt">${e(guide.trace)}</p><p class="small">This is a scratchpad, not a graded answer. A guess gives you something to revisit when you write the full review.</p><details class="background"><summary>See the proposal again</summary><pre><code>${e(c.artifact)}</code></pre></details><label class="field-label" for="review-prediction">Your prediction</label><textarea id="review-prediction" data-review-prediction="${c.id}" placeholder="Walk through the small case. What do you expect to observe, and why?">${e(review.prediction || "")}</textarea><button class="text-button" data-review-hint="${c.id}">I\u2019m stuck</button>${review.hint ? `<p class="hint-text">${e(guide.trace_hint)}</p>` : ""}${reviewFooter(c, { back: "change", primary: "review-next", primaryText: "Next: write your review" })}`;
     else if (review.step === "done")
-      content = `<h1>Keep this check in mind.</h1><p class="completion-takeaway">${e(guide.takeaway)}</p><p class="lead compact">Your prediction, review, and any feedback are saved. Working through an exercise is practice; it is not a correctness certificate.</p><div class="completion-actions"><button class="primary" data-go="lesson/${resumeLesson().id}">Continue your course \u2192</button><a href="#home">Return to the course</a></div><button class="option-row" data-review-step="write" data-challenge="${c.id}"><span>Revisit your reasoning<small>Read your prediction alongside your review and revise it.</small></span><span>\u2192</span></button>`;
+      content = `<h1>Review complete</h1><p class="lead compact">Your prediction, review and any feedback are saved.</p><div class="completion-actions"><button class="primary" data-go="lesson/${resumeLesson().id}">Continue your course \u2192</button><a href="#home">Return to the course</a></div><button class="option-row" data-review-step="write" data-challenge="${c.id}"><span>Revisit your reasoning<small>Read your prediction alongside your review and revise it.</small></span><span>\u2192</span></button>`;
     else
       content = `<h1>Explain your decision.</h1><p class="challenge-prompt">${e(c.prompt)}</p><details class="background"><summary>See the proposal and your prediction</summary><pre><code>${e(c.artifact)}</code></pre><p><b>Your first prediction:</b> ${e(review.prediction || "You skipped the scratchpad. You can still reason through the example now.")}</p></details><p class="small">Start with your decision and why. Use the small case to support it, say what you would keep or change, and describe a check that could show you are right.</p><label for="challenge-answer" class="field-label">Your review</label><textarea id="challenge-answer" data-challenge-answer="${c.id}" placeholder="I would approve, reject, or investigate this because\u2026 In the small case\u2026 I would keep or change\u2026 To check this, I would\u2026">${e(answer)}</textarea><div class="explain-options"><button class="text-button" data-review-step="change" data-challenge="${c.id}">Reopen the proposal</button><button class="text-button" data-compare-review="${c.id}">Compare without AI feedback</button></div><details class="background"><summary>What should my review explain?</summary><ul>${c.criteria.map((row) => `<li>${e(row.label)}</li>`).join("")}</ul></details><div id="grade-result">${reviewFeedback(c)}</div>${reviewWritingFooter(c)}`;
     return header + content + picker;
@@ -1531,4 +1566,83 @@
     if (route[0] === "challenges" || route[0] === "lesson" && flowFor(route[1]).step === "explain" || route[0] === "block" && route[2] === "explain")
       render();
   });
+  var preview = document.createElement("div");
+  preview.className = "hover-card";
+  preview.id = "hover-card";
+  preview.setAttribute("role", "tooltip");
+  preview.hidden = true;
+  document.body.append(preview);
+  var previewFor = null;
+  var hideTimer;
+  function enhanceMarks() {
+    document.querySelectorAll("dfn[data-term]").forEach((d) => {
+      d.tabIndex = 0;
+      d.setAttribute("aria-describedby", "hover-card");
+    });
+    document.querySelectorAll("a[data-source]").forEach((a) => {
+      const source = SOURCES[a.dataset.source];
+      if (!source) return;
+      a.href = sourceHref(source[1], a.dataset.quote);
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.setAttribute("aria-describedby", "hover-card");
+    });
+    document.querySelectorAll('#main a[href^="http"]').forEach((a) => {
+      a.target = "_blank";
+      a.rel = "noopener";
+    });
+  }
+  function showPreview(el) {
+    clearTimeout(hideTimer);
+    if (previewFor === el && !preview.hidden) return;
+    if (el.dataset.term) {
+      const definition = GLOSSARY[el.dataset.term];
+      if (!definition) return;
+      preview.innerHTML = `<p class="hover-kind">${icon("book-bookmark", 14)}Glossary</p><h4>${e(el.dataset.term)}</h4><p>${e(definition)}</p><a href="#glossary">All terms</a>`;
+    } else {
+      const source = SOURCES[el.dataset.source];
+      if (!source) return;
+      const quote = el.dataset.quote;
+      preview.innerHTML = `<p class="hover-kind">${icon("file-text", 14)}${e(new URL(source[1]).hostname.replace(/^www\./, ""))}</p><h4>${e(source[0])}</h4>${quote ? `<blockquote>${e(quote)}</blockquote>` : `<p>${e(source[2])}</p>`}<a href="${e(sourceHref(source[1], quote))}" target="_blank" rel="noopener">${quote ? "Open at this passage" : "Open the source"} ${icon("external-link", 14)}</a>`;
+    }
+    previewFor = el;
+    preview.hidden = false;
+    const r = el.getBoundingClientRect(), w = preview.offsetWidth, h = preview.offsetHeight, below = r.bottom + 8 + h < innerHeight;
+    preview.style.left = Math.max(16, Math.min(r.left, innerWidth - w - 16)) + scrollX + "px";
+    preview.style.top = (below ? r.bottom + 8 : r.top - h - 8) + scrollY + "px";
+  }
+  function hidePreview(delay = 150) {
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => {
+      preview.hidden = true;
+      previewFor = null;
+    }, delay);
+  }
+  var markOf = (t) => t instanceof Element ? t.closest("dfn[data-term], a[data-source]") : null;
+  document.addEventListener("mouseover", (event) => {
+    const mark = markOf(event.target);
+    if (mark) showPreview(mark);
+    else if (!(event.target instanceof Node && preview.contains(event.target)) && previewFor)
+      hidePreview();
+  });
+  document.addEventListener("focusin", (event) => {
+    const mark = markOf(event.target);
+    if (mark) showPreview(mark);
+  });
+  document.addEventListener("focusout", (event) => {
+    if (markOf(event.target)) hidePreview();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !preview.hidden) hidePreview(0);
+  });
+  document.addEventListener("pointerdown", (event) => {
+    const mark = markOf(event.target);
+    if (event.pointerType !== "mouse" && mark?.dataset.term) showPreview(mark);
+    else if (!(event.target instanceof Node && preview.contains(event.target))) hidePreview(0);
+  });
+  new MutationObserver(enhanceMarks).observe(document.getElementById("main"), {
+    childList: true,
+    subtree: true
+  });
+  enhanceMarks();
 })();

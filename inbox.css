@@ -184,9 +184,6 @@ p {
   font-size: 1rem;
   color: #52525b;
 }
-.settings-button > span {
-  float: right;
-}
 .workspace {
   margin-left: 222px;
 }
@@ -1159,4 +1156,20 @@ h1 {
 }
 .connections .form-help {
   margin: 0.25rem 0 0;
+}
+
+/* Lucide icons sit on the text baseline and take the text color. */
+.icon {
+  flex: none;
+  vertical-align: -0.15em;
+}
+[data-icon] {
+  display: inline-flex;
+}
+.settings-button,
+#recheck,
+[data-copy] {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }

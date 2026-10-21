@@ -6,6 +6,7 @@ import { mkdir, copyFile, writeFile, readFile } from "node:fs/promises";
 import { resolve, dirname, join } from "node:path";
 import { createHash } from "node:crypto";
 
+await import("./icons");
 await mkdir("vendor", { recursive: true });
 await build({
   entryPoints: ["browser/app.ts", "browser/inbox.ts", "browser/progress.ts", "browser/visuals.ts"],

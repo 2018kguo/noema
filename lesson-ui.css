@@ -93,11 +93,6 @@ main h3 {
 .outline:hover {
   background: var(--soft);
 }
-.remember {
-  background: #f4f4f5;
-  border-color: #e4e4e7;
-  border-radius: 8px;
-}
 .lesson-topline {
   margin-bottom: 22px;
 }
@@ -966,4 +961,86 @@ main h3 {
 }
 .level-bar + .level-note {
   margin: -1rem 0 1.5rem;
+}
+
+/* Hover links: terms get a dotted underline, citations a quiet link; both open a card. */
+.icon {
+  flex: none;
+  vertical-align: -0.15em;
+}
+.level-bar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+dfn[data-term] {
+  font-style: normal;
+  text-decoration: underline dotted;
+  text-decoration-color: var(--muted);
+  text-underline-offset: 0.2em;
+  cursor: help;
+}
+a[data-source] {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--line);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+}
+a[data-source]:hover,
+dfn[data-term]:hover {
+  text-decoration-color: var(--ink);
+}
+.hover-card {
+  position: absolute;
+  z-index: 60;
+  width: min(22rem, calc(100vw - 32px));
+  padding: 1rem 1.125rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--white);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 0.12);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--ink);
+}
+.hover-card h4 {
+  margin: 0.25rem 0 0.375rem;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+.hover-card p {
+  margin: 0 0 0.5rem;
+}
+.hover-card .hover-kind {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.hover-card a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--ink);
+  font-size: 0.875rem;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hover-card:not([hidden]) {
+    animation: hover-in 120ms ease-out;
+  }
+  @keyframes hover-in {
+    from {
+      opacity: 0;
+      transform: translateY(-2px);
+    }
+  }
+}
+.hover-card blockquote {
+  margin: 0 0 0.625rem;
+  padding-left: 0.75rem;
+  border-left: 3px solid var(--line);
+  color: var(--muted);
 }

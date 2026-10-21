@@ -19,6 +19,7 @@ import { connections } from "../src/connections";
 import { runStructured } from "../src/structured-cli";
 import { z } from "zod";
 import { view, place } from "../browser/levels";
+import { sourceHref } from "../browser/links";
 const cleanups: (() => void)[] = [];
 afterEach(() => {
   for (const f of cleanups.splice(0).reverse()) f();
@@ -518,4 +519,19 @@ test("research fetches only links the sources contain, plus named reference page
     throw Error("asked again");
   });
   expect(again.documents).toHaveLength(3);
+});
+test("quoted citations link to a highlighted passage", () => {
+  expect(sourceHref("https://x.org/a", "rate-limited, by design")).toBe(
+    "https://x.org/a#:~:text=rate%2Dlimited%2C%20by%20design",
+  );
+  expect(sourceHref("https://x.org/a#top", "short")).toBe("https://x.org/a#top:~:text=short");
+  expect(
+    sourceHref(
+      "https://x.org/a",
+      "one two three four five six seven eight nine ten eleven twelve thirteen",
+    ),
+  ).toBe(
+    "https://x.org/a#:~:text=one%20two%20three%20four%20five,nine%20ten%20eleven%20twelve%20thirteen",
+  );
+  expect(sourceHref("https://x.org/a")).toBe("https://x.org/a");
 });

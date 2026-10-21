@@ -38,14 +38,17 @@
       >
       <nav aria-label="Workspace">
         <a href="#inbox" id="nav-inbox" class="nav-item"
-          ><span>↳</span> Inbox <span class="count" id="inbox-count">0</span></a
+          ><span data-icon="inbox"></span> Inbox <span class="count" id="inbox-count">0</span></a
         >
         <a href="#learning" id="nav-learning" class="nav-item"
-          ><span>▤</span> Learning <span class="count" id="learning-count">1</span></a
+          ><span data-icon="graduation-cap"></span> Learning
+          <span class="count" id="learning-count">1</span></a
         >
       </nav>
       <div class="sidebar-bottom">
-        <button id="settings-button" class="settings-button">Settings</button>
+        <button id="settings-button" class="settings-button">
+          <span data-icon="settings"></span> Settings
+        </button>
       </div>
     </aside>
     <div class="workspace">
@@ -70,7 +73,7 @@
               spellcheck="false"
             ></textarea>
             <details id="capture-context">
-              <summary>Add a note or paste source text <span>Optional</span></summary>
+              <summary>Add a note or paste source text</summary>
               <div class="context-fields">
                 <label for="intent">What do you want to understand?</label
                 ><textarea
@@ -105,7 +108,8 @@
               <p id="collection-summary">Loading your inbox…</p>
             </div>
             <label class="search"
-              ><span aria-hidden="true">⌕</span><span class="sr-only">Find a saved link</span
+              ><span data-icon="search" aria-hidden="true"></span
+              ><span class="sr-only">Find a saved link</span
               ><input id="search" type="search" placeholder="Find a link"
             /></label>
           </div>
@@ -138,7 +142,9 @@
           never sees or stores your login.
         </p>
         <ul id="connections" class="connections"></ul>
-        <button type="button" class="quiet" id="recheck">Recheck</button>
+        <button type="button" class="quiet" id="recheck">
+          <span data-icon="refresh-cw"></span> Recheck
+        </button>
         <h3>Model</h3>
         <p>Used to prepare courses from your links and to check written answers.</p>
         <label for="provider">Use</label

@@ -260,8 +260,24 @@ export function validateCourse(raw: unknown, rawChallenges: unknown) {
     ...challenges.map((c) => [c.id, c] as const),
     ["glossary", course.GLOSSARY] as const,
   ])
-    if (/\bsource\d+\b/i.test(JSON.stringify(value, skipIds)))
+    if (
+      /\bsource\d+\b/i.test(
+        JSON.stringify(value, skipIds).replace(/data-source=\\"[^"\\]*\\"/g, ""),
+      )
+    )
       throw Error("Name sources in prose instead of using their ids: " + label);
+  // Hover links must resolve: terms to the glossary, citations to a listed source.
+  const html = JSON.stringify([course.LESSONS, challenges, course.META.about_html]);
+  contains(
+    [...html.matchAll(/data-term=\\?"([^"\\]+)/g)].map((m) => m[1]),
+    new Set(Object.keys(course.GLOSSARY)),
+    "glossary term",
+  );
+  contains(
+    [...html.matchAll(/data-source=\\?"([^"\\]+)/g)].map((m) => m[1]),
+    new Set(Object.keys(course.SOURCES)),
+    "cited source",
+  );
   for (const l of course.LESSONS) {
     contains(l.needs, ids, "prerequisite");
     contains(l.sources, new Set(Object.keys(course.SOURCES)), "source");

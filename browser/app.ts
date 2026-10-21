@@ -8,6 +8,8 @@ import type {
   CacheLab,
 } from "./state";
 import { available, view, place, LEVEL_NAMES, type Level } from "./levels";
+import { icon } from "./icons";
+import { sourceHref } from "./links";
 
 const KEY = META.progress_key || "noema:" + META.id;
 const emptyState = (): SavedState => ({
@@ -298,6 +300,7 @@ function depthHTML(l) {
     )
     .join("")}</div></section>`;
 }
+const LEVEL_ICONS = { 1: "lightbulb", 2: "cog", 3: "telescope" } as const;
 const LEVEL_HINTS = {
   1: "The situation, the core idea and why it matters",
   2: "The moving parts, numbers and trade-offs",
@@ -316,7 +319,7 @@ function levelBar(l) {
   return `<div class="level-bar" role="group" aria-label="Depth for this topic">${have
     .map(
       (n) =>
-        `<button type="button" data-topic-level="${l.id}:${n}" aria-pressed="${n === v.level}" title="${LEVEL_HINTS[n]}">${LEVEL_NAMES[n]}</button>`,
+        `<button type="button" data-topic-level="${l.id}:${n}" aria-pressed="${n === v.level}" title="${LEVEL_HINTS[n]}">${icon(LEVEL_ICONS[n], 15)}${LEVEL_NAMES[n]}</button>`,
     )
     .join("")}</div>${note}`;
 }
@@ -346,7 +349,7 @@ function blockPage(id, step = "read") {
   if (step === "read")
     return (
       header +
-      `<header class="reading-block-header"><h1>${topics}</h1><p class="lead">About ${block.minutes} minutes of reading and examples. Read these ${block.lessons.length} topics at your own pace. The questions come together at the end of this block.</p><nav class="reading-contents" aria-label="In this reading block">${block.lessons.map((l, i) => `<a href="#block/${id}/read/${l.id}" data-read-jump="${l.id}"><span>${block.start + i + 1}</span>${e(l.title)}</a>`).join("")}</nav></header>${block.lessons.map((l, i) => `<section class="reading-topic" id="read-${l.id}"><div class="reading-topic-heading" data-read-topic="${l.id}"><span class="small">Topic ${block.start + i + 1}</span><h2>${e(l.title)}</h2><p class="lesson-goal">${e(l.goal)}</p>${levelBar(l)}</div><article class="prose">${readingHTML(l)}</article><section data-block-card class="block-worked-example"><h3>${e(l.example_title || "Worked example")}</h3><p>${e(l.example[0])}</p><ol class="block-example-steps">${l.example[1].map((text) => `<li>${e(text)}</li>`).join("")}</ol>${NoemaVisuals.render(l.visual, l.example[1].length - 1, l.id)}</section><div class="remember"><p>${e(l.takeaway)}</p></div>${depthHTML(l)}${l.activity ? `<p class="block-activity-link"><a href="#lesson/${l.id}">Open the hands-on work for this topic →</a><span class="small">You can also return to it after the block.</span></p>` : ""}${background(l)}</section>`).join("")}<div class="block-reading-actions"><div><h2>Ready to try the questions?</h2><p class="small">Your answers for all ${block.lessons.length} topics will be checked together.</p></div><button class="primary" data-finish-reading="${id}">Mark this block read & start the quiz →</button><a href="#home">Save and return to the course</a></div>`
+      `<header class="reading-block-header"><h1>${topics}</h1><p class="lead">About ${block.minutes} minutes of reading and examples. Read these ${block.lessons.length} topics at your own pace. The questions come together at the end of this block.</p><nav class="reading-contents" aria-label="In this reading block">${block.lessons.map((l, i) => `<a href="#block/${id}/read/${l.id}" data-read-jump="${l.id}"><span>${block.start + i + 1}</span>${e(l.title)}</a>`).join("")}</nav></header>${block.lessons.map((l, i) => `<section class="reading-topic" id="read-${l.id}"><div class="reading-topic-heading" data-read-topic="${l.id}"><span class="small">Topic ${block.start + i + 1}</span><h2>${e(l.title)}</h2><p class="lesson-goal">${e(l.goal)}</p>${levelBar(l)}</div><article class="prose">${readingHTML(l)}</article><section data-block-card class="block-worked-example"><h3>${e(l.example_title || "Worked example")}</h3><p>${e(l.example[0])}</p><ol class="block-example-steps">${l.example[1].map((text) => `<li>${e(text)}</li>`).join("")}</ol>${NoemaVisuals.render(l.visual, l.example[1].length - 1, l.id)}</section>${depthHTML(l)}${l.activity ? `<p class="block-activity-link"><a href="#lesson/${l.id}">Open the hands-on work for this topic →</a><span class="small">You can also return to it after the block.</span></p>` : ""}${background(l)}</section>`).join("")}<div class="block-reading-actions"><div><h2>Ready to try the questions?</h2><p class="small">Your answers for all ${block.lessons.length} topics will be checked together.</p></div><button class="primary" data-finish-reading="${id}">Mark this block read & start the quiz →</button><a href="#home">Save and return to the course</a></div>`
     );
   if (step === "practice")
     return (
@@ -450,7 +453,7 @@ function question(q, { guided = false, batch = false } = {}) {
 }
 function readStep(l) {
   const reading = readingHTML(l);
-  return `<h1>${e(l.title)}</h1><p class="lesson-goal">${e(l.goal)}</p>${levelBar(l)}<article class="prose">${reading}</article><div class="remember"><p>${e(l.takeaway)}</p></div>${depthHTML(l)}${background(l)}${footer(l, { primary: "next-example", primaryText: "Next: see an example" })}`;
+  return `<h1>${e(l.title)}</h1><p class="lesson-goal">${e(l.goal)}</p>${levelBar(l)}<article class="prose">${reading}</article>${depthHTML(l)}${background(l)}${footer(l, { primary: "next-example", primaryText: "Next: see an example" })}`;
 }
 function cacheCode(start, editable) {
   return `<section class="cache-code-panel"><div class="cache-code-heading"><span>Cache read · two saved positions</span><span>${editable ? "Change the highlighted value" : "Follow the highlighted value"}</span></div><pre class="cache-code" aria-label="Cache read code"><code><span class="code-line active"><span class="line-number">1</span>start = ${editable ? `<select id="cache-start" aria-label="First saved position to read"><option value="0" ${start === 0 ? "selected" : ""}>0</option><option value="1" ${start === 1 ? "selected" : ""}>1</option></select>` : `<mark>${start}</mark>`}</span><span class="code-line"><span class="line-number">2</span>keys = cache.keys[start:]</span><span class="code-line"><span class="line-number">3</span>values = cache.values[start:]</span><span class="code-line"><span class="line-number">4</span>attended = self.attention(q, keys, values)</span></code></pre><div class="code-explanation"><p><b>1 · Choose where the read begins.</b> Position 0 is the first saved entry. Position 1 is the second.</p><p><b>2–3 · Select matching keys and values.</b> <code>[start:]</code> means “from start to the end.” It does not delete anything from the original cache.</p><p><b>4 · Calculate attention.</b> The current query, <code>q</code>, determines how the visible values are mixed.</p></div><p class="small code-caption">This expands the cache-read lines of <code>cached_step</code> for the two-entry case. The exercise selects the corresponding branch of that function.</p></section>`;
@@ -1013,7 +1016,7 @@ function doneStep(l) {
         `<button class="option-row" data-go="challenges/${c.id}"><span>Use this idea in a review<small>${e(c.title)} Start with background, then judge the proposal.</small></span><span>→</span></button>`,
     )
     .join("");
-  return `<p class="lesson-context">Lesson ${index + 1} · Your place is saved</p><h1>That’s the main idea.</h1><p class="completion-takeaway">${e(l.takeaway)}</p><p class="lead compact">${next ? `Next, we’ll build on this in “${e(next.title)}.”` : "Your experiment is already taking shape in the lesson activities. Revisit the notes here as you collect results for your own model."}</p><div class="completion-actions"><button class="primary" ${next ? `data-go="lesson/${next.id}"` : `data-open-activity="${l.id}"`}>${next ? "Start the next lesson" : "Revisit your experiment"} →</button><a href="#home">Take a break</a></div><div class="optional-next"><h2>Want to spend more time here?</h2>${l.activity ? `<button class="option-row" data-open-activity="${l.id}"><span>Return to the hands-on activity<small>${e(l.activity.title)} Your notes and results are saved here.</small></span><span>→</span></button>` : ""}${related}<button class="option-row" data-step="learn" data-lesson="${l.id}"><span>Read the explanation again<small>Including the optional calculations and engineering detail.</small></span><span>→</span></button></div>${background(l)}`;
+  return `<p class="lesson-context">Lesson ${index + 1} · Your place is saved</p><h1>Lesson complete</h1><p class="lead compact">${next ? `Next: ${e(next.title)}.` : "That was the last lesson. Your notes from the activities are saved."}</p><div class="completion-actions"><button class="primary" ${next ? `data-go="lesson/${next.id}"` : `data-open-activity="${l.id}"`}>${next ? "Start the next lesson" : "Revisit your experiment"} →</button><a href="#home">Take a break</a></div><div class="optional-next"><h2>Want to spend more time here?</h2>${l.activity ? `<button class="option-row" data-open-activity="${l.id}"><span>Return to the hands-on activity<small>${e(l.activity.title)} Your notes and results are saved here.</small></span><span>→</span></button>` : ""}${related}<button class="option-row" data-step="learn" data-lesson="${l.id}"><span>Read the explanation again<small>Including the optional calculations and engineering detail.</small></span><span>→</span></button></div>${background(l)}`;
 }
 function lesson(id) {
   const l = lookup(id);
@@ -1123,7 +1126,7 @@ function challengePage(id) {
   else if (review.step === "predict")
     content = `<h1>What would happen?</h1><p class="explain-prompt">${e(guide.trace)}</p><p class="small">This is a scratchpad, not a graded answer. A guess gives you something to revisit when you write the full review.</p><details class="background"><summary>See the proposal again</summary><pre><code>${e(c.artifact)}</code></pre></details><label class="field-label" for="review-prediction">Your prediction</label><textarea id="review-prediction" data-review-prediction="${c.id}" placeholder="Walk through the small case. What do you expect to observe, and why?">${e(review.prediction || "")}</textarea><button class="text-button" data-review-hint="${c.id}">I’m stuck</button>${review.hint ? `<p class="hint-text">${e(guide.trace_hint)}</p>` : ""}${reviewFooter(c, { back: "change", primary: "review-next", primaryText: "Next: write your review" })}`;
   else if (review.step === "done")
-    content = `<h1>Keep this check in mind.</h1><p class="completion-takeaway">${e(guide.takeaway)}</p><p class="lead compact">Your prediction, review, and any feedback are saved. Working through an exercise is practice; it is not a correctness certificate.</p><div class="completion-actions"><button class="primary" data-go="lesson/${resumeLesson().id}">Continue your course →</button><a href="#home">Return to the course</a></div><button class="option-row" data-review-step="write" data-challenge="${c.id}"><span>Revisit your reasoning<small>Read your prediction alongside your review and revise it.</small></span><span>→</span></button>`;
+    content = `<h1>Review complete</h1><p class="lead compact">Your prediction, review and any feedback are saved.</p><div class="completion-actions"><button class="primary" data-go="lesson/${resumeLesson().id}">Continue your course →</button><a href="#home">Return to the course</a></div><button class="option-row" data-review-step="write" data-challenge="${c.id}"><span>Revisit your reasoning<small>Read your prediction alongside your review and revise it.</small></span><span>→</span></button>`;
   else
     content = `<h1>Explain your decision.</h1><p class="challenge-prompt">${e(c.prompt)}</p><details class="background"><summary>See the proposal and your prediction</summary><pre><code>${e(c.artifact)}</code></pre><p><b>Your first prediction:</b> ${e(review.prediction || "You skipped the scratchpad. You can still reason through the example now.")}</p></details><p class="small">Start with your decision and why. Use the small case to support it, say what you would keep or change, and describe a check that could show you are right.</p><label for="challenge-answer" class="field-label">Your review</label><textarea id="challenge-answer" data-challenge-answer="${c.id}" placeholder="I would approve, reject, or investigate this because… In the small case… I would keep or change… To check this, I would…">${e(answer)}</textarea><div class="explain-options"><button class="text-button" data-review-step="change" data-challenge="${c.id}">Reopen the proposal</button><button class="text-button" data-compare-review="${c.id}">Compare without AI feedback</button></div><details class="background"><summary>What should my review explain?</summary><ul>${c.criteria.map((row) => `<li>${e(row.label)}</li>`).join("")}</ul></details><div id="grade-result">${reviewFeedback(c)}</div>${reviewWritingFooter(c)}`;
   return header + content + picker;
@@ -1920,3 +1923,91 @@ Promise.allSettled([
   )
     render();
 });
+
+// Hover previews, like Wikipedia's page previews: a marked term shows its glossary entry and a
+// citation shows its source card. Keyboard focus and taps open them too.
+const preview = document.createElement("div");
+preview.className = "hover-card";
+preview.id = "hover-card";
+preview.setAttribute("role", "tooltip");
+preview.hidden = true;
+document.body.append(preview);
+let previewFor: Element | null = null,
+  hideTimer: ReturnType<typeof setTimeout> | undefined;
+function enhanceMarks() {
+  document.querySelectorAll<HTMLElement>("dfn[data-term]").forEach((d) => {
+    d.tabIndex = 0;
+    d.setAttribute("aria-describedby", "hover-card");
+  });
+  document.querySelectorAll<HTMLAnchorElement>("a[data-source]").forEach((a) => {
+    const source = SOURCES[a.dataset.source];
+    if (!source) return;
+    a.href = sourceHref(source[1], a.dataset.quote);
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.setAttribute("aria-describedby", "hover-card");
+  });
+  // Every outside link in course content opens in a new tab, so the reader keeps their place.
+  document.querySelectorAll<HTMLAnchorElement>('#main a[href^="http"]').forEach((a) => {
+    a.target = "_blank";
+    a.rel = "noopener";
+  });
+}
+function showPreview(el: HTMLElement) {
+  clearTimeout(hideTimer);
+  if (previewFor === el && !preview.hidden) return;
+  if (el.dataset.term) {
+    const definition = GLOSSARY[el.dataset.term];
+    if (!definition) return;
+    preview.innerHTML = `<p class="hover-kind">${icon("book-bookmark", 14)}Glossary</p><h4>${e(el.dataset.term)}</h4><p>${e(definition)}</p><a href="#glossary">All terms</a>`;
+  } else {
+    const source = SOURCES[el.dataset.source];
+    if (!source) return;
+    const quote = el.dataset.quote;
+    preview.innerHTML = `<p class="hover-kind">${icon("file-text", 14)}${e(new URL(source[1]).hostname.replace(/^www\./, ""))}</p><h4>${e(source[0])}</h4>${quote ? `<blockquote>${e(quote)}</blockquote>` : `<p>${e(source[2])}</p>`}<a href="${e(sourceHref(source[1], quote))}" target="_blank" rel="noopener">${quote ? "Open at this passage" : "Open the source"} ${icon("external-link", 14)}</a>`;
+  }
+  previewFor = el;
+  preview.hidden = false;
+  const r = el.getBoundingClientRect(),
+    w = preview.offsetWidth,
+    h = preview.offsetHeight,
+    below = r.bottom + 8 + h < innerHeight;
+  preview.style.left = Math.max(16, Math.min(r.left, innerWidth - w - 16)) + scrollX + "px";
+  preview.style.top = (below ? r.bottom + 8 : r.top - h - 8) + scrollY + "px";
+}
+function hidePreview(delay = 150) {
+  clearTimeout(hideTimer);
+  hideTimer = setTimeout(() => {
+    preview.hidden = true;
+    previewFor = null;
+  }, delay);
+}
+const markOf = (t: EventTarget | null) =>
+  t instanceof Element ? t.closest<HTMLElement>("dfn[data-term], a[data-source]") : null;
+document.addEventListener("mouseover", (event) => {
+  const mark = markOf(event.target);
+  if (mark) showPreview(mark);
+  else if (!(event.target instanceof Node && preview.contains(event.target)) && previewFor)
+    hidePreview();
+});
+document.addEventListener("focusin", (event) => {
+  const mark = markOf(event.target);
+  if (mark) showPreview(mark);
+});
+document.addEventListener("focusout", (event) => {
+  if (markOf(event.target)) hidePreview();
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !preview.hidden) hidePreview(0);
+});
+// Touch: a tap on a term opens its card; a tap elsewhere closes it.
+document.addEventListener("pointerdown", (event) => {
+  const mark = markOf(event.target);
+  if (event.pointerType !== "mouse" && mark?.dataset.term) showPreview(mark);
+  else if (!(event.target instanceof Node && preview.contains(event.target))) hidePreview(0);
+});
+new MutationObserver(enhanceMarks).observe(document.getElementById("main")!, {
+  childList: true,
+  subtree: true,
+});
+enhanceMarks();

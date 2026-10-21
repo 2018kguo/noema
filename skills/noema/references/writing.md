@@ -36,6 +36,43 @@ once, plainly, where a number comes from; do not repeat a disclaimer after every
 figure. Do not narrate the lesson ("This lesson shows…", "The question here
 is…"). State the idea. Do not end paragraphs with a moral.
 
+## LLM tells to remove
+
+Readers recognize machine prose by its shapes more than its words. Each of these
+has drawn real complaints ([Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing)).
+Find them on the second pass and rewrite the sentence as a person would say it.
+
+- **Antithesis.** "This is not X, it's Y." "X rather than Y." "Not only X but also Y."
+  Say what it is. Mention what it isn't only when a reader would actually assume it.
+- **Teaser fragments.** "Three changes. Which part owns each one?" "Not a detail. A
+  design decision." "The harder question is…" "Several problems remain open." Write
+  the full sentence that carries the point.
+- **Colon and semicolon pivots** that stand in for "because", "but" or "so": "X exists
+  in theory; in practice, Y." Use the conjunction.
+- **Aphorisms and morals.** A closing line that restates the paragraph as a maxim
+  ("A cache has to preserve the right history"). Delete it; the paragraph already said it.
+- **Imperative openers and closers.** "Read the figures for what they are." "Ask every
+  claim which workload…" State the fact or the check plainly.
+- **Groups of three** and announced counts ("Three contracts are in use"). Give the real
+  number of things, and don't announce it.
+- **Copula avoidance.** "serves as", "stands as", "marks", "boasts", "refers to". Write "is".
+- **Signature vocabulary.** honest, load-bearing, the trap, full stop, quietly, crucial,
+  pivotal, underscore, leverage, multifaceted, "worth noting", "X matters more".
+- **Bold inline labels** that turn a paragraph into a list of mini-headings.
+- **Name-drop lists.** Each cited paper or person gets what they found, in a sentence a
+  newcomer can follow, or gets cut.
+
+## Stand alone, or link
+
+Every name the reader meets must be explained where it appears or be one hover away.
+Never write "the Q&A", "the README" or a bare file path as if the reader had it open:
+say what the document is the first time ("DeepSeek's Q&A about running DeepInfer in
+production"). Mark a specialist term on its first use in a level with
+`<dfn data-term="Glossary key">term</dfn>` and give it a plain glossary entry. Cite a
+source with `<a data-source="sourceId" data-quote="a short exact phrase from it">readable
+name</a>`; the reader shows a preview card and the link opens the source in a new tab,
+scrolled to and highlighting that phrase. Copy the phrase verbatim from the source. A term that needs more than a sentence to explain is a prerequisite: teach it.
+
 Use a second pass to ask:
 
 - Which sentence depends on a fact the reader has not learned yet?

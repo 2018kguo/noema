@@ -64,7 +64,16 @@ export function extractArticle(html: string) {
   flush();
   return { blocks, links, embeds, figures, title: title.trim() };
 }
-export function cleanHTML(value: string) {
+// Hover links survive sanitizing: <dfn data-term> and <a data-source> (no href; the reader adds
+// it from SOURCES). With `refs`, marks that point nowhere are unwrapped to plain text.
+export function cleanHTML(
+  value: string,
+  refs?: {
+    terms: Set<string>;
+    sources: Set<string>;
+    quoted?: (id: string, quote: string) => boolean;
+  },
+) {
   const allowed = new Set([
     "p",
     "h2",
@@ -92,6 +101,21 @@ export function cleanHTML(value: string) {
     if ("tagName" in n) {
       if (hidden.has(n.tagName)) return "";
       const content = "childNodes" in n ? n.childNodes.map(walk).join("") : "";
+      const mark = { dfn: "data-term", a: "data-source" }[n.tagName];
+      if (mark) {
+        const target = n.attrs.find((a) => a.name === mark)?.value || "",
+          known = refs ? (mark === "data-term" ? refs.terms : refs.sources).has(target) : true;
+        // A quote is kept only when it appears in that source, so its highlight link resolves.
+        const quote = n.attrs.find((a) => a.name === "data-quote")?.value.trim() || "",
+          keepQuote =
+            mark === "data-source" &&
+            quote.length <= 300 &&
+            !!quote &&
+            (refs?.quoted ? refs.quoted(target, quote) : true);
+        return target && known && target.length <= 120
+          ? `<${n.tagName} ${mark}="${escapeHTML(target)}"${keepQuote ? ` data-quote="${escapeHTML(quote)}"` : ""}>${content}</${n.tagName}>`
+          : content;
+      }
       return allowed.has(n.tagName)
         ? "<" + n.tagName + ">" + content + (n.tagName === "br" ? "" : "</" + n.tagName + ">")
         : content;

@@ -1,4 +1,4 @@
-export {};
+import { icon, type IconName } from "./icons";
 
 const $ = (
   selector: string,
@@ -297,7 +297,7 @@ function renderConnections() {
       const c = links![name],
         state = !c.installed ? "Not installed" : c.loggedIn ? "Connected" : "Not signed in",
         detail = [c.version && "v" + c.version, c.method].filter(Boolean).join(" · ");
-      return `<li class="${c.loggedIn ? "ok" : "off"}"><div><b>${NAMES[name]}</b><span>${state}${detail ? " · " + escapeHTML(detail) : ""}</span></div>${c.fix ? `<div class="fix"><code>${escapeHTML(c.fix)}</code><button type="button" class="quiet" data-copy="${escapeHTML(c.fix)}">Copy</button></div><p class="form-help">Run this in a terminal, then press Recheck.</p>` : ""}</li>`;
+      return `<li class="${c.loggedIn ? "ok" : "off"}"><div><b>${NAMES[name]}</b><span>${state}${detail ? " · " + escapeHTML(detail) : ""}</span></div>${c.fix ? `<div class="fix"><code>${escapeHTML(c.fix)}</code><button type="button" class="quiet" data-copy="${escapeHTML(c.fix)}">${icon("copy", 14)} Copy</button></div><p class="form-help">Run this in a terminal, then press Recheck.</p>` : ""}</li>`;
     })
     .join("");
   for (const option of document.querySelector<HTMLSelectElement>("#provider")!.options)
@@ -498,4 +498,9 @@ setInterval(() => {
 }, 2500);
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) refresh();
+});
+
+// Static icons: any element with data-icon gets the matching Lucide shape.
+document.querySelectorAll<HTMLElement>("[data-icon]").forEach((el) => {
+  el.innerHTML = icon(el.dataset.icon as IconName);
 });

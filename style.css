@@ -473,18 +473,6 @@ code {
   padding: 2px 5px;
   overflow-wrap: anywhere;
 }
-.remember {
-  padding: 22px 24px;
-  background: var(--soft);
-  border-radius: 8px;
-  margin: 34px 0;
-}
-.remember p {
-  font-size: 18px;
-  line-height: 1.75;
-  margin: 8px 0 0;
-  color: #345a42;
-}
 .optional-reading {
   margin: 38px 0 20px;
   padding-top: 8px;
@@ -1570,12 +1558,6 @@ input[type="range"] {
   }
   .prose h3 {
     font-size: 19px;
-  }
-  .remember {
-    padding: 19px;
-  }
-  .remember p {
-    font-size: 17px;
   }
   .example-scenario {
     font-size: 19px;
