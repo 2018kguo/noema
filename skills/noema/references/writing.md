@@ -70,6 +70,8 @@ is…"). State the idea. Do not end paragraphs with a moral.
 Readers recognize machine prose by its shapes more than its words. Each of these
 has drawn real complaints ([Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing)).
 Find them on the second pass and rewrite the sentence as a person would say it.
+`src/tells.ts` detects these (shared with [Sprout](https://github.com/2018kguo/sprout)), and
+`bun run course inspect <dir>` reports every hit with its rate per 100 words.
 
 - **Antithesis.** "This is not X, it's Y." "X rather than Y." "Not only X but also Y."
   Say what it is. Mention what it isn't only when a reader would actually assume it.
@@ -96,6 +98,16 @@ Find them on the second pass and rewrite the sentence as a person would say it.
 - **Signature vocabulary.** honest, load-bearing, the trap, full stop, quietly, crucial,
   pivotal, underscore, leverage, multifaceted, "worth noting", "X matters more".
 - **Bold inline labels** that turn a paragraph into a list of mini-headings.
+- **Rhetorical setups.** A question answered at once ("The result? Chaos."), "here's the
+  thing", "the truth is", and closers like "ultimately" or "at its core". Say the point.
+- **Significance tails.** ", highlighting its importance", ", paving the way for…". Cut the clause.
+- **Teacher voice.** "Let's break this down", "think of it as". Talk to the reader as a peer.
+- **Em dashes.** Use a period, comma or parentheses.
+- **Titles with a flourish.** "The math you need, without the fog", "What X actually does",
+  "Read the code without getting lost", "more than a weights file". Name the topic plainly,
+  the way a person labels a chapter: "Tensor shapes and memory sizes".
+- **Lists of three** in titles and taglines: "Tokens, logits and choosing what comes next",
+  "The evidence, where it breaks and what's still open". Name the one subject.
 - **Name-drop lists.** Each cited paper or person gets what they found, in a sentence a
   newcomer can follow, or gets cut.
 

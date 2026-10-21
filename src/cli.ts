@@ -7,7 +7,7 @@ import { InboxWorker } from "./inbox-worker";
 import { makeServer } from "./server";
 import { bundle, bundleBytes } from "./share";
 import { Crawler } from "./crawl";
-import { inspectCourse } from "./course-inspect";
+import { inspectCourse, tellRate } from "./course-inspect";
 const [command = "serve", ...args] = process.argv.slice(2);
 const { values: v, positionals: p } = parseArgs({
   args,
@@ -82,7 +82,10 @@ async function main() {
         `Valid: ${b.course.LESSONS.length} topics, ${Object.keys(b.challenges).length} review scenarios`,
       );
     } else if (action === "inspect") {
-      console.log(JSON.stringify(inspectCourse(loadBundle(path).course), null, 2));
+      const { course } = loadBundle(path);
+      console.log(
+        JSON.stringify({ summary: tellRate(course), topics: inspectCourse(course) }, null, 2),
+      );
     } else if (action === "bundle") {
       if (!v.out) throw Error("Use --out course.zip");
       console.log(await bundle(path, v.out));

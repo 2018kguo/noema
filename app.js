@@ -4,9 +4,9 @@
   var LEVELS = [1, 2, 3];
   var LEVEL_NAMES = { 1: "Intro", 2: "High level", 3: "Depth" };
   var LEVEL_BLURBS = {
-    1: "The situation, the core idea and why it matters.",
-    2: "How it works: the moving parts, numbers and trade-offs.",
-    3: "The evidence, where it breaks and what\u2019s still open."
+    1: "Start here if the subject is new to you.",
+    2: "How it works, for someone who will build or run it.",
+    3: "The evidence behind the claims, and what is still unsettled."
   };
   var valid = (n) => n === 1 || n === 2 || n === 3;
   var available = (lesson2) => LEVELS.filter((n) => lesson2.levels?.[n] !== void 0 && lesson2.levels?.[n] !== null);
@@ -277,7 +277,7 @@
         ""
       )}</div><div class="actions"><button class="primary" data-go="home">Go to the course</button><button class="text-button" data-retake-placement>Retake the placement questions</button></div>`;
     }
-    return `<div class="lesson-topline"><a href="#home">\u2190 Course</a></div><h1>Where should you start?</h1><p class="lead">Answer what you can. These questions are meant to be hard, so choose \u201CI\u2019m not sure\u201D rather than guessing. You\u2019ll start at the deepest pass you already know.</p><form id="placement-form">${sections().filter((phase) => probes.some((q) => q.phase === phase)).map(
+    return `<div class="lesson-topline"><a href="#home">\u2190 Course</a></div><h1>Where should you start?</h1><p class="lead">Answer what you can. These questions are meant to be hard, so choose \u201CI\u2019m not sure\u201D if you would be guessing. You\u2019ll start at the deepest pass you already know.</p><form id="placement-form">${sections().filter((phase) => probes.some((q) => q.phase === phase)).map(
       (phase) => `<section class="placement-section"><h2>${e(phaseLabel(phase))}</h2>${probes.filter((q) => q.phase === phase).map(
         (q) => `<div class="question" data-place-q="${e(q.id)}"><fieldset><legend>${e(q.prompt)}</legend>${[...q.options, "I\u2019m not sure"].map((option, i) => `<label class="choice"><input type="radio" name="${e(q.id)}" value="${i < q.options.length ? i : -1}" required><span>${e(option)}</span></label>`).join("")}</fieldset></div>`
       ).join("")}</section>`

@@ -5,9 +5,9 @@ export type Level = 1 | 2 | 3;
 export const LEVELS: Level[] = [1, 2, 3];
 export const LEVEL_NAMES: Record<Level, string> = { 1: "Intro", 2: "High level", 3: "Depth" };
 export const LEVEL_BLURBS: Record<Level, string> = {
-  1: "The situation, the core idea and why it matters.",
-  2: "How it works: the moving parts, numbers and trade-offs.",
-  3: "The evidence, where it breaks and what’s still open.",
+  1: "Start here if the subject is new to you.",
+  2: "How it works, for someone who will build or run it.",
+  3: "The evidence behind the claims, and what is still unsettled.",
 };
 export type LevelState = { level?: number; tracks?: Record<string, object> };
 type Leveled = { id: string; levels?: Partial<Record<string, unknown>> };

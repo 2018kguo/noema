@@ -20,7 +20,7 @@ import { runStructured } from "../src/structured-cli";
 import { z } from "zod";
 import { levelFor, place, switchTrack, trackState } from "../browser/levels";
 import { sourceHref } from "../browser/links";
-import { tells } from "../src/tells";
+import { tells, titleTells } from "../src/tells";
 const cleanups: (() => void)[] = [];
 afterEach(() => {
   for (const f of cleanups.splice(0).reverse()) f();
@@ -552,18 +552,57 @@ test("quoted citations link to a highlighted passage", () => {
   );
   expect(sourceHref("https://x.org/a")).toBe("https://x.org/a");
 });
+test("the bundled course carries no strong LLM tells in its titles or teaching text", () => {
+  const c = sample.course;
+  expect(c.LESSONS.flatMap((l) => titleTells(l.title).filter((t) => t.strong))).toEqual([]);
+  const text = c.LESSONS.flatMap((l) => Object.values(l.levels).filter(Boolean)).join(" ");
+  // The workshop's "The code above…" line is a deliberate pointer at the lab, not a definition.
+  expect(
+    tells(text)
+      .filter((t) => t.strong)
+      .map((t) => t.sentence),
+  ).toEqual([]);
+});
 test("tell detector names the sentences an editor must rewrite", () => {
   const found = tells(
     "<p>Three changes. A cache is not a log, but a ledger. The curve is the honest unit. Prefill reads the prompt once.</p>",
   );
-  expect(found.map((f) => f.kind).sort()).toEqual([
+  expect([...new Set(found.map((f) => f.kind))].sort()).toEqual([
     "announced count",
     "antithesis",
     "flashcard opener",
     "signature word",
   ]);
-  expect(tells("The comparison group is built by randomization.")[0]?.kind).toBe(
-    "flashcard opener",
-  );
   expect(found.every((f) => !f.sentence.includes("Prefill"))).toBe(true);
+  for (const [text, kind] of [
+    ["The comparison group is built by randomization.", "flashcard opener"],
+    ["It's not a bug, it's a feature.", "antithesis"],
+    ["This is not only faster but also cheaper.", "antithesis"],
+    ["We shipped it. The result? Chaos.", "question, instant answer"],
+    ["Here's the thing about batching.", "false suspense"],
+    ["Ultimately, the team moved on.", "signposted ending"],
+    ["It's worth noting that nobody asked.", "empty transition"],
+    ["The team moved to paging, highlighting its focus on memory.", "significance tail"],
+    ["The cache serves as a record of each step.", "copula avoidance"],
+    ["Think of it as a ledger.", "teacher voice"],
+    ["Despite these challenges, the engine shipped.", "challenges brush-off"],
+    ["We were fast — too fast.", "em dash"],
+    ["The schema change itself was not hard. The week it cost us was.", "contrast reversal"],
+  ])
+    expect(tells(text).map((f) => f.kind)).toContain(kind);
+  // Plain human prose, including ordinary contrasts and questions, stays clean.
+  for (const text of [
+    "There were four of us, and we sat close enough to hear each other's keyboards.",
+    "I didn't want a meeting, so I wrote a doc and asked people to read it by ten.",
+    "Is it slower? Sometimes, when someone forgets to update the doc for a few days in a row.",
+    "We went from three repos to one, and builds got faster.",
+    "The bill was not small, but it was predictable.",
+    "Each of those studies follows a protocol, a plan written before anyone enrolls that fixes who qualifies.",
+  ])
+    expect(tells(text).filter((f) => f.strong)).toEqual([]);
+  expect(titleTells("The math you need, without the fog").map((f) => f.kind)).toContain(
+    "cute title",
+  );
+  expect(titleTells("Tokens, logits and choosing what comes next")[0]?.kind).toBe("list of three");
+  expect(titleTells("How the scheduler picks the next batch")).toEqual([]);
 });

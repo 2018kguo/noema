@@ -247,7 +247,7 @@ function placementPage() {
         "",
       )}</div><div class="actions"><button class="primary" data-go="home">Go to the course</button><button class="text-button" data-retake-placement>Retake the placement questions</button></div>`;
   }
-  return `<div class="lesson-topline"><a href="#home">← Course</a></div><h1>Where should you start?</h1><p class="lead">Answer what you can. These questions are meant to be hard, so choose “I’m not sure” rather than guessing. You’ll start at the deepest pass you already know.</p><form id="placement-form">${sections()
+  return `<div class="lesson-topline"><a href="#home">← Course</a></div><h1>Where should you start?</h1><p class="lead">Answer what you can. These questions are meant to be hard, so choose “I’m not sure” if you would be guessing. You’ll start at the deepest pass you already know.</p><form id="placement-form">${sections()
     .filter((phase) => probes.some((q) => q.phase === phase))
     .map(
       (phase) =>

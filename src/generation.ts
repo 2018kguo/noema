@@ -15,7 +15,7 @@ import { type Item, type Settings } from "./inbox-store";
 import { type Reading } from "./source-reader";
 import { runStructured, Cancelled } from "./structured-cli";
 import { cleanHTML, escapeHTML, paragraphCount } from "./html";
-import { tells, arithmetic } from "./tells";
+import { tells, titleTells, arithmetic } from "./tells";
 import schemas from "./generation-schemas.json";
 const t = z.string(),
   arr = (min: number, max: number) => z.array(t).min(min).max(max);
@@ -235,11 +235,15 @@ export async function generate(
   const plan = await checkpoint(
     "plan",
     "",
-    'Plan 8–12 topics, up to 20 for a broad goal. Order prerequisite concepts before applications. Name phases as "01 · Foundations". Each focus names one concrete idea; group related topics into roughly 30-minute reading blocks before quizzes. Introduce terms in plain English. Introductions use two short sentences. Review descriptions give situations without revealing verdicts. For every phase, write placement probes: one level-2 (High level) and one level-3 (Depth) multiple-choice question that a reader who already works at that depth answers quickly and a newcomer cannot guess; test understanding of ideas, never vocabulary alone or arithmetic.' +
+    'Plan 8–12 topics, up to 20 for a broad goal. Order prerequisite concepts before applications. Name phases as "01 · Foundations". Each focus names one concrete idea; titles name that idea plainly, as a person would label a chapter, with no flourishes and no "A, B and C" lists; group related topics into roughly 30-minute reading blocks before quizzes. Introduce terms in plain English. Introductions use two short sentences. Review descriptions give situations without revealing verdicts. For every phase, write placement probes: one level-2 (High level) and one level-3 (Depth) multiple-choice question that a reader who already works at that depth answers quickly and a newcomer cannot guess; test understanding of ideas, never vocabulary alone or arithmetic.' +
       " Cite sources only by their id field.",
     planSchema
       .refine((p) => p.lessons.every((l) => l.sources.every((id) => sourceIds.includes(id))), {
         message: "Lesson sources must be source ids: " + sourceIds.join(", "),
+      })
+      .refine((p) => p.lessons.every((l) => !titleTells(l.title).some((t) => t.strong)), {
+        message:
+          "Name each topic plainly, with no flourish (no 'without the fog', 'actually', 'more than a') and no list of three; one subject per title",
       })
       .refine((p) => p.placement.every((q) => p.lessons.some((l) => l.phase === q.phase)), {
         message: "Placement phases must match lesson phases exactly",
@@ -310,7 +314,7 @@ export async function generate(
         ? ([result.example_setup, result.example_steps] as const)
         : null;
     const flagged = [
-      ...Object.values(levels).flatMap(tells),
+      ...Object.values(levels).flatMap((html) => tells(html).filter((t) => t.strong)),
       ...(example && arithmetic(example[0] + " " + example[1].join(" ")) >= 3
         ? [
             {
