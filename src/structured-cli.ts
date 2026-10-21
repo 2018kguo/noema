@@ -12,6 +12,9 @@ export async function runStructured(
   timeout = 150,
   cancelled = () => false,
 ): Promise<unknown> {
+  // The Claude CLI rejects a `$schema` draft URI it can't resolve; the schema itself is unchanged.
+  const { $schema: _draft, ...plain } = schema;
+  schema = plain;
   const work = await mkdtemp(join(tmpdir(), "noema-model-"));
   let command: string[];
   try {
@@ -67,6 +70,7 @@ export async function runStructured(
         stdio: ["pipe", "pipe", "pipe"],
       });
       let output = "",
+        errors = "",
         bytes = 0,
         settled = false,
         stopping = false,
@@ -99,7 +103,9 @@ export async function runStructured(
         if (bytes > 8_000_000) stop(Error("Model output exceeded the limit."));
         else output += chunk.toString();
       });
-      child.stderr.resume();
+      child.stderr.on("data", (chunk: Buffer) => {
+        errors = (errors + chunk.toString()).slice(-2000);
+      });
       child.stdin.on("error", () => {});
       child.stdin.end(prompt);
       child.on("error", (error) => {
@@ -119,15 +125,21 @@ export async function runStructured(
           settled = true;
           if (stopReason) reject(stopReason);
           else if (code === 0) resolve(output);
-          else
+          else {
+            // Claude prints a JSON envelope with the real reason even when it exits non-zero.
+            let reason = errors.trim();
+            try {
+              const parsed = JSON.parse(output);
+              reason = String(parsed.result || parsed.error || reason);
+            } catch {
+              reason ||= output.trim().slice(-500);
+            }
             reject(
               Error(
-                provider +
-                  " exited with status " +
-                  code +
-                  ". Check CLI login, model access and usage limits.",
+                `${provider} exited with status ${code}${reason ? ": " + reason.slice(0, 400) : ""}`,
               ),
             );
+          }
         }
       });
     });
@@ -137,8 +149,16 @@ export async function runStructured(
         is_error: z.boolean().optional(),
         structured_output: z.unknown().optional(),
         result: z.string().optional(),
+        total_cost_usd: z.number().optional(),
+        duration_ms: z.number().optional(),
+        usage: z.record(z.string(), z.unknown()).optional(),
       })
       .parse(JSON.parse(stdout));
+    // One line per call so token use and caching can be compared across changes.
+    const u = envelope.usage || {};
+    console.error(
+      `[model] claude ${model || "default"} in=${u.input_tokens} cache_write=${u.cache_creation_input_tokens} cache_read=${u.cache_read_input_tokens} out=${u.output_tokens} $${envelope.total_cost_usd?.toFixed(3)} ${Math.round((envelope.duration_ms || 0) / 1000)}s prompt_chars=${prompt.length}`,
+    );
     if (envelope.is_error)
       throw Error("Claude reported an error. Check CLI login and account limits.");
     if (envelope.structured_output !== undefined) return envelope.structured_output;

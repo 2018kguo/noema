@@ -16,6 +16,8 @@ import { progress } from "../browser/progress";
 import { visuals } from "../browser/visuals";
 import { scheduleTimes } from "../src/visual-models";
 import { connections } from "../src/connections";
+import { runStructured } from "../src/structured-cli";
+import { z } from "zod";
 import { view, place } from "../browser/levels";
 const cleanups: (() => void)[] = [];
 afterEach(() => {
@@ -445,4 +447,25 @@ test("course validation requires one question per written level", () => {
   const d = structuredClone(sample.course);
   delete d.LESSONS[full].levels[3];
   expect(() => validateCourse(d, challenges)).toThrow("level the topic lacks");
+});
+test("structured calls never send a $schema URI and surface the CLI's own error", async () => {
+  const bin = temp(),
+    path = process.env.PATH;
+  // A stand-in for the Claude CLI: rejects $schema like v2.1 does, otherwise returns an envelope.
+  writeFileSync(
+    join(bin, "claude"),
+    `#!/bin/sh\ncase "$*" in *'$schema'*) echo '{"is_error":true,"result":"not a valid JSON Schema"}'; exit 1;; esac\ncase "$*" in *fail-please*) echo '{"is_error":true,"result":"Not logged in · Please run /login"}'; exit 1;; esac\necho '{"structured_output":{"title":"ok"},"usage":{}}'\n`,
+    { mode: 0o755 },
+  );
+  process.env.PATH = bin + ":" + path;
+  try {
+    const schema = z.toJSONSchema(z.object({ title: z.string() }));
+    expect(schema.$schema).toBeDefined();
+    expect(await runStructured("claude", "", "hi", schema)).toEqual({ title: "ok" });
+    await expect(
+      runStructured("claude", "", "hi", { type: "object", description: "fail-please" }),
+    ).rejects.toThrow("Not logged in");
+  } finally {
+    process.env.PATH = path;
+  }
 });
