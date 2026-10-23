@@ -4,6 +4,46 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { z } from "zod";
 export class Cancelled extends Error {}
+
+// OpenAI's strict mode (Codex --output-schema) rejects oneOf and needs every key in `required`.
+// The unions are split by a const `kind`, so anyOf means the same; optional keys become nullable,
+// and `unstrict` drops the nulls they come back as so the original schema still parses the result.
+type Schema = Record<string, any>;
+export function strict(schema: Schema): Schema {
+  if (Array.isArray(schema)) return schema.map(strict);
+  if (!schema || typeof schema !== "object") return schema;
+  const { oneOf, ...out } = Object.fromEntries(
+    Object.entries(schema).map(([k, v]) => [k, strict(v)]),
+  );
+  if (oneOf) out.anyOf = oneOf;
+  if (out.properties) {
+    const required = new Set(schema.required || []);
+    for (const k of Object.keys(out.properties))
+      if (!required.has(k)) out.properties[k] = { anyOf: [out.properties[k], { type: "null" }] };
+    out.required = Object.keys(out.properties);
+  }
+  return out;
+}
+export function unstrict(value: unknown, schema: Schema): unknown {
+  if (Array.isArray(value)) return value.map((v) => unstrict(v, schema.items || {}));
+  if (!value || typeof value !== "object") return value;
+  const flat = (s: Schema): Schema[] =>
+    s.anyOf || s.oneOf ? (s.anyOf || s.oneOf).flatMap(flat) : [s];
+  const branches = schema.anyOf || schema.oneOf ? flat(schema) : [];
+  const obj = value as Record<string, unknown>;
+  // The branch whose const `kind` matches, else the first object branch.
+  const branch =
+    branches.find((b) => b.properties?.kind?.const === obj.kind) ||
+    branches.find((b) => b.properties) ||
+    schema;
+  if (branch !== schema) return unstrict(value, branch);
+  const required = new Set(schema.required || []);
+  return Object.fromEntries(
+    Object.entries(obj)
+      .filter(([k, v]) => v !== null || required.has(k))
+      .map(([k, v]) => [k, unstrict(v, schema.properties?.[k] || {})]),
+  );
+}
 export async function runStructured(
   provider: string,
   model: string,
@@ -26,7 +66,7 @@ export async function runStructured(
   try {
     if (system) await writeFile(join(work, "system.md"), system);
     if (provider === "codex") {
-      await writeFile(join(work, "schema.json"), JSON.stringify(schema));
+      await writeFile(join(work, "schema.json"), JSON.stringify(strict(schema)));
       command = [
         "codex",
         "exec",
@@ -149,14 +189,16 @@ export async function runStructured(
             }
             reject(
               Error(
-                `${provider} exited with status ${code}${reason ? ": " + reason.slice(0, 400) : ""}`,
+                // The CLIs echo the prompt first and print the error last.
+                `${provider} exited with status ${code}${reason ? ": " + reason.slice(-400) : ""}`,
               ),
             );
           }
         }
       });
     });
-    if (provider === "codex") return JSON.parse(await readFile(join(work, "result.json"), "utf8"));
+    if (provider === "codex")
+      return unstrict(JSON.parse(await readFile(join(work, "result.json"), "utf8")), schema);
     const envelope = z
       .object({
         is_error: z.boolean().optional(),

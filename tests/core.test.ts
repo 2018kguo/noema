@@ -23,7 +23,7 @@ import { progress } from "../browser/progress";
 import { visuals } from "../browser/visuals";
 import { scheduleTimes } from "../src/visual-models";
 import { connections } from "../src/connections";
-import { runStructured } from "../src/structured-cli";
+import { runStructured, strict, unstrict } from "../src/structured-cli";
 import { z } from "zod";
 import { levelFor, place, switchTrack, trackState } from "../browser/levels";
 import { sourceHref } from "../browser/links";
@@ -830,4 +830,31 @@ test("tell detector names the sentences an editor must rewrite", () => {
   );
   expect(titleTells("Tokens, logits and choosing what comes next")[0]?.kind).toBe("list of three");
   expect(titleTells("How the scheduler picks the next batch")).toEqual([]);
+});
+
+test("codex gets a strict schema and its nulls for optional keys are dropped", () => {
+  const visual = z.discriminatedUnion("kind", [
+    z.object({ kind: z.literal("a"), start: z.number().optional() }),
+    z.object({ kind: z.literal("b"), note: z.string().nullable() }),
+  ]);
+  const schema = z.object({ visual: visual.nullable(), tag: z.string().optional() });
+  const json = z.toJSONSchema(schema) as Record<string, any>;
+  const sent = JSON.stringify(strict(json));
+  expect(sent).not.toContain("oneOf");
+  const walk = (s: any): void => {
+    if (s && typeof s === "object") {
+      if (s.properties) expect(s.required).toEqual(Object.keys(s.properties));
+      Object.values(s).forEach(walk);
+    }
+  };
+  walk(strict(json));
+  for (const [reply, parsed] of [
+    [{ visual: { kind: "a", start: null }, tag: null }, { visual: { kind: "a" } }],
+    [
+      { visual: { kind: "b", note: null }, tag: "x" },
+      { visual: { kind: "b", note: null }, tag: "x" },
+    ],
+    [{ visual: null, tag: null }, { visual: null }],
+  ])
+    expect(schema.parse(unstrict(reply, json))).toEqual(parsed);
 });
