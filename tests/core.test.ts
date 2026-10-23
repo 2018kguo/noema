@@ -679,6 +679,7 @@ test("research fetches links the sources contain, named reference pages and sear
           {
             subject: [
               { url: "https://lab.example/write-up", why: "the subject's own write-up" },
+              { url: "https://lab.example/write-up?copy", why: "the same page again" },
               { url: "http://lab.example/insecure", why: "x" },
             ],
             context: [{ url: "https://example.org/post", why: "already read" }],
@@ -692,14 +693,16 @@ test("research fetches links the sources contain, named reference pages and sear
           },
     async (url) => {
       fetched.push(url);
-      return [page(url), url];
+      return [page(url.replace("?copy", "")), url];
     },
   );
   expect(fetched.sort()).toEqual([
     "https://en.wikipedia.org/api/rest_v1/page/html/Attention_(machine_learning)",
     "https://example.org/paper",
     "https://lab.example/write-up",
+    "https://lab.example/write-up?copy",
   ]);
+  // The same page found twice is one source.
   expect(result.documents.map((d) => d.id)).toEqual(["source1", "source2", "source3", "source4"]);
   // The source's own links and the subject's write-up are read in full; only Wikipedia is
   // background.

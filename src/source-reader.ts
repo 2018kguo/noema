@@ -572,10 +572,14 @@ export async function research(
       ),
     ),
   ]);
-  const added = documents.length - reading.documents.length;
+  // Search and the source's own links often find the same page, or a repo already read.
+  const unique = documents.filter(
+    (d, i) => documents.findIndex((x) => x.sha256 === d.sha256 && x.title === d.title) === i,
+  );
+  const added = unique.length - reading.documents.length;
   const value = readingSchema.parse({
     ...reading,
-    documents: documents.map((d, i) => ({ ...d, id: "source" + (i + 1) })),
+    documents: unique.map((d, i) => ({ ...d, id: "source" + (i + 1) })),
     gaps,
     scope:
       reading.scope +
