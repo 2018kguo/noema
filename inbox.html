@@ -158,10 +158,8 @@
           <option value="claude">Claude Code</option>
           <option value="codex">Codex</option></select
         ><label for="generation-model">Model</label
-        ><input id="generation-model" placeholder="The CLI’s default model" maxlength="120" />
-        <p class="form-help">
-          For Claude, <code>sonnet</code> writes better courses; <code>haiku</code> is cheaper.
-        </p>
+        ><select id="generation-model"></select>
+        <p class="form-help">Larger models write better courses; smaller ones are cheaper.</p>
         <p id="settings-error" class="error" role="alert" hidden></p>
         <div class="dialog-actions">
           <button type="button" class="quiet" data-close="settings-dialog">Cancel</button

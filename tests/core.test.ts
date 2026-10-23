@@ -551,12 +551,17 @@ test("connections report sign-in state without account details", async () => {
   const exec = async (cmd: string[]) =>
     cmd.includes("--version")
       ? { code: 0, out: cmd[0] === "claude" ? "2.1.305 (Claude Code)" : "codex-cli 0.163.0" }
-      : cmd[0] === "claude"
+      : cmd.includes("models")
         ? {
             code: 0,
-            out: '{"loggedIn":true,"authMethod":"claude.ai","subscriptionType":"max","email":"a@b.c"}',
+            out: '{"models":[{"slug":"b","display_name":"B","visibility":"list","priority":2},{"slug":"x","display_name":"X","visibility":"hide","priority":0},{"slug":"a","display_name":"A","visibility":"list","priority":1}]}',
           }
-        : { code: 1, out: "Not logged in" };
+        : cmd[0] === "claude"
+          ? {
+              code: 0,
+              out: '{"loggedIn":true,"authMethod":"claude.ai","subscriptionType":"max","email":"a@b.c"}',
+            }
+          : { code: 1, out: "Not logged in" };
   const c = await connections(true, exec);
   if (Bun.which("claude"))
     expect(c.claude).toEqual({
@@ -565,6 +570,11 @@ test("connections report sign-in state without account details", async () => {
       loggedIn: true,
       method: "Claude max subscription",
       fix: null,
+      models: [
+        { id: "opus", name: "Opus" },
+        { id: "sonnet", name: "Sonnet" },
+        { id: "haiku", name: "Haiku" },
+      ],
     });
   if (Bun.which("codex"))
     expect(c.codex).toMatchObject({
@@ -572,6 +582,10 @@ test("connections report sign-in state without account details", async () => {
       version: "0.163.0",
       loggedIn: false,
       fix: "codex login",
+      models: [
+        { id: "a", name: "A" },
+        { id: "b", name: "B" },
+      ],
     });
   expect(JSON.stringify(c)).not.toContain("a@b.c");
   await connections(true);

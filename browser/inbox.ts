@@ -288,6 +288,7 @@ type Connection = {
   loggedIn: boolean;
   method: string | null;
   fix: string | null;
+  models: { id: string; name: string }[];
 };
 let links: Record<"claude" | "codex", Connection> | null = null;
 const NAMES = { claude: "Claude Code", codex: "Codex" } as const;
@@ -312,14 +313,29 @@ function renderConnections() {
   if (!links[$("#provider").value as "claude" | "codex"].loggedIn && ready[0])
     $("#provider").value = ready[0];
   $("#save-settings").disabled = !ready.length;
+  renderModels();
 }
+// The model list follows the chosen CLI; a saved model it no longer lists stays selectable.
+function renderModels(keep = $("#generation-model").value) {
+  const models = links?.[$("#provider").value as "claude" | "codex"].models || [];
+  const ids = models.map((m) => m.id);
+  $("#generation-model").innerHTML = [
+    `<option value="">CLI default</option>`,
+    ...models.map((m) => `<option value="${escapeHTML(m.id)}">${escapeHTML(m.name)}</option>`),
+    ...(keep && !ids.includes(keep)
+      ? [`<option value="${escapeHTML(keep)}">${escapeHTML(keep)}</option>`]
+      : []),
+  ].join("");
+  $("#generation-model").value = keep;
+}
+$("#provider").addEventListener("change", () => renderModels(""));
 function openSettings() {
   if (!inbox) return;
   if (inbox.settings.provider !== "none") $("#provider").value = inbox.settings.provider;
-  $("#generation-model").value = inbox.settings.model || "";
   $("#settings-error").hidden = true;
   $("#save-settings").textContent = inbox.settings.enabled ? "Save" : "Start preparing";
   renderConnections();
+  renderModels(inbox.settings.provider === $("#provider").value ? inbox.settings.model || "" : "");
   $("#settings-dialog").showModal();
 }
 $("#recheck").addEventListener("click", async () => {

@@ -267,14 +267,26 @@
     if (!links[$("#provider").value].loggedIn && ready[0])
       $("#provider").value = ready[0];
     $("#save-settings").disabled = !ready.length;
+    renderModels();
   }
+  function renderModels(keep = $("#generation-model").value) {
+    const models = links?.[$("#provider").value].models || [];
+    const ids = models.map((m) => m.id);
+    $("#generation-model").innerHTML = [
+      `<option value="">CLI default</option>`,
+      ...models.map((m) => `<option value="${escapeHTML(m.id)}">${escapeHTML(m.name)}</option>`),
+      ...keep && !ids.includes(keep) ? [`<option value="${escapeHTML(keep)}">${escapeHTML(keep)}</option>`] : []
+    ].join("");
+    $("#generation-model").value = keep;
+  }
+  $("#provider").addEventListener("change", () => renderModels(""));
   function openSettings() {
     if (!inbox) return;
     if (inbox.settings.provider !== "none") $("#provider").value = inbox.settings.provider;
-    $("#generation-model").value = inbox.settings.model || "";
     $("#settings-error").hidden = true;
     $("#save-settings").textContent = inbox.settings.enabled ? "Save" : "Start preparing";
     renderConnections();
+    renderModels(inbox.settings.provider === $("#provider").value ? inbox.settings.model || "" : "");
     $("#settings-dialog").showModal();
   }
   $("#recheck").addEventListener("click", async () => {
