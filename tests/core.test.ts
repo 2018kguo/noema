@@ -855,6 +855,6 @@ test("codex gets a strict schema and its nulls for optional keys are dropped", (
       { visual: { kind: "b", note: null }, tag: "x" },
     ],
     [{ visual: null, tag: null }, { visual: null }],
-  ])
-    expect(schema.parse(unstrict(reply, json))).toEqual(parsed);
+  ] as [unknown, unknown][])
+    expect(schema.parse(unstrict(reply, json)) as unknown).toEqual(parsed);
 });
