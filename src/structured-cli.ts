@@ -164,13 +164,14 @@ export async function runStructured(
         result: z.string().optional(),
         total_cost_usd: z.number().optional(),
         duration_ms: z.number().optional(),
+        num_turns: z.number().optional(),
         usage: z.record(z.string(), z.unknown()).optional(),
       })
       .parse(JSON.parse(stdout));
     // One line per call so token use and caching can be compared across changes.
     const u = envelope.usage || {};
     console.error(
-      `[model] claude ${model || "default"} in=${u.input_tokens} cache_write=${u.cache_creation_input_tokens} cache_read=${u.cache_read_input_tokens} out=${u.output_tokens} $${envelope.total_cost_usd?.toFixed(3)} ${Math.round((envelope.duration_ms || 0) / 1000)}s prompt_chars=${prompt.length}`,
+      `[model] claude ${model || "default"} in=${u.input_tokens} cache_write=${u.cache_creation_input_tokens} cache_read=${u.cache_read_input_tokens} out=${u.output_tokens} thinking=${(u.output_tokens_details as { thinking_tokens?: number } | undefined)?.thinking_tokens ?? "?"} turns=${envelope.num_turns ?? "?"} $${envelope.total_cost_usd?.toFixed(3)} ${Math.round((envelope.duration_ms || 0) / 1000)}s prompt_chars=${prompt.length}`,
     );
     if (envelope.is_error)
       throw Error("Claude reported an error. Check CLI login and account limits.");

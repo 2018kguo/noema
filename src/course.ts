@@ -360,6 +360,19 @@ export const READER_ASSETS = [
 function unique(ids: string[], label: string) {
   if (new Set(ids).size !== ids.length) throw Error("Duplicate " + label);
 }
+// Source ids are keys for links, not names a reader understands, so only text outside tags
+// counts: a data-source attribute is a citation however the model quoted it. Generation checks
+// each answer with this so a leaked id gets a corrected retry instead of failing the course.
+export const showsSourceIds = (value: unknown) =>
+  /\bsource\d+\b/i.test(
+    JSON.stringify(value, (k, v) =>
+      ["sources", "source_ids"].includes(k)
+        ? undefined
+        : typeof v === "string"
+          ? v.replace(/<[^>]*>/g, " ")
+          : v,
+    ),
+  );
 export function validateCourse(raw: unknown, rawChallenges: unknown) {
   const course = courseSchema.parse(raw),
     challenges = z.array(challengeSchema).parse(rawChallenges);
@@ -386,19 +399,12 @@ export function validateCourse(raw: unknown, rawChallenges: unknown) {
     new Set(course.LESSONS.map((l) => l.phase)),
     "placement section",
   );
-  // Source ids are keys for links, not names a reader understands.
-  const skipIds = (k: string, v: unknown) =>
-    ["sources", "source_ids"].includes(k) ? undefined : v;
   for (const [label, value] of [
     ...course.LESSONS.map((l) => [l.id, l] as const),
     ...challenges.map((c) => [c.id, c] as const),
     ["glossary", course.GLOSSARY] as const,
   ])
-    if (
-      /\bsource\d+\b/i.test(
-        JSON.stringify(value, skipIds).replace(/data-source=\\"[^"\\]*\\"/g, ""),
-      )
-    )
+    if (showsSourceIds(value))
       throw Error("Name sources in prose instead of using their ids: " + label);
   // Hover links must resolve: terms to the glossary, citations to a listed source.
   const html = JSON.stringify([course.LESSONS, challenges, course.META.about_html]);

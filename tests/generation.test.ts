@@ -28,6 +28,7 @@ test("generation validates model output and reuses checkpointed steps without ne
     item = s.add("https://example.org/source").item;
   let calls = 0,
     failedOnce = false,
+    leaked = false,
     critiques = 0;
   const shared = new Set<string>(),
     prompts: string[] = [];
@@ -78,7 +79,11 @@ test("generation validates model output and reuses checkpointed steps without ne
         ? fixtures.lesson
         : keys.includes("example_setup")
           ? fixtures.editor
-          : fixtures.review;
+          : // One review names a source by id in prose, as review-3 of a real run did; the
+            // checkpoint must send it back instead of failing the finished course.
+            leaked
+            ? fixtures.review
+            : ((leaked = true), { ...fixtures.review, solution: "As source1 shows, it holds." });
   };
   try {
     const result = await generate(
@@ -94,7 +99,7 @@ test("generation validates model output and reuses checkpointed steps without ne
     // 16 drafting calls, one self-review per topic, and a revision per topic: the fixture draft
     // trips the mechanical checks, so every topic is rewritten before anyone sees it.
     expect(critiques).toBe(5);
-    expect(calls).toBe(26);
+    expect(calls).toBe(27);
     // One cached prefix: every call that needs the sources gets the same system prompt, and
     // no user prompt re-sends the source text.
     expect(shared.size).toBe(1);

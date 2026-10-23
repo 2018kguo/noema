@@ -3,7 +3,14 @@ import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { InboxStore, normalizeLink } from "../src/inbox-store";
-import { loadBundle, validateCourse, ROOT, visualSchema, checkVisual } from "../src/course";
+import {
+  loadBundle,
+  validateCourse,
+  showsSourceIds,
+  ROOT,
+  visualSchema,
+  checkVisual,
+} from "../src/course";
 import { validateGrade, selectedContext } from "../src/grade";
 import { extractArticle, cleanHTML, canonical } from "../src/html";
 import { collect, publicURL, NeedsInput, research } from "../src/source-reader";
@@ -199,6 +206,127 @@ test("an X post is named by its author and never uses its own URL as a preview i
   });
   expect(result.documents[0].title).toBe("Post by Some Lab on X");
   expect(result.documents[0].image).toBeUndefined();
+});
+test("a post's links are followed through the author's reply to the write-up and repository", async () => {
+  const s = store(),
+    i = s.add("https://x.com/someone/status/2112955825367269788", "").item,
+    sha = "a".repeat(40),
+    fetched: string[] = [];
+  const html = (body: string) =>
+    `<html><head><title>Page</title></head><body><article><p>${"word ".repeat(80)}</p>${body}</article></body></html>`;
+  const result = await collect(i, temp(), async (url) => {
+    fetched.push(url);
+    if (url.startsWith("https://publish.twitter.com/oembed"))
+      return [
+        JSON.stringify({
+          html:
+            "<blockquote><p>4,000x faster. " +
+            "More detail. ".repeat(20) +
+            '<a href="https://t.co/abc">link</a></p></blockquote>',
+          author_name: "Lab",
+        }),
+        url,
+      ];
+    // The shortened link leads back to the post's own page, where the reply carries the links.
+    if (url === "https://t.co/abc")
+      return [
+        html(
+          '<a href="https://help.x.com/rules">rules</a><a href="https://lab.example/">home</a>' +
+            '<a href="https://github.com/lab/run">code</a><a href="https://lab.example/run#update">post</a>',
+        ),
+        "https://x.com/someone/status/2112955825367269788",
+      ];
+    if (url === "https://lab.example/run#update") return [html(""), url];
+    const api = "https://api.github.com/repos/lab/run";
+    if (url === api + "/commits/HEAD") return [JSON.stringify({ sha }), url];
+    if (url.startsWith(api + "/git/trees/"))
+      return [JSON.stringify({ tree: [{ path: "README.md", type: "blob", size: 10 }] }), url];
+    if (url === `https://raw.githubusercontent.com/lab/run/${sha}/README.md`) return ["# Run", url];
+    if (url.startsWith(api + "/pulls"))
+      return [
+        JSON.stringify([
+          {
+            number: 2,
+            title: "Fused kernels, 1.6 s",
+            body: "Why it is faster.",
+            merged_at: "2026-10-22T00:00:00Z",
+          },
+          { number: 1, title: "Closed unmerged", body: null, merged_at: null },
+        ]),
+        url,
+      ];
+    throw Error("not fetched: " + url);
+  });
+  expect(result.documents.map((d) => d.title)).toEqual([
+    "Post by Lab on X",
+    "Page",
+    "run · README.md",
+    "run · merged pull requests",
+    "Page",
+  ]);
+  expect(result.documents[3].text).toContain("#2 Fused kernels, 1.6 s");
+  expect(result.documents[3].text).not.toContain("Closed unmerged");
+  // Site chrome and a bare homepage are skipped, and GitHub's HTML page is never fetched.
+  expect(fetched).not.toContain("https://help.x.com/rules");
+  expect(fetched).not.toContain("https://lab.example/");
+  expect(fetched).not.toContain("https://github.com/lab/run");
+});
+test("an X post reads the author's reply chain and their answers, not other people's replies", async () => {
+  const s = store(),
+    i = s.add("https://x.com/lab/status/100", "").item,
+    fetched: string[] = [];
+  const status = (id: string, by: string, text: string, to?: string) => ({
+    id,
+    text,
+    author: { screen_name: by },
+    replying_to: to ? { status: to } : null,
+  });
+  const result = await collect(i, temp(), async (url) => {
+    fetched.push(url);
+    if (url.startsWith("https://publish.twitter.com/oembed"))
+      return [
+        JSON.stringify({
+          html: "<blockquote><p>4,000x faster. " + "More detail. ".repeat(20) + "</p></blockquote>",
+          author_name: "Lab",
+        }),
+        url,
+      ];
+    if (url === "https://api.fxtwitter.com/2/thread/100")
+      return [
+        JSON.stringify({
+          thread: [
+            status("100", "lab", "4,000x faster."),
+            status("101", "lab", "code: https://lab.example/run/notes", "100"),
+          ],
+        }),
+        url,
+      ];
+    if (url === "https://api.fxtwitter.com/2/conversation/100")
+      return [
+        JSON.stringify({
+          replies: [
+            status("200", "reader", "Does it scale?", "100"),
+            status("201", "lab", "Not all of the tricks will.", "200"),
+            status("202", "fan", "wow https://spam.example/x", "100"),
+          ],
+        }),
+        url,
+      ];
+    if (url === "https://lab.example/run/notes")
+      return [
+        `<html><head><title>Notes</title></head><body><article><p>${"word ".repeat(80)}</p></article></body></html>`,
+        url,
+      ];
+    throw Error("not fetched: " + url);
+  });
+  const post = result.documents[0].text;
+  expect(post).toContain("code: https://lab.example/run/notes");
+  expect(post).toContain(
+    "@reader asked: Does it scale?\nThe author answered: Not all of the tricks will.",
+  );
+  expect(post).not.toContain("wow");
+  expect(result.documents.map((d) => d.title)).toEqual(["Post by Lab on X", "Notes"]);
+  expect(fetched).not.toContain("https://spam.example/x");
 });
 test("double-escaped model HTML is unwrapped; code keeps its escapes", () => {
   expect(cleanHTML(JSON.stringify("<p>One.</p>\n<p>Two</p>"))).toBe("<p>One.</p>\n<p>Two</p>");
@@ -401,6 +529,9 @@ test("course text rejects raw HTML introductions and bare source ids", () => {
   const ids = structuredClone(sample.course);
   ids.LESSONS[0].levels[1] += "<p>As source1 says.</p>";
   expect(() => validateCourse(ids, challenges)).toThrow("Name sources");
+  // Model HTML quotes the attribute either way before cleanHTML runs; both are citations.
+  expect(showsSourceIds({ html: "<a data-source='source1' data-quote='x'>x</a>" })).toBe(false);
+  expect(showsSourceIds({ html: "As source1 says." })).toBe(true);
 });
 test("schedule slack absorbs a delay until the task becomes critical", () => {
   const plan = (d: number) =>
@@ -546,11 +677,11 @@ test("research fetches links the sources contain, named reference pages and sear
       search
         ? // Only https search results are fetched; plain http and already-read pages are skipped.
           {
-            found: [
+            subject: [
               { url: "https://lab.example/write-up", why: "the subject's own write-up" },
               { url: "http://lab.example/insecure", why: "x" },
-              { url: "https://example.org/post", why: "already read" },
             ],
+            context: [{ url: "https://example.org/post", why: "already read" }],
           }
         : {
             links: [
@@ -570,6 +701,11 @@ test("research fetches links the sources contain, named reference pages and sear
     "https://lab.example/write-up",
   ]);
   expect(result.documents.map((d) => d.id)).toEqual(["source1", "source2", "source3", "source4"]);
+  // The source's own links and the subject's write-up are read in full; only Wikipedia is
+  // background.
+  expect(result.documents.filter((d) => d.background).map((d) => d.url)).toEqual([
+    "https://en.wikipedia.org/api/rest_v1/page/html/Attention_(machine_learning)",
+  ]);
   // Saved: a second run neither asks the model nor fetches.
   const again = await research({ id: "a", url: "", note: "" } as never, reading, dir, async () => {
     throw Error("asked again");
