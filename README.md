@@ -1,4 +1,10 @@
-# Noema
+<h1 align="center">Noema</h1>
+<p align="center">Turn the links you save into lessons you can work through.</p>
+<p align="center">
+  <a href="#start-noema">Get started</a> ·
+  <a href="#use-the-skill-for-deeper-work">Prepare a course</a> ·
+  <a href="#develop-and-verify">Development</a>
+</p>
 
 Save links you want to understand, then work through the lessons Noema prepares
 for you. The inbox keeps your reading ideas in one place: a tweet, an article,
@@ -13,7 +19,7 @@ a repository, or several links you have been meaning to explore.
 
 ## Start Noema
 
-Requires **Bun 1.4.3**. The included inference lab also needs Python 3.9+; ordinary article courses do not. No GPU or model download is needed.
+Requires **Bun**; see the [toolchain requirement](package.json). The included inference lab also needs Python 3; ordinary article courses do not. No GPU or model download is needed.
 
 ```bash
 git clone https://github.com/2018kguo/noema.git
