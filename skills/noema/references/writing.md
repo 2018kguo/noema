@@ -90,7 +90,13 @@ Find them on the second pass and rewrite the sentence as a person would say it.
   studies follows a protocol, a plan written before anyone enrolls that fixes who
   qualifies, the dose and how the results will be analyzed."
 - **Staccato rhythm.** Runs of short declarative sentences. Join the ones that belong
-  together and let sentence length vary the way speech does.
+  together and let sentence length vary the way speech does. Do not overcorrect into
+  long, comma-chained sentences; that is paper voice (see "Measure the prose").
+- **Self-narration.** The text talks about itself: "The table also cuts against us",
+  "The programs make the point more plainly than the medians", "this is an inference
+  from the pattern, not a measurement of why", "Our thesis is", "here they are first".
+  State the content. Put a counterpoint in a plain sentence where it applies, and a
+  caveat once, next to the number it changes.
 - **Colon and semicolon pivots** that stand in for "because", "but" or "so": "X exists
   in theory; in practice, Y." Use the conjunction.
 - **Aphorisms and morals.** A closing line that restates the paragraph as a maxim
@@ -117,6 +123,52 @@ Find them on the second pass and rewrite the sentence as a person would say it.
   "The evidence, where it breaks and what's still open". Name the one subject.
 - **Name-drop lists.** Each cited paper or person gets what they found, in a sentence a
   newcomer can follow, or gets cut.
+
+## Measure the prose, then read it
+
+Slop comes in two forms, and the tell detector catches only the first.
+
+- **Rhetoric** is the tells above: antitheses, punchlines, morals, self-narration.
+- **Paper voice** has no tells at all. It reads like a journal abstract: long sentences
+  joined by commas, a hedge in every sentence, side findings in every paragraph. Readers
+  call it "meandering", "hard to read" and "technically followable but feels like
+  reading a paper".
+
+Fixing rhetoric alone tends to produce paper voice, because joining staccato sentences
+and adding caveats both make sentences longer. We learned this on a set of data-heavy
+blog posts:
+
+- Posts a domain expert called "clearly LLM slop" scored only 0.1 to 0.3 strong tells per
+  100 words. The detector is a floor, not a verdict.
+- After the tells were removed, the same expert said the posts read like a paper.
+  `density()` in `src/tells.ts` separates the two groups:
+
+|                                | Mean sentence  | Over 30 words | Commas per sentence |
+| ------------------------------ | -------------- | ------------- | ------------------- |
+| Posts the reader liked         | 15 to 17 words | 6 to 9%       | about 1.0           |
+| Posts that "read like a paper" | 24 to 27 words | 30 to 36%     | 1.3 to 1.7          |
+| Limit (`DENSITY_LIMITS`)       | 18 words       | 10%           | 1.1                 |
+
+`bun run course inspect` reports density for each level and for the whole course. If a
+level goes over a limit, split its sentences, not its ideas. Use one idea per sentence,
+paragraphs of two to four sentences, and common words ("start", not "commence"). Avoid
+noun stacks ("Phase 2 to Phase 3 transition timing").
+
+Structure makes the biggest difference:
+
+- **Answer first.** Answer the title's question, with its main number, in the first two
+  sentences. A case or scene can follow in two or three short sentences.
+- **Cut rather than compress.** Delete a section that answers a different question than the
+  title. Squeezing every finding into shorter sentences keeps the meandering.
+- **Caveat once.** Put the main limit next to the number it changes, or in the method
+  note. Hedging every sentence makes each one longer and weaker.
+
+The numbers only show that a passage is dense. They don't show that it is good. Prose
+that passes every check can still say nothing, repeat itself, or misstate a source.
+Read every paragraph yourself before you accept it, and don't trust a writer's or
+agent's report that the text is "clean". In the blog posts, the reader who read
+everything found problems the checks missed: a snapshot called "the newest" when a
+later letter existed, and two posts that gave different counts for the same thing.
 
 ## Questions people want to answer
 
@@ -182,6 +234,14 @@ state what the diagram leaves out. Use `null` when neither fits; decorative
 cards do not explain a mechanism. Write the example and diagram together, then
 check that every highlighted step agrees with the prose.
 
+Make a chart for the point the text is making, not as a dump of the data. Highlight
+only the marks that carry the point and leave the rest grey. Print each value on its
+mark so nobody has to read an axis. Write a caption that says what is measured and
+what the chart shows, and don't repeat the heading above it. Check the chart at phone
+width (390 px): a chart drawn 800 px wide shrinks its text to about 6 px there. If a
+table exists only to compare numbers, replace it with the chart. Keep a table only
+when readers will look up a particular row.
+
 Offer a small prediction before a slider or experiment. Change one assumption
 and explain which results depend on it. Keep the original example visible
 beside the changed case. Motion should show a meaningful change, stop on its
@@ -203,6 +263,8 @@ rewritten when anything fails. Each item comes from a reader's complaint.
   level, and Depth does not rephrase High level. A level that would mostly repeat is dropped.
 - **No textbook padding.** Formulas, derivations and side topics the sources never use
   are dropped, along with any level that would be made of them.
+- **Reads plainly.** Density is within `DENSITY_LIMITS`, the point comes first, and
+  each caveat appears once. Someone outside the field could follow it on first reading.
 - **Sounds like a person.** None of the tells above, no flashcard openers, no staccato,
   no everyday analogies standing in for the real thing (speed limits, roads, kitchens),
   no cute or three-item titles.
