@@ -229,6 +229,15 @@ export const arithmetic = (text: string) =>
 // "feel like reading a paper" averaged 24 to 27 words with 30 to 36% over 30 words. Removing tells
 // alone pushed prose the wrong way, because joining staccato sentences makes them long.
 export const DENSITY_LIMITS = { meanSentence: 18, longShare: 0.1, commasPerSentence: 1.1 };
+// The opposite failure. Rewriting paper voice toward those limits produced choppy prose: facts
+// stacked one per sentence, every sentence about the same length, runs of sentences that open with
+// a count ("Sixty-four letters ... Sixty-one ..."). A reader said no English teacher would pass it.
+// Posts readers liked varied sentence length (standard deviation 8 to 14 words) and rarely opened a
+// sentence with a number (0 to 9%); the choppy rewrites measured 5 to 6 words and up to 20%. Three
+// posts a side, so these flag a passage for a reread rather than set a target.
+export const RHYTHM_FLAGS = { minLengthSpread: 7, maxNumberLed: 0.15 };
+const NUMBER_LED =
+  /^(?:[0-9]|(?:One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve|Thirteen|Fourteen|Fifteen|Sixteen|Seventeen|Eighteen|Nineteen|Twenty|Thirty|Forty|Fifty|Sixty|Seventy|Eighty|Ninety|Hundreds?|Half|Most|Many|Few)\b)/;
 export function density(html: string) {
   const sentences = strip(html)
     .split(/(?<=[.!?])\s+(?=[A-Z0-9“"])/)
@@ -241,8 +250,23 @@ export function density(html: string) {
     longShare: +(lens.filter((n) => n > 30).length / lens.length).toFixed(2),
     commasPerSentence: +((sentences.join(" ").split(",").length - 1) / sentences.length).toFixed(1),
   };
+  const mean = lens.reduce((a, b) => a + b, 0) / lens.length;
+  const rhythm = {
+    lengthSpread: +Math.sqrt(lens.reduce((a, n) => a + (n - mean) ** 2, 0) / lens.length).toFixed(
+      1,
+    ),
+    numberLed: +(sentences.filter((s) => NUMBER_LED.test(s)).length / sentences.length).toFixed(2),
+  };
   const over = (Object.keys(DENSITY_LIMITS) as (keyof typeof DENSITY_LIMITS)[]).filter(
     (k) => d[k] > DENSITY_LIMITS[k],
   );
-  return { ...d, over };
+  // Too few sentences to judge rhythm in a short passage.
+  const choppy =
+    sentences.length < 8
+      ? []
+      : [
+          ...(rhythm.lengthSpread < RHYTHM_FLAGS.minLengthSpread ? ["lengthSpread"] : []),
+          ...(rhythm.numberLed > RHYTHM_FLAGS.maxNumberLed ? ["numberLed"] : []),
+        ];
+  return { ...d, ...rhythm, over, choppy };
 }

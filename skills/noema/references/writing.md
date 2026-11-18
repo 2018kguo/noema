@@ -150,9 +150,24 @@ blog posts:
 | Limit (`DENSITY_LIMITS`)       | 18 words       | 10%           | 1.1                 |
 
 `bun run course inspect` reports density for each level and for the whole course. If a
-level goes over a limit, split its sentences, not its ideas. Use one idea per sentence,
-paragraphs of two to four sentences, and common words ("start", not "commence"). Avoid
-noun stacks ("Phase 2 to Phase 3 transition timing").
+level goes over a limit, split its sentences, not its ideas. Use common words ("start", not
+"commence"). Avoid noun stacks ("Phase 2 to Phase 3 transition timing").
+
+The limits catch paper voice. Don't write toward them. When we rewrote the same posts to
+fit the limits, they overcorrected into choppy prose. Each fact got its own sentence, every
+sentence ran about the same length, and runs of sentences opened with a count ("Sixty-four
+letters fault ... Sixty-one fault ..."). The reader said no English teacher would pass it.
+`density()` also reports two rhythm signals for this failure:
+
+|                        | Spread of sentence length | Sentences that open with a number |
+| ---------------------- | ------------------------- | --------------------------------- |
+| Posts the reader liked | 8 to 14 words             | 0 to 9%                           |
+| The choppy rewrites    | 5 to 6 words              | up to 20%                         |
+| Flag (`RHYTHM_FLAGS`)  | under 7                   | over 15%                          |
+
+These come from three posts on each side. Treat them as a reason to reread a passage,
+never as a target. Self-review passes them to the reviewer as findings to check, not
+rules to obey.
 
 Structure makes the biggest difference:
 
@@ -169,6 +184,45 @@ Read every paragraph yourself before you accept it, and don't trust a writer's o
 agent's report that the text is "clean". In the blog posts, the reader who read
 everything found problems the checks missed: a snapshot called "the newest" when a
 later letter existed, and two posts that gave different counts for the same thing.
+
+## Read it as a writing teacher would
+
+Numbers can show that prose is dense or choppy. Only a reader can tell whether it is
+good. After the checks pass, read the whole piece top to bottom the way a good writing
+teacher grades an essay, and rewrite whatever fails:
+
+- **Paragraphs.** Each develops one idea. It opens with a topic sentence that says what the
+  paragraph shows. The sentences after it support that sentence and are tied to each other by
+  their reasons ("because", "so", "but", "which means"). A run of separate fact-sentences
+  is a list in disguise. Connect the facts, or make it a real list.
+- **Transitions.** A reader always knows why the next sentence or section follows from the
+  last. Each section leads into the next, and the ending lands on what the reader should do
+  or know.
+- **Rhythm.** Mix short and medium sentences. A long sentence is fine when it reads cleanly.
+  Telegraphic fragments are as hard to read as comma-chained ones.
+- **Clear references.** Every "it", "this", "the reviewer" or "the team" points to something
+  already named. Say who did what.
+- **Precise, ordinary words.** Use no odd verbs ("fault the study", "turned on it") and no vague
+  nouns ("the paper", when you mean the journal article). Define each term of art the
+  first time it appears, in plain words.
+- **One thing at a time.** The opening states the point once, with its main number, before
+  the case that shows it. Don't cram a case, two percentages and a contrast into the first
+  two sentences.
+
+## Have a point, say it in the title, and show the evidence
+
+Every piece needs one point a reader could repeat. State it in the first two sentences.
+The title and subtitle should say it concretely. Name who it is for and the answer, with a
+number where there is one. No abstraction ("X moved from the drug to who makes it"), no
+colon pun, and no headings that are only labels ("About the vendor") when they could state
+a point. Show the evidence for the point on the page: a chart, diagram, source figure or
+something interactive wherever it makes the point clearer than prose. Cut sections that
+don't serve the point.
+
+A reader's complaint about one piece is a sample, not an exception. When someone says one
+topic is weak, check every other topic for the same failure, and apply the feedback as a
+principle with judgment for each kind of piece. Don't turn it into a narrow target for the
+one passage they named.
 
 ## Questions people want to answer
 
@@ -263,8 +317,13 @@ rewritten when anything fails. Each item comes from a reader's complaint.
   level, and Depth does not rephrase High level. A level that would mostly repeat is dropped.
 - **No textbook padding.** Formulas, derivations and side topics the sources never use
   are dropped, along with any level that would be made of them.
+- **Has a point.** The first two sentences state it, the title says it, and the evidence for
+  it is on the page. Every paragraph serves it.
 - **Reads plainly.** Density is within `DENSITY_LIMITS`, the point comes first, and
   each caveat appears once. Someone outside the field could follow it on first reading.
+- **Reads as connected prose.** Paragraphs open with topic sentences, facts are tied together
+  by their reasons, sentence length varies, every "it" and "this" has a clear referent, and
+  terms are defined where they first appear. A writing teacher would pass it.
 - **Sounds like a person.** None of the tells above, no flashcard openers, no staccato,
   no everyday analogies standing in for the real thing (speed limits, roads, kitchens),
   no cute or three-item titles.

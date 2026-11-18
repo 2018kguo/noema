@@ -16,7 +16,7 @@ import { type Item, type Settings } from "./inbox-store";
 import { type Reading } from "./source-reader";
 import { runStructured, Cancelled } from "./structured-cli";
 import { cleanHTML, escapeHTML, paragraphCount } from "./html";
-import { tells, titleTells, arithmetic, repetition } from "./tells";
+import { tells, titleTells, arithmetic, repetition, density } from "./tells";
 import schemas from "./generation-schemas.json";
 const t = z.string(),
   arr = (min: number, max: number) => z.array(t).min(min).max(max);
@@ -348,6 +348,21 @@ export async function generate(
           : [];
       }),
     ];
+    levels.forEach((html, n) => {
+      const r = html ? density(html) : null;
+      if (r?.over.length)
+        found.push({
+          where: `level ${n + 1}`,
+          problem: `may read like a paper (${r.over.join(", ")} over the guide's limits)`,
+          fix: "read it; if it is dense, give one idea per sentence and cut side findings, without chopping it into fragments",
+        });
+      if (r?.choppy.length)
+        found.push({
+          where: `level ${n + 1}`,
+          problem: `may read as choppy, stacked facts (${r.choppy.join(", ")})`,
+          fix: "read it as a writing teacher would; if it is choppy, give each paragraph a topic sentence, connect facts with their reasons and vary sentence length",
+        });
+    });
     if (
       d.example_setup &&
       d.example_steps &&

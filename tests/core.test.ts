@@ -871,3 +871,16 @@ test("density flags paper voice that no tell catches", () => {
   expect(density(paper)!.over).toEqual(["meanSentence", "longShare", "commasPerSentence"]);
   expect(density(plain)!.over).toEqual([]);
 });
+
+test("density flags choppy, stacked-fact prose that the limits reward", () => {
+  // Rewritten toward the density limits, this passes them and still reads badly: every sentence a
+  // fact, the same length, several opening with a count.
+  const choppy =
+    "<p>Risk is still what FDA cites most. Sixty-four letters fault risk that was left out. Sixty-one fault risk that was hard to see. Most TV letters cite risk presentation. Nineteen of 34 letters fault the trial design. Twenty-one letters fault an exploratory endpoint. Eight letters repeat one sentence about cancer drugs. Fourteen letters fault the patients behind a claim. Four letters cite open-label extensions.</p>";
+  const connected =
+    "<p>Risk is still what FDA cites most, but the letters about pieces for doctors tell a different story. In 19 of the 34 letters, FDA objected to the trial behind a claim, usually because the study could not support it. That kind of problem needs the protocol and the statistical analysis plan to catch, so a reviewer who reads only the piece will miss it. The single-arm trials are the clearest case. Without a control arm, nobody can tell what the drug added, and FDA said so in eight letters. Onset claims fail in a similar way when they rest on an early, exploratory endpoint. An ad for Ingrezza showed improvement at week 2, although the trial measured its main result at week 6.</p>";
+  const c = density(choppy)!;
+  expect(c.over).toEqual([]);
+  expect(c.choppy).toEqual(["lengthSpread", "numberLed"]);
+  expect(density(connected)!.choppy).toEqual([]);
+});
