@@ -27,6 +27,15 @@ const TELLS: Tell[] = [
     fix: "give the things; don't announce how many",
   },
   {
+    // Found on data posts a domain reader called slop although the other patterns barely fired:
+    // "The table also cuts against us", "The programs make the point more plainly than the medians",
+    // "this is an inference from the pattern, not a measurement of why".
+    kind: "self-narration",
+    strong: true,
+    re: /\bcuts? against (?:us|our)\b|\bmakes? (?:the|this|that) point\b|\bour (?:thesis|argument|reading|read) (?:is|was)\b|\bnot a measurement of\b|\b(?:here (?:it is|they are)|so here)\b|\bthe (?:post|essay|article|piece) (?:argues|shows|is about)\b/i,
+    fix: "state the content; never describe the text, its thesis or what a line is about to do",
+  },
+  {
     kind: "colon or semicolon pivot",
     strong: true,
     re: /[;:] (?:in practice|but|so|and the|that is)\b/i,
@@ -213,3 +222,27 @@ export function repetition(html: string, earlier: string) {
 // How much of a text is calculation: operators between numbers, equals signs, multiplication.
 export const arithmetic = (text: string) =>
   (text.match(/[0-9][0-9.,]*\s*(?:×|÷|\/|=|\*|−|\+)\s*[0-9(]|[×÷=]/g) || []).length;
+
+// Paper voice: no tell fires, yet the text reads like a journal abstract because sentences are long
+// and comma-chained. Measured on one blog (Nov 2026): posts readers liked averaged 16 to 17 words a
+// sentence with at most 9% over 30 words and about one comma per sentence; posts a reader said
+// "feel like reading a paper" averaged 24 to 27 words with 30 to 36% over 30 words. Removing tells
+// alone pushed prose the wrong way, because joining staccato sentences makes them long.
+export const DENSITY_LIMITS = { meanSentence: 18, longShare: 0.1, commasPerSentence: 1.1 };
+export function density(html: string) {
+  const sentences = strip(html)
+    .split(/(?<=[.!?])\s+(?=[A-Z0-9“"])/)
+    .filter((s) => s.split(" ").length > 2);
+  if (!sentences.length) return null;
+  const lens = sentences.map((s) => s.split(" ").length);
+  const d = {
+    sentences: sentences.length,
+    meanSentence: +(lens.reduce((a, b) => a + b, 0) / lens.length).toFixed(1),
+    longShare: +(lens.filter((n) => n > 30).length / lens.length).toFixed(2),
+    commasPerSentence: +((sentences.join(" ").split(",").length - 1) / sentences.length).toFixed(1),
+  };
+  const over = (Object.keys(DENSITY_LIMITS) as (keyof typeof DENSITY_LIMITS)[]).filter(
+    (k) => d[k] > DENSITY_LIMITS[k],
+  );
+  return { ...d, over };
+}

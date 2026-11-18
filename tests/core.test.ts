@@ -27,7 +27,7 @@ import { runStructured, strict, unstrict } from "../src/structured-cli";
 import { z } from "zod";
 import { levelFor, place, switchTrack, trackState } from "../browser/levels";
 import { sourceHref } from "../browser/links";
-import { tells, titleTells } from "../src/tells";
+import { tells, titleTells, density } from "../src/tells";
 const cleanups: (() => void)[] = [];
 afterEach(() => {
   for (const f of cleanups.splice(0).reverse()) f();
@@ -813,6 +813,8 @@ test("tell detector names the sentences an editor must rewrite", () => {
     ["A speed limit sign does the same job on a road.", "everyday analogy"],
     ["That pattern is my inference, not a claim either source makes.", "first-person narrator"],
     ["The schema change itself was not hard. The week it cost us was.", "contrast reversal"],
+    ["The table also cuts against us.", "self-narration"],
+    ["The programs make the point more plainly than the medians.", "self-narration"],
   ])
     expect(tells(text).map((f) => f.kind)).toContain(kind);
   // Plain human prose, including ordinary contrasts and questions, stays clean.
@@ -857,4 +859,15 @@ test("codex gets a strict schema and its nulls for optional keys are dropped", (
     [{ visual: null, tag: null }, { visual: null }],
   ] as [unknown, unknown][])
     expect(schema.parse(unstrict(reply, json)) as unknown).toEqual(parsed);
+});
+
+test("density flags paper voice that no tell catches", () => {
+  // Rewritten to remove every tell, this still reads like an abstract: long, comma-chained sentences.
+  const paper =
+    "<p>Across all 466 approvals, the median time from the last Phase 2 readout to the first Phase 3 start was 11 months, and 41% of programs waited more than a year, while for drugs approved in 2008 to 2013 the median was 7 months. Our numbers run shorter than those of the earlier study, mainly because we count a Phase 2 as finished on its registered primary completion date, which comes before the analysis a company's own completion date may include.</p>";
+  const plain =
+    "<p>A new drug typically waits 11 months between Phase 2 and Phase 3. That wait has grown from 7 months since 2008. It is longest at small companies, which often have to raise money first.</p>";
+  expect(tells(paper).filter((t) => t.strong)).toEqual([]);
+  expect(density(paper)!.over).toEqual(["meanSentence", "longShare", "commasPerSentence"]);
+  expect(density(plain)!.over).toEqual([]);
 });
