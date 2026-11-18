@@ -36,6 +36,14 @@ const TELLS: Tell[] = [
     fix: "state the content; never describe the text, its thesis or what a line is about to do",
   },
   {
+    // Kevin, Nov 18, on "The trial flaws in the letters fall into a few kinds" and "AbbVie's
+    // webpage shows how this happens": a topic sentence that names a structure says nothing yet.
+    kind: "empty topic sentence",
+    strong: true,
+    re: /\b(?:falls?|comes?|splits?|divides?|breaks? down) into (?:a few|several|some|many|two|three|four|five) (?:kinds|types|groups|categories|buckets|patterns)\b|\bshows? (?:how|why) this (?:happens|matters|works|plays out)\b/i,
+    fix: "make the topic sentence a claim: name the kinds or say what the case shows",
+  },
+  {
     kind: "colon or semicolon pivot",
     strong: true,
     re: /[;:] (?:in practice|but|so|and the|that is)\b/i,
