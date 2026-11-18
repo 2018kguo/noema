@@ -209,6 +209,50 @@ teacher grades an essay, and rewrite whatever fails:
   the case that shows it. Don't cram a case, two percentages and a contrast into the first
   two sentences.
 
+## Keep every paragraph on its claim
+
+A section can pass every sentence-level check and still meander. These rules come from a
+section a domain reader called weak (Kevin, Nov 18, on a post about FDA promotion letters):
+
+- **Topic sentences claim; they don't announce.** "The flaws fall into a few kinds" and
+  "this case shows how it happens" promise content without giving any. Say the claim:
+  "The same four flaws come up again and again, and each is visible only in the protocol,
+  the SAP or the CSR."
+- **An example illustrates its own paragraph.** A case belongs in the paragraph whose claim
+  it shows. A paragraph about exploratory endpoints that drifts into a missed significance
+  cutoff is two paragraphs, or one with a sentence linking them.
+- **Never restate the sentence before.** "By the trial's own rules the result failed. Only
+  the SAP showed that the result had failed." Cut the echo, or replace it with what follows
+  from it.
+- **Give every count its base.** Eight, 21, 14, 4 and 22 letters mean nothing until the reader
+  knows out of how many. State the base once ("53 of the 135 letters fault the trial"), and
+  order the parts so the reader can compare them, usually largest first.
+- **Concrete nouns.** "The patients behind a claim" and "other letters object to" make the
+  reader guess. Say "the patients a result comes from are not the patients the claim
+  describes."
+- **Cut side facts.** A detail that doesn't serve the paragraph's claim ("three of them in
+  2026") goes, however true. The data file keeps it.
+- **End a section on its consequence.** The last sentence says what the reader should do or
+  conclude ("a claim that fails one of these checks has to come out of the piece"). It does
+  not open a new fact or point back to an earlier case ("as it did to AbbVie").
+- **Tie each part to the piece's point.** When a post argues that reviewers need the source
+  documents, every flaw it describes says which document reveals it.
+
+Before (meanders):
+
+> The trial flaws in the letters fall into a few kinds. The most consistent concerns cancer
+> drugs approved on a single-arm trial ... Other letters object to the patients behind a claim.
+> ... Claims based on them drew four letters, three of them in 2026. None of these flaws can
+> be fixed with a disclaimer. In 22 letters FDA says so in some form, as it did to AbbVie.
+
+After (one claim per paragraph, counts on one base, ends on what to do):
+
+> FDA faults the trial behind a claim in 53 of the 135 letters, and the same four flaws come
+> up again and again. Each one is plain in the protocol, the SAP or the CSR, and invisible in
+> the journal article a piece cites. ... A disclaimer fixes none of these. In 22 letters FDA
+> says that stating a study's limits does not make a misleading claim acceptable, so a claim
+> that fails one of these checks has to come out of the piece rather than gain a footnote.
+
 ## Have a point, say it in the title, and show the evidence
 
 Every piece needs one point a reader could repeat. State it in the first two sentences.
@@ -324,6 +368,9 @@ rewritten when anything fails. Each item comes from a reader's complaint.
 - **Reads as connected prose.** Paragraphs open with topic sentences, facts are tied together
   by their reasons, sentence length varies, every "it" and "this" has a clear referent, and
   terms are defined where they first appear. A writing teacher would pass it.
+- **Stays on its claims.** Every topic sentence states a claim, every example sits in the
+  paragraph it illustrates, no sentence restates the one before, every count has its base,
+  side facts are cut, and each section ends on its consequence for the reader.
 - **Sounds like a person.** None of the tells above, no flashcard openers, no staccato,
   no everyday analogies standing in for the real thing (speed limits, roads, kitchens),
   no cute or three-item titles.

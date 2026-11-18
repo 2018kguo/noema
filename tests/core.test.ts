@@ -815,6 +815,8 @@ test("tell detector names the sentences an editor must rewrite", () => {
     ["The schema change itself was not hard. The week it cost us was.", "contrast reversal"],
     ["The table also cuts against us.", "self-narration"],
     ["The programs make the point more plainly than the medians.", "self-narration"],
+    ["The trial flaws in the letters fall into a few kinds.", "empty topic sentence"],
+    ["AbbVie's webpage for Skyrizi shows how this happens.", "empty topic sentence"],
   ])
     expect(tells(text).map((f) => f.kind)).toContain(kind);
   // Plain human prose, including ordinary contrasts and questions, stays clean.
